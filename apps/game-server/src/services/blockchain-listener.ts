@@ -1,0 +1,63 @@
+import { ethers } from 'ethers'
+import { GLADIATOR_NFT_ABI } from './abi'
+
+const RPC_URL = process.env.POLYGON_MUMBAI_RPC_URL!
+const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_GLADIATOR_NFT_ADDRESS!
+
+export class BlockchainListener {
+  private provider: ethers.JsonRpcProvider
+  private contract: ethers.Contract
+
+  constructor() {
+    this.provider = new ethers.JsonRpcProvider(RPC_URL)
+    this.contract = new ethers.Contract(
+      CONTRACT_ADDRESS,
+      GLADIATOR_NFT_ABI,
+      this.provider
+    )
+  }
+
+  async start(onMint: (tokenId: bigint, owner: string, gladiatorClass: number) => void) {
+    console.log('🔗 Starting blockchain listener...')
+
+    // Listen for GladiatorMinted events
+    this.contract.on('GladiatorMinted', async (tokenId, owner, gladiatorClass, event) => {
+      console.log(`📡 New Gladiator minted: ${tokenId}`)
+
+      try {
+        await onMint(tokenId, owner, Number(gladiatorClass))
+      } catch (error) {
+        console.error('Error processing mint event:', error)
+      }
+    })
+
+    // Optionally: sync historical events on startup
+    await this.syncHistoricalEvents(onMint)
+  }
+
+  async syncHistoricalEvents(onMint: (tokenId: bigint, owner: string, gladiatorClass: number) => void) {
+    console.log('🔄 Syncing historical mint events...')
+
+    const filter = this.contract.filters.GladiatorMinted()
+    const events = await this.contract.queryFilter(filter, -10000) // Last ~10k blocks
+
+    for (const event of events) {
+      const [tokenId, owner, gladiatorClass] = event.args!
+      await onMint(tokenId, owner, Number(gladiatorClass))
+    }
+
+    console.log(`✅ Synced ${events.length} historical events`)
+  }
+
+  async getGladiatorData(tokenId: bigint) {
+    const gladiator = await this.contract.getGladiator(tokenId)
+    return {
+      class: Number(gladiator.class),
+      strength: Number(gladiator.strength),
+      agility: Number(gladiator.agility),
+      endurance: Number(gladiator.endurance),
+      technique: Number(gladiator.technique),
+      mintedAt: Number(gladiator.mintedAt),
+    }
+  }
+}

@@ -1,0 +1,186 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String       @id @default(uuid())
+  email         String       @unique
+  walletAddress String?      @unique
+  username      String       @unique
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  // NextAuth fields
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+
+  gladiators    Gladiator[]
+  equipment     Equipment[]
+  matchesAsP1   Match[]      @relation("Player1Matches")
+  matchesAsP2   Match[]      @relation("Player2Matches")
+  friends       Friend[]     @relation("UserFriends")
+  friendOf      Friend[]     @relation("FriendOf")
+  challenges    Challenge[]  @relation("Challenger")
+  challengedBy  Challenge[]  @relation("Opponent")
+}
+
+model Gladiator {
+  id                    String   @id @default(uuid())
+  tokenId               Int      @unique
+  ownerId               String
+  owner                 User     @relation(fields: [ownerId], references: [id])
+
+  class                 String   // Duelist, Brute, Assassin
+  level                 Int      @default(1)
+  xp                    Int      @default(0)
+
+  // Base stats
+  strength              Int
+  agility               Int
+  endurance             Int
+  technique             Int
+
+  // Equipment
+  equippedWeaponId      String?
+  equippedWeapon        Equipment? @relation("EquippedWeapon", fields: [equippedWeaponId], references: [id])
+  equippedArmorId       String?
+  equippedArmor         Equipment? @relation("EquippedArmor", fields: [equippedArmorId], references: [id])
+
+  // Progression
+  skillPointsAvailable  Int      @default(0)
+  unlockedSkills        String[] // Array of skill IDs
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  matchesAsP1           Match[]  @relation("Gladiator1Matches")
+  matchesAsP2           Match[]  @relation("Gladiator2Matches")
+  challengesAsG1        Challenge[] @relation("ChallengeGladiator1")
+  challengesAsG2        Challenge[] @relation("ChallengeGladiator2")
+}
+
+model Equipment {
+  id                String   @id @default(uuid())
+  ownerId           String
+  owner             User     @relation(fields: [ownerId], references: [id])
+
+  type              String   // Weapon, Armor
+  rarity            String   // Common, Rare, Epic
+  name              String
+
+  // Stats (nullable, depends on type)
+  attackBonus       Int?
+  defenseBonus      Int?
+  speedBonus        Int?
+
+  createdAt         DateTime @default(now())
+
+  equippedByWeapon  Gladiator[] @relation("EquippedWeapon")
+  equippedByArmor   Gladiator[] @relation("EquippedArmor")
+}
+
+model Match {
+  id                  String   @id @default(uuid())
+
+  player1GladiatorId  String
+  player1Gladiator    Gladiator @relation("Gladiator1Matches", fields: [player1GladiatorId], references: [id])
+
+  player2GladiatorId  String?
+  player2Gladiator    Gladiator? @relation("Gladiator2Matches", fields: [player2GladiatorId], references: [id])
+
+  isCpuMatch          Boolean  @default(false)
+
+  winnerId            String?  // Gladiator ID of winner
+  matchLog            Json     // Array of action logs
+  durationSeconds     Int
+
+  createdAt           DateTime @default(now())
+
+  player1Id           String
+  player1             User     @relation("Player1Matches", fields: [player1Id], references: [id])
+
+  player2Id           String?
+  player2             User?    @relation("Player2Matches", fields: [player2Id], references: [id])
+
+  challenge           Challenge?
+}
+
+model Friend {
+  userId      String
+  user        User     @relation("UserFriends", fields: [userId], references: [id])
+
+  friendId    String
+  friend      User     @relation("FriendOf", fields: [friendId], references: [id])
+
+  status      String   // pending, accepted
+  createdAt   DateTime @default(now())
+
+  @@id([userId, friendId])
+  @@unique([userId, friendId])
+}
+
+model Challenge {
+  id              String   @id @default(uuid())
+
+  challengerId    String
+  challenger      User     @relation("Challenger", fields: [challengerId], references: [id])
+
+  opponentId      String
+  opponent        User     @relation("Opponent", fields: [opponentId], references: [id])
+
+  gladiator1Id    String
+  gladiator1      Gladiator @relation("ChallengeGladiator1", fields: [gladiator1Id], references: [id])
+
+  gladiator2Id    String
+  gladiator2      Gladiator @relation("ChallengeGladiator2", fields: [gladiator2Id], references: [id])
+
+  status          String   // pending, accepted, declined, completed
+
+  matchId         String?  @unique
+  match           Match?   @relation(fields: [matchId], references: [id])
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
