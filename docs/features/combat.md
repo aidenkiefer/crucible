@@ -1,61 +1,45 @@
-# Combat System — Grid Tactics v0.2
+# Combat System — Real-Time Coliseum (ROTMG-inspired) v0.3
 
-> Goal: Define a deterministic, server-authoritative, turn/tick-based combat model
-> using a compact battle grid (4x3), with meaningful positioning, weapon-driven
-> attacks, and two schools of magic (Faith + Arcana). Designed for the demo and
-> easy future evolution.
+> Goal: Define a **server-authoritative real-time** combat model in a free-moving coliseum,
+> with WASD/arrow-key movement, ability cooldowns, and stat-driven pacing (Speed/Stamina).
+> This replaces the grid / turn-based proposal while preserving the rest of our design intent:
+> deterministic outcomes where possible, low server load per match, clean client/server boundaries,
+> and extensibility for weapons + spellcasting.
 
 ---
 
 ## 0) Inspiration & Design Intent
 
-This system is loosely inspired by For The King II’s battle grid concept:
-- Characters occupy discrete tiles on a small battle grid
-- Positioning affects range/targeting
-- Attacks reference simple grid patterns (rows/columns/small AoEs)
+This system is inspired by:
+- Free-moving arena combat and “bullet-hell roguelike” feel (think :contentReference[oaicite:0]{index=0} vibes)
+- Readable combat with cooldown-driven actions
+- Stat-based pacing (SPD/STAM) rather than strict turn order
 
-We are *not* trying to clone FTK2 exactly.
-We’re using “small-grid tactics” as a foundation.
-
-Key demo constraints:
-- Deterministic resolution (server is source of truth)
-- Low bandwidth: client receives state snapshots + events, renders smoothly
-- Simple action set first, expand later (skills, AoEs, tile effects)
+We are *not* building a full MMO. The demo is **1v1 (or small-room)** coliseum combat with:
+- Responsive movement
+- Cooldowns + stamina gating
+- Clear hitboxes/projectiles
+- Server-authoritative resolution (anti-cheat first)
 
 ---
 
-## 1) Arena Grid Layout
+## 1) Arena Layout
 
-### 1.1 Grid Dimensions
-Total battle grid is **4 rows x 3 columns**:
+### 1.1 World Model
+- 2D top-down arena (coliseum floor)
+- Bounded rectangle with collision walls
+- Optional obstacles (pillars) for line-of-sight and skill expression
 
-- Rows represent depth from player A’s side toward player B’s side.
-- Columns represent **left / middle / right** lanes.
+### 1.2 Coordinate System
+- Continuous positions: `pos = { x: float, y: float }`
+- Velocity: `vel = { vx: float, vy: float }`
+- Facing: either:
+  - `angle` (mouse aim) OR
+  - directional vector from movement
 
-Coordinates:
-- `row ∈ {0,1,2,3}` where `0` is the **front row for Player A**, and `3` is the **front row for Player B**
-- `col ∈ {0,1,2}` where `0=left`, `1=middle`, `2=right`
-
-### 1.2 Spawn Positions
-Default spawn for each player:
-- **Player A spawns at `(0,1)`**
-- **Player B spawns at `(3,1)`**
-
-This means:
-- Both players start “front + middle”
-- Players can reposition anywhere: front/back + left/middle/right
-
-### 1.3 Ownership / Side Definitions
-Define "side" by rows:
-- Player A “half”: rows `0–1`
-- Player B “half”: rows `2–3`
-
-(For demo, we can keep midline crossing rules simple; see §6.)
-
-### 1.4 Occupancy Rules
-- Exactly 1 unit per tile.
-- Units cannot overlap.
-- Movement requires destination tile to be empty.
+For demo simplicity:
+- Keyboard movement (WASD/arrow keys)
+- Mouse aim optional (can aim with last movement direction for v0)
 
 ---
 
@@ -63,375 +47,311 @@ Define "side" by rows:
 
 Each Gladiator has **base attributes** and **derived combat stats**.
 
-### 2.1 Base Attributes (Primary)
+### 2.1 Base Attributes
 - **Constitution (CON)**: scales HP + Stamina
-- **Strength (STR)**: scales heavy/melee weapons, some stagger effects
-- **Dexterity (DEX)**: scales finesse weapons, ranged weapons, dodge effectiveness (optional)
-- **Speed (SPD)**: initiative/turn order; may also affect move distance (optional)
+- **Strength (STR)**: scales heavy/melee weapons; stagger potential (later)
+- **Dexterity (DEX)**: scales finesse/ranged weapons; improves attack speed (optional)
+- **Speed (SPD)**: movement speed and/or cooldown recovery and/or attack windup speed
 - **Defense (DEF)**: physical mitigation
-- **Magic Resist (MRES)**: magic mitigation (general)
-- **Arcana (ARC)**: scales sorcery/arcane magic damage + mana regen
-- **Faith (FTH)**: scales incantations/holy/buffs + mana regen
+- **Magic Resist (MRES)**: magic mitigation
+- **Arcana (ARC)**: scales arcane magic damage + mana regen
+- **Faith (FTH)**: scales faith/holy magic + mana regen
 
-Suggested optional additions (not required for demo, but good to keep in mind):
-- **Focus (FOC)**: status resistance / concentration (anti-interrupt)
-- **Poise (POI)**: stagger resistance / stability
-- **Luck (LCK)**: affects crit chance or loot (probably exclude from demo)
+Optional later:
+- **Poise (POI)**: stagger resistance
+- **Focus (FOC)**: concentration/status resistance
 
-### 2.2 Derived Stats
-- **HP Max**: `HP = baseHP + CON * hpScale`
-- **Stamina Max (STAM)**: `STAM = baseSTAM + CON * stamScale`
-- **Mana Max (MANA)**: `MANA = baseMANA + (ARC + FTH) * manaScale` (or separate pools later)
-- **Mana Regen**: per round, based on equipped catalyst + ARC/FTH
-- **Physical Power**:
-  - STR scaling for heavy weapons
-  - DEX scaling for finesse/ranged weapons
-- **Magic Power**:
-  - ARC scaling for “Arcana spells”
-  - FTH scaling for “Faith spells”
-
-### 2.3 Combat State
-- `pos` (row, col)
-- `alive` (bool)
-- `cooldowns` (per action/ability/spell)
-- `statusEffects[]` (optional for demo)
-- `equippedLoadout` (weapon/armor/catalyst/spell slots)
+### 2.2 Derived Stats (suggested baselines)
+- `HP_MAX = baseHP + CON * hpScale`
+- `STAM_MAX = baseSTAM + CON * stamScale`
+- `MANA_MAX = baseMANA + (ARC + FTH) * manaScale` (or split later)
+- `MOVE_SPEED = baseMove + SPD * moveScale`
+- `STAM_REGEN = baseRegen + CON * regenScale` (optionally + armor penalties)
+- `COOLDOWN_MULT = f(SPD)` e.g. `cooldown = baseCooldown * (1 - clamp(SPD*0.01, 0, 0.35))`
+  - (SPD reduces cooldowns up to a cap; tune later)
 
 ---
 
-## 3) Turn Structure (Tick-Based / Turn-Based Hybrid)
+## 3) Real-Time Loop & Networking Model
 
-This model fits a 1000ms tick loop and can also be expressed as strict turns.
+### 3.1 Authority & Anti-Cheat
+- Server is authoritative for:
+  - positions (final truth)
+  - damage
+  - hit validation
+  - stamina/mana
+  - cooldowns
+- Client is authoritative only for:
+  - input intent
+  - local prediction for smoothness (visual only)
 
-### 3.1 High-level loop
-Combat proceeds in **Rounds**.
-Each round has:
+### 3.2 Server Tick Rate
+Recommended:
+- **Server sim tick**: 20–30 Hz for demo
+- **Client render**: 60+ FPS
+- **Network snapshot send**: 10–20 Hz (deltas preferred)
 
-1. **Intent Phase** (clients submit action)
-2. **Resolve Phase** (server resolves deterministically)
-3. **Broadcast Phase** (server sends events + updated state)
+### 3.3 Client Prediction & Smoothing
+- Client predicts its own movement immediately.
+- Server sends periodic snapshots:
+  - client reconciles by smoothly correcting toward server position.
+- Other player movement is rendered via interpolation between snapshots.
 
-### 3.2 Timing
-- Default tick interval: **1000ms**
-- Client must submit an action before the deadline.
-- If no action arrives: server chooses a fallback (e.g., "Guard" or "Wait").
+### 3.4 Message Types (minimal)
+Client → Server:
+- `INPUT` (sequence number + pressed keys + aim direction)
+- `ACTION_CAST` (ability id + aim + timestamp/sequence)
 
-### 3.3 Initiative (Order)
-For v0.2:
-- Resolve actions in descending `SPD`.
-- Tie-breakers:
-  1) higher current STAM
-  2) stable deterministic tie-break (unitId ascending)
-
----
-
-## 4) Actions (v0.2)
-
-Each round, a unit may choose **one** action.
-Actions can be:
-- **Universal** (available to all)
-- **Weapon-driven** (depends on equipped weapon)
-- **Spell-driven** (depends on equipped catalyst with loaded spells)
-
-### 4.1 Universal Actions
-#### Move
-- Move to an adjacent tile (N/S/E/W).
-- Costs STAM (tunable; default -1).
-- Cannot move into occupied tiles.
-
-#### Guard / Block
-- Reduces damage taken until next round.
-- Optional: regenerate STAM or reduce stamina costs next round.
-
-#### Dodge Roll (Turn-Consuming)
-- Dodge Roll **consumes your turn**.
-- You may dodge into **any empty tile within Dodge Range**, farther than normal Move.
-- Grants a temporary “Evasion” window for the resolution step.
-
-Dodge is intentionally powerful but costs your whole turn.
+Server → Client:
+- `SNAPSHOT` (positions, hp/stam/mana, cooldowns, statuses)
+- `EVENT` (projectile spawned, hit confirmed, damage applied, death)
 
 ---
 
-### 4.2 Weapon-Driven Attacks
-Attack options depend on equipped weapon(s).
-Examples:
-- Sword: Slash (light), Thrust (heavy)
-- Spear: Poke (melee 2), Sweep (row AoE)
-- Bow: Single Shot (ranged line), Volley (small AoE)
-- Dagger: Quick Stab (low stamina), Backstep Strike (movement+attack later)
+## 4) Movement & Stamina
 
-For the demo:
-- Implement 2–3 weapon families max
-- Each family provides:
-  - Light attack
-  - Heavy attack
-  - Optional special (later)
+### 4.1 Movement Controls
+- WASD / arrows apply acceleration or direct velocity.
+- Movement is continuous, with collisions vs arena walls/obstacles.
 
-Each attack has:
-- `staminaCost`
-- `baseDamage`
-- `scaling` (STR vs DEX vs mixed)
-- `pattern` (see §5)
-- `damageType` (physical / holy / arcane / etc.)
+### 4.2 Stamina Interaction (demo rules)
+We want pacing to depend on STAM + SPD without becoming annoying.
 
----
+Recommended demo approach:
+- Normal movement does **not** drain stamina.
+- “Burst mobility” and attacks consume stamina.
 
-### 4.3 Spellcasting (Catalyst-Driven)
-Spells are available only when a **spellcasting item** is equipped:
-- Tome
-- Wand
-- Staff
-- (later: holy seal / talisman)
+Mobility actions:
+- **Dodge Roll / Dash**
+  - Consumes stamina
+  - Has cooldown
+  - Grants brief i-frames or damage reduction (deterministic; see §7)
 
-Spellcasting items have **spell slots**.
-Players “load” known spells into these slots before combat (or between rounds later).
-
-Spellcasting constraints:
-- Casting a spell consumes your turn.
-- Costs `MANA`.
-- Some spells may also cost STAM (optional).
-
-Two magic classes:
-- **Faith-based**: incantations, blessings, holy damage, buffs, heals
-- **Arcana-based**: sorcery/arcane magic, elemental or raw magic damage
-
-For demo:
-- Implement 2 spells per class (4 total)
-- Keep patterns simple (single target + small AoE)
+Optional later:
+- Sprint drains stamina while held.
 
 ---
 
-## 5) Targeting, Range, and Patterns
+## 5) Actions & Cooldowns
 
-All attacks/spells target tiles via patterns for clarity and easy extension.
+This replaces the turn-based “one action per round” model.
 
-### 5.1 Distance Metrics
-- Use **Manhattan distance** for simplicity:
-  - `dist = |r1-r2| + |c1-c2|`
+### 5.1 Universal Actions
+- **Basic Attack** (weapon-defined)
+- **Dodge Roll / Dash**
+- **Guard / Block** (optional for demo; could be hold-to-block)
+- **Cast Spell** (if catalyst equipped + spell loaded)
 
-### 5.2 Patterns (Initial Set)
-Represent patterns as a set of offsets relative to an origin tile.
+### 5.2 Weapon-Driven Attacks
+Weapons define:
+- attack pattern (melee arc, thrust line, projectile)
+- stamina cost
+- windup time (optional for demo)
+- cooldown time
+- scaling (STR/DEX)
 
-#### MELEE_1 (Adjacent)
-Hits a target in N/S/E/W adjacent tile.
+Demo weapon families (keep small):
+- Sword (melee arc)
+- Spear (long thrust / narrow line)
+- Bow (projectile)
+- Dagger (fast, short range)
 
-#### MELEE_2 (Extended)
-Hits a target within Manhattan distance ≤ 2.
+### 5.3 Spellcasting Items & Spell Slots
+Spellcasting requires equipping a catalyst:
+- Tome / Wand / Staff (Arcana)
+- Seal / Talisman (Faith)
 
-#### RANGED_LINE
-From caster/attacker, choose a direction; hits the first enemy encountered up to `RANGE`.
+Catalysts define:
+- number of spell slots
+- mana regen modifier
+- cast speed modifier (optional)
 
-#### RANGED_ANY
-Target any enemy tile within a max distance (or entire grid for demo if needed).
+Spells are “loaded” into slots pre-match.
 
-#### AOE_CROSS
-Centered on a target tile: center + N/S/E/W neighbors.
-
-#### AOE_2x2 / AOE_2x3
-Anchored on target tile; affects a small rectangle.
-
-### 5.3 Line-of-Sight (Optional)
-For demo, skip LoS.
-Later: LoS blocks ranged line attacks if a unit is in the way.
-
-### 5.4 Friendly Fire
-For demo: no friendly fire.
-Later: allow for certain AoEs.
-
----
-
-## 6) Movement Rules & Midline Crossing
-
-### 6.1 Move
-- Adjacent only (N/S/E/W)
-
-### 6.2 Dodge Roll
-- Consumes turn
-- Can move to **any tile within Dodge Range** (default Manhattan distance ≤ 3)
-- Must land on an empty tile
-- Grants temporary evasion modifier during Resolve Phase
-
-### 6.3 Midline Crossing (Demo Rule)
-For v0.2 demo:
-- Midline crossing is allowed (players can occupy any tile) **OR**
-- Midline crossing is restricted (players cannot enter opponent half)
-
-Pick one for demo simplicity:
-- Recommended: **allow full-grid movement**, because it enables more interesting positioning with minimal extra code.
-- If restricted, enforce row bounds per player side.
+Magic classes:
+- **Faith-based**: incantations, blessings, holy damage, buffs/heals
+- **Arcana-based**: other magic (elemental/arcane), projectiles, AoE zones
 
 ---
 
-## 7) Damage Types, Mitigation, and Determinism
+## 6) Combat Feel: Windup, Cooldowns, Cast Time
 
-### 7.1 Damage Types
-- **Physical**: mitigated by DEF
-- **Magic (Arcana)**: mitigated by MRES (or later ArcRes)
-- **Holy/Faith**: mitigated by MRES (or later HolyRes)
+We need readable combat without desync.
 
-### 7.2 Damage Formula (Simple)
-- `raw = baseDamage + scalingContribution`
-- `mitigated = max(1, raw - mitigationStat)`
-- Apply guard/dodge effects
-- Subtract from HP
+Recommended:
+- Abilities have **server-defined**:
+  - `castTime` (0–300ms for demo)
+  - `cooldown`
+  - `staminaCost` and/or `manaCost`
+- The server validates cast start and completion.
 
-Scaling contribution examples:
-- STR weapon: `STR * strScale`
-- DEX weapon: `DEX * dexScale`
-- Arcana spell: `ARC * arcScale`
-- Faith spell: `FTH * fthScale`
-
-### 7.3 Deterministic Evasion
-Avoid RNG in demo.
-Dodge works as:
-- If you Dodge Roll this round:
-  - You gain a fixed “evasion” effect (e.g., reduce incoming damage by X% or nullify the first hit)
-  - AND you reposition
-
-Choose one for v0.2 demo:
-- **Option A (simplest):** Dodge nullifies the first incoming hit this round.
-- **Option B:** Dodge reduces damage taken by a fixed %.
+Client can play windup animation immediately, but the server confirms the actual projectile/hit.
 
 ---
 
-## 8) Stamina & Mana
+## 7) Hit Detection & Determinism
+
+### 7.1 Hit Models
+Choose one of these for demo:
+
+**Option A (simplest): Server-side hitboxes only**
+- Melee: server checks distance + facing arc at cast time
+- Ranged: server simulates projectile and checks collisions
+
+**Option B (hybrid): Client suggests hits, server verifies**
+- Faster feel but more complexity; not needed for demo
+
+Recommended: **Option A**.
+
+### 7.2 Dodge / I-frames Without RNG
+Avoid random miss. Dodge provides deterministic protection:
+
+Pick one:
+- **A)** Dodge grants i-frames for `N ms` (server ignores hits during window)
+- **B)** Dodge grants % damage reduction for `N ms`
+
+Option A feels more like action roguelikes, but requires tight server timing.
+Option B is easier and still fair.
+
+### 7.3 Damage Types & Mitigation
+- Physical damage mitigated by DEF
+- Magic/Faith mitigated by MRES (split later if desired)
+
+---
+
+## 8) Resources: Stamina & Mana
 
 ### 8.1 Stamina
-- Light attacks cost STAM
-- Heavy attacks cost more STAM
-- Move costs small STAM
-- Dodge costs moderate STAM and consumes turn
+- Attacks consume stamina.
+- Dodge consumes stamina.
+- Stamina regenerates over time:
+  - `stam += STAM_REGEN * dt`
 
-If STAM insufficient:
-- Action is downgraded to Guard/Wait or disallowed.
+If stamina is insufficient:
+- action fails to start (server rejects), client shows “out of stamina” feedback.
 
 ### 8.2 Mana
-- Spells cost MANA
-- Mana regen occurs each round based on catalyst and ARC/FTH
-- If MANA insufficient, spell cannot be cast
+- Spells consume mana.
+- Mana regenerates over time based on ARC/FTH and catalyst modifiers.
 
 ---
 
-## 9) Equipment & Loadouts
+## 9) Status Effects (Optional for Demo)
 
-### 9.1 Loadout Slots (Demo)
-- Weapon (required)
-- Armor (optional, can affect DEF / MRES)
-- Catalyst (optional; enables spells)
-- Spell Slots (owned by catalyst)
-
-### 9.2 Weapon Scaling Rules
-Weapons define scaling:
-- STR-weighted
-- DEX-weighted
-- Hybrid (rare)
-- Catalyst scaling for ARC/FTH
-
-### 9.3 Spell Slots
-Spellcasting items have:
-- `slotCount` (e.g., 2 for demo)
-- `loadedSpells[]` (selected from known spells)
+Not required, but we should keep the system extensible:
+- slow, burn, holy mark, bleed (later)
+- represented as:
+  - `statusEffects[]` with durations and stacks
 
 ---
 
-## 10) Server/Client Responsibilities
+## 10) Match Rules & Win Conditions
 
-### 10.1 Server (Authoritative)
-- Validates legality:
-  - cooldowns
-  - stamina/mana
-  - tile occupancy
-  - range/pattern targeting
-- Resolves actions in SPD order
-- Produces:
-  - Updated MatchState
-  - CombatEvents[] for animation/replay/debug
-
-### 10.2 Client (Rendering + UX)
-- Renders grid and units
-- Highlights legal moves and target tiles based on equipped actions/spells
-- Sends ActionIntent
-- Animates via CombatEvents
-- Interpolates state for smoothness
+- Match duration: e.g. 3–5 minutes (demo)
+- Win by:
+  - opponent HP reaches 0
+  - or timeout (higher HP% wins; tie = draw)
 
 ---
 
-## 11) Data Structures (Suggested)
+## 11) Server/Client Responsibilities (non-negotiable)
 
-### 11.1 Core Types
-- `TileCoord = { row: 0|1|2|3, col: 0|1|2 }`
+### 11.1 Server
+- Simulates movement and collisions
+- Validates input limits (speed hacks)
+- Executes abilities
+- Spawns projectiles
+- Applies damage & resources
+- Emits authoritative snapshots + events
 
-- `MatchState`:
-  - `roundNumber`
-  - `units: UnitState[]`
-  - `tileEffects` (optional)
-  - `modeConfig` (tick duration, dodge range, etc.)
+### 11.2 Client
+- Collects input
+- Predicts local movement
+- Renders animations, effects, UI
+- Never decides outcomes
+
+---
+
+## 12) Data Structures (Suggested)
+
+### 12.1 Core Types
+- `Vec2 = { x: number, y: number }`
 
 - `UnitState`:
-  - `unitId`
-  - `ownerId`
-  - base attributes: `CON, STR, DEX, SPD, DEF, MRES, ARC, FTH`
-  - derived: `hpMax, stamMax, manaMax`
-  - current: `hp, stam, mana`
-  - `pos`
-  - `cooldowns`
-  - `statusEffects`
+  - ids: `unitId`, `ownerId`
+  - base stats: `CON STR DEX SPD DEF MRES ARC FTH`
+  - derived: `hpMax stamMax manaMax moveSpeed`
+  - current: `hp stam mana`
+  - motion: `pos vel`
+  - `cooldowns: Record<abilityId, timeRemaining>`
+  - `statusEffects[]`
   - `loadout` (weapon/armor/catalyst/spells)
 
-### 11.2 Action Intent
-- `ActionIntent`:
-  - `unitId`
-  - `actionType` (MOVE, GUARD, DODGE, WEAPON_ATTACK, CAST_SPELL)
-  - `toTile?` (move/dodge destination)
-  - `attackId?` (weapon attack identifier)
-  - `spellId?` (spell identifier)
-  - `targetTile?` or `targetUnitId?`
-  - `submittedAt` (client timestamp for UX only)
+- `ProjectileState`:
+  - `projectileId`
+  - `ownerUnitId`
+  - `pos vel`
+  - `radius`
+  - `damage`
+  - `damageType`
+  - `ttl`
 
-### 11.3 Combat Events
-Events are the contract between server + renderer:
-- `MOVE(unitId, from, to)`
-- `DODGE(unitId, from, to, evasionType)`
-- `ATTACK(unitId, attackId, targetUnitId, damage, damageType)`
-- `CAST(unitId, spellId, targetTile, affectedUnitIds[], damageMap?)`
-- `GUARD(unitId)`
-- `RESOURCE(unitId, hpDelta, stamDelta, manaDelta)`
-- `DEATH(unitId)`
+### 12.2 Inputs
+- `InputFrame`:
+  - `seq`
+  - `moveX` (-1..1)
+  - `moveY` (-1..1)
+  - `aim` (Vec2 normalized or angle)
+  - `buttons` (attack/dodge/spell1/spell2...)
 
----
-
-## 12) Minimal Content Set for Demo
-
-Recommended initial content:
-- Weapons:
-  - Sword (STR/DEX hybrid, melee 1)
-  - Spear (STR, melee 2)
-  - Bow (DEX, ranged line)
-- Catalysts:
-  - Staff (Arcana)
-  - Tome/Seal (Faith)
-- Spells (2 Arcana, 2 Faith):
-  - Arcana: Magic Bolt (single target), Arcane Burst (AOE_CROSS)
-  - Faith: Smite (single target holy), Blessing (self-buff or small heal)
+### 12.3 Events
+- `Event` examples:
+  - `CAST_STARTED(unitId, abilityId)`
+  - `PROJECTILE_SPAWNED(projectileId, owner, pos, vel, radius)`
+  - `HIT(targetUnitId, sourceId, amount, type)`
+  - `RESOURCE(unitId, hpDelta, stamDelta, manaDelta)`
+  - `DEATH(unitId)`
+  - `COOLDOWN_UPDATED(unitId, abilityId, timeRemaining)`
 
 ---
 
-## 13) Definition of Done (Combat v0.2)
+## 13) Minimal Content Set for Demo
 
-- Grid renders and updates correctly (4x3)
-- Spawn positions match: Player A (0,1), Player B (3,1)
-- Legal action highlighting works (Move, Dodge, weapon attacks, spells)
-- Server resolves deterministically and validates all intents
-- CombatEvents drive smooth animations and a replay log
+Weapons:
+- Sword (melee arc, STR/DEX hybrid)
+- Spear (long thrust line, STR)
+- Bow (projectile, DEX)
+
+Mobility:
+- Dodge Roll (dash with i-frames or DR)
+
+Spells (if implementing spellcasting in demo):
+- Arcana: Magic Bolt (projectile), Arcane Burst (small AoE zone)
+- Faith: Smite (projectile), Blessing (self buff or small heal)
+
+Armor:
+- Light Armor (more move speed / less DEF)
+- Heavy Armor (more DEF / less move speed)
+
+---
+
+## 14) Definition of Done (Combat v0.3)
+
+- Players move smoothly with WASD/arrow keys
+- Server authoritative movement & collisions
+- Cooldowns + stamina gating implemented
+- Weapon attacks work (at least 2 weapon families)
+- Dodge roll works (turnless real-time dash) with deterministic protection
 - Match ends reliably (HP <= 0)
+- Events logged for replay/debug
 
 ---
 
-## 14) Future Extensions (Not Required for Demo)
+## 15) Future Extensions (Not Required for Demo)
 
-- Additional stats (Poise, Focus), status effects, stagger/interrupts
-- Tile effects (fire, traps, buffs)
-- Advanced spellcasting (channels, lines, cones)
-- Class skill trees
-- Ranked ladders & tournaments
-- Non-crypto onboarding
+- More abilities per weapon
+- Full class kits (3–5 abilities)
+- Status effects and tile hazards
+- Spectator mode & deterministic replays
+- Ranked matchmaking and tournament rules
+- Advanced spell slot systems and catalysts

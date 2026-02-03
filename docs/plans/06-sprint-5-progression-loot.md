@@ -1,11 +1,11 @@
-# Sprint 4: Progression & Loot Systems
+# Sprint 5: Progression & Loot Systems
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
 **Goal:** Gladiators level up, unlock skills, and earn equipment with rarity tiers
 
-**Duration:** Week 4-5
-**Prerequisites:** Sprint 3 complete (combat working)
+**Duration:** Week 6-7
+**Prerequisites:** Sprint 4 complete (weapons & projectiles working)
 
 **Architecture:** XP-based leveling, skill tree with 3 branches per class, loot generation engine, crafting system
 

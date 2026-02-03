@@ -13,10 +13,14 @@ contract GladiatorNFT is ERC721, Ownable {
     // Gladiator metadata
     struct Gladiator {
         GladiatorClass class;
+        uint8 constitution;
         uint8 strength;
-        uint8 agility;
-        uint8 endurance;
-        uint8 technique;
+        uint8 dexterity;
+        uint8 speed;
+        uint8 defense;
+        uint8 magicResist;
+        uint8 arcana;
+        uint8 faith;
         uint256 mintedAt;
     }
 
@@ -44,10 +48,14 @@ contract GladiatorNFT is ERC721, Ownable {
         // Generate random stats (pseudo-random for demo)
         gladiators[tokenId] = Gladiator({
             class: gladiatorClass,
-            strength: _randomStat(gladiatorClass, 0),
-            agility: _randomStat(gladiatorClass, 1),
-            endurance: _randomStat(gladiatorClass, 2),
-            technique: _randomStat(gladiatorClass, 3),
+            constitution: _randomStat(gladiatorClass, 0),
+            strength: _randomStat(gladiatorClass, 1),
+            dexterity: _randomStat(gladiatorClass, 2),
+            speed: _randomStat(gladiatorClass, 3),
+            defense: _randomStat(gladiatorClass, 4),
+            magicResist: _randomStat(gladiatorClass, 5),
+            arcana: _randomStat(gladiatorClass, 6),
+            faith: _randomStat(gladiatorClass, 7),
             mintedAt: block.timestamp
         });
 
@@ -70,16 +78,16 @@ contract GladiatorNFT is ERC721, Ownable {
         uint8 variance = uint8(random);
 
         if (gladiatorClass == GladiatorClass.Duelist) {
-            // High technique and agility
-            if (seed == 1 || seed == 3) return baseMin + 20 + (variance % 10); // agility/technique
+            // High dexterity, speed, defense
+            if (seed == 2 || seed == 3 || seed == 4) return baseMin + 20 + (variance % 10);
             return baseMin + variance;
         } else if (gladiatorClass == GladiatorClass.Brute) {
-            // High strength and endurance
-            if (seed == 0 || seed == 2) return baseMin + 20 + (variance % 10); // strength/endurance
+            // High constitution, strength, defense
+            if (seed == 0 || seed == 1 || seed == 4) return baseMin + 20 + (variance % 10);
             return baseMin + variance;
         } else { // Assassin
-            // High agility and technique
-            if (seed == 1 || seed == 3) return baseMin + 20 + (variance % 10);
+            // High dexterity, speed, arcana
+            if (seed == 2 || seed == 3 || seed == 6) return baseMin + 20 + (variance % 10);
             return baseMin + variance;
         }
     }

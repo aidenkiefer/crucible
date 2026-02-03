@@ -1,408 +1,303 @@
-# Sprint 2 Summary: Combat System - CPU Battles
+# Sprint 2 Summary: Real-Time Combat System - CPU Battles
 
-**Status:** 📋 Planned
-**Duration:** Week 3
-**Goal:** Players can fight CPU opponents with animated combat
+**Status:** ✅ Complete
+**Duration:** Sprint 2
+**Goal:** Players can fight CPU opponents with real-time combat
 
 ---
 
 ## Overview
 
-Sprint 2 will implement the core combat system, enabling players to battle against CPU opponents. This sprint focuses on server-authoritative combat logic, tick-based action processing, CPU AI decision-making, and match state persistence. The combat system will serve as the foundation for future PvP battles.
+Sprint 2 implemented a server-authoritative real-time combat system running at 20Hz (50ms tick rate). The system features continuous WASD movement, physics-based combat, dodge rolls with i-frames, CPU AI with adaptive strategies, and WebSocket-based state synchronization. All 8 gladiator stats were added to the NFT contract and database, with 5 stats (CON, STR, DEX, SPD, DEF) actively used in combat calculations.
 
 ---
 
-## Planned Deliverables
+## What Was Built
 
-### 1. Combat Engine
-**Status:** 📋 Planned
+### 1. NFT Contract & Database Updates (8 Stats) ✅
+
+**Files Modified:**
+- `contracts/contracts/GladiatorNFT.sol`
+- `packages/database/prisma/schema.prisma`
+- `packages/database/prisma/migrations/20260203134839_add_8_stats_to_gladiator/migration.sql`
+
+**Changes:**
+- Expanded Gladiator stats from 4 to 8:
+  - **Old:** strength, agility, endurance, technique
+  - **New:** constitution, strength, dexterity, speed, defense, magicResist, arcana, faith
+- Updated class stat bonuses:
+  - **Duelist:** +20 to dexterity, speed, defense
+  - **Brute:** +20 to constitution, strength, defense
+  - **Assassin:** +20 to dexterity, speed, arcana
+- Created database migration (ready to deploy)
+
+**Note:** Only CON, STR, DEX, SPD, DEF are used in Sprint 2 combat. MRES, ARC, FTH reserved for magic system in Sprint 4+.
+
+---
+
+### 2. Combat Engine Core (Real-Time) ✅
+
+**Files Created:**
+- `apps/game-server/src/combat/types.ts` - Type definitions with 8-stat system
+- `apps/game-server/src/combat/physics.ts` - Movement, collision, dodge physics
+- `apps/game-server/src/combat/damage-calculator.ts` - Damage and stat calculations
+- `apps/game-server/src/combat/engine.ts` - 20Hz combat simulation engine
+- `apps/game-server/src/combat/__tests__/engine.test.ts` - Unit tests (11 test cases)
+- `apps/game-server/vitest.config.ts` - Test configuration
+
+**Core Features:**
+- **20Hz server tick rate** (50ms intervals) for smooth real-time combat
+- **Continuous WASD movement** with velocity-based physics
+- **Attack system:**
+  - Sword weapon with 90° arc, 80-unit range
+  - Damage scales with STR: `base * (1 + STR/100)`
+  - Stamina cost: 15, cooldown: 800ms
+- **Dodge roll:**
+  - 200ms deterministic i-frames (no RNG)
+  - Travels 100 units in 300ms
+  - Stamina cost: 20, cooldown: 1000ms
+- **Stamina system:**
+  - Regenerates 10/second (scales with CON)
+  - Pool size: 100 + (CON * 5)
+- **HP system:**
+  - HP pool: 100 + (CON * 10)
+  - Defense provides damage reduction up to 75% max
+- **Physics:**
+  - 800x600 arena with boundary clamping
+  - Body collision detection with push-back resolution
+
+**Stat Usage (Sprint 2):**
+- CON → HP pool, stamina pool
+- STR → Melee damage
+- DEX → Ranged damage (Sprint 4+)
+- SPD → Movement speed
+- DEF → Damage mitigation
+- MRES, ARC, FTH → Unused (Sprint 4+)
+
+---
+
+### 3. CPU AI for Real-Time Combat ✅
+
+**Files Created:**
+- `apps/game-server/src/ai/cpu-ai.ts` - AI decision-making system
+- `apps/game-server/src/ai/__tests__/cpu-ai.test.ts` - Unit tests (8 test cases)
 
 **Features:**
-- Tick-based combat (1000ms intervals)
-- Server-authoritative state management
-- Health and stamina systems
-- Damage calculation with stat modifiers
-- Action validation (stamina costs, cooldowns)
-- Win condition detection
-
-**Proposed Architecture:**
-```typescript
-class CombatEngine {
-  processTick(matchState, actions): MatchState
-  calculateDamage(attacker, defender, actionType): number
-  applyStaminaCost(gladiator, actionType): void
-  checkWinCondition(matchState): boolean
-}
-```
-
-**Combat Stats:**
-- Health: 100 (base)
-- Stamina: 100 (base, regenerates 10/tick)
-- Strength: Affects attack damage
-- Agility: Affects dodge chance
-- Endurance: Affects stamina pool and regeneration
-- Technique: Affects critical hit chance
+- **3 adaptive strategies:**
+  1. **Aggressive (HP > 70%):** Chase and attack when in range
+  2. **Defensive (HP < 30%):** Keep distance and dodge threats
+  3. **Opportunistic (30-70% HP):** Balance aggression/defense, strafe around player
+- **Decision interval:** 200ms (every 4 ticks) to prevent over-reactive behavior
+- **Context-aware behaviors:**
+  - Dodge when player attacks and close
+  - Attack when in range and player vulnerable
+  - Manage stamina (avoid actions when low)
+  - Respect action cooldowns
+- **Movement patterns:**
+  - Direct chase (aggressive)
+  - Retreat/kiting (defensive)
+  - Circular strafing (opportunistic)
+  - Perpendicular dodge rolls
 
 ---
 
-### 2. Action System
-**Status:** 📋 Planned
+### 4. Match Management ✅
 
-**Actions:**
-- **Light Attack** - Low damage, low stamina (15)
-- **Heavy Attack** - High damage, high stamina (30)
-- **Block** - Reduce incoming damage by 50%, medium stamina (20)
-- **Dodge** - Chance to avoid damage based on agility, low stamina (10)
+**Files Created:**
+- `apps/game-server/src/services/match-instance.ts` - Single match lifecycle management
+- `apps/game-server/src/services/match-manager.ts` - Multi-match orchestration
 
-**Action Processing:**
-1. Client submits action via WebSocket
-2. Server queues action for next tick
-3. On tick: validate stamina, apply effects
-4. Broadcast updated state to client
+**MatchInstance Features:**
+- Runs combat engine at 20Hz
+- Processes player actions via `submitAction()`
+- Generates CPU AI actions automatically
+- Stores state snapshots every 500ms
+- Emits combat events (damage, deaths, dodges)
+- Handles match completion and cleanup
 
-**Stamina Management:**
-- Actions consume stamina
-- Insufficient stamina = action fails, minimal damage dealt
-- Stamina regenerates 10 points per tick
-- Blocking/dodging reduce stamina regen by 50%
-
----
-
-### 3. CPU AI System
-**Status:** 📋 Planned
-
-**AI Difficulty Levels:**
-- **Easy** - Random actions, poor timing
-- **Normal** - Basic decision tree
-- **Hard** - Advanced tactics, stat-aware decisions
-
-**Decision Tree (Normal AI):**
-```
-If health < 30%:
-  → 60% Block, 30% Dodge, 10% Light Attack
-Else if stamina < 20:
-  → 100% Block (regen stamina)
-Else if opponent.stamina < 20:
-  → 70% Heavy Attack, 30% Light Attack
-Else:
-  → 40% Light Attack, 30% Heavy Attack, 20% Block, 10% Dodge
-```
-
-**AI Service:**
-```typescript
-class CpuAI {
-  decideAction(gladiator, opponent, difficulty): Action
-  calculateThreatLevel(opponent): number
-  shouldPlayDefensive(state): boolean
-}
-```
+**MatchManager Features:**
+- Create, start, stop, remove matches
+- Track all active matches
+- Cleanup completed matches
+- Helper functions:
+  - `mapGladiatorStats()` - Maps 8 database stats to combat stats
+  - `createPlayerConfig()` - Creates player config from gladiator data
 
 ---
 
-### 4. Match Manager
-**Status:** 📋 Planned
+### 5. WebSocket Real-Time Input Handlers ✅
 
-**Responsibilities:**
-- Create and destroy match instances
-- Manage active matches in memory
-- Coordinate tick loops
-- Broadcast state updates via WebSocket
-- Persist completed matches to database
+**Files Created/Modified:**
+- `apps/game-server/src/sockets/match-handlers.ts` - Match-specific socket handlers
+- `apps/game-server/src/sockets/index.ts` - Updated to integrate match handlers
 
-**Match Lifecycle:**
+**WebSocket Events:**
+
+**Client → Server:**
+- `match:create` - Create new match (CPU or PvP)
+- `match:start` - Start match and begin 20Hz tick loop
+- `match:action` - Submit player action (move/attack/dodge)
+- `match:join` - Join existing match room
+- `match:leave` - Leave match room
+
+**Server → Client:**
+- `match:created` - Match created successfully
+- `match:started` - Match has started
+- `match:state` - Combat state snapshot at 20Hz
+- `match:events` - Combat events from current tick
+- `match:completed` - Match ended with winner
+- `match:error` - Error occurred
+
+**State Broadcasting:**
+- Broadcasts at 20Hz to all clients in match room
+- Includes: positions, HP, stamina, facing angles, actions, invulnerability status
+- Events include: damage taken, actions performed, deaths, dodge activations
+
+---
+
+## Architecture
+
+### 20Hz Server Tick Loop
+
 ```
-1. CREATE: Player requests CPU match
-2. INIT: Load gladiator stats, initialize state
-3. START: Begin tick loop
-4. TICK: Process actions every 1000ms
-5. UPDATE: Broadcast state to client
-6. END: Detect win condition
-7. SAVE: Persist to database
-8. CLEANUP: Remove from memory
+1. Collect actions (player + CPU)
+2. Process actions (validate stamina, cooldowns)
+3. Update invulnerability (i-frames)
+4. Update positions based on velocity
+5. Resolve body collisions
+6. Regenerate stamina
+7. Clear completed actions
+8. Check for winner
+9. Broadcast state to clients (20Hz)
 ```
 
-**Match State:**
-```typescript
-interface MatchState {
-  id: string
-  player1: GladiatorState
-  player2: GladiatorState
-  currentTick: number
-  actions: ActionQueue
-  winner: string | null
-  log: ActionLog[]
-}
+### Server-Client Flow
+
+```
+Client                    Game Server
+  |                           |
+  |-- match:action ---------->|
+  |   (WASD input)            |
+  |                           | Process tick (50ms)
+  |                           | - Player action
+  |                           | - CPU AI action
+  |                           | - Physics update
+  |                           | - Collision check
+  |                           | - Damage calculation
+  |<-- match:state -----------|
+  |   (authoritative state)   |
+  |<-- match:events ----------|
+  |   (combat events)         |
 ```
 
 ---
 
-### 5. Match Persistence
-**Status:** 📋 Planned
+## Testing
 
-**Database Schema:**
-```prisma
-model Match {
-  id                  String   @id @default(uuid())
-  player1GladiatorId  String
-  player2GladiatorId  String?
-  isCpuMatch          Boolean  @default(false)
-  winnerId            String?
-  matchLog            Json     // Array of actions
-  durationSeconds     Int
-  createdAt           DateTime @default(now())
-}
-```
+**Unit Tests:** 19 total test cases
+- Combat engine: 11 tests
+- CPU AI: 8 tests
 
-**Match Log Format:**
-```json
-[
-  {
-    "tick": 1,
-    "player1Action": "LIGHT_ATTACK",
-    "player2Action": "BLOCK",
-    "player1Damage": 0,
-    "player2Damage": 15,
-    "player1Health": 100,
-    "player2Health": 85,
-    "player1Stamina": 85,
-    "player2Stamina": 80
-  },
-  ...
-]
-```
+**Test Coverage:**
+- Initialization, movement, attacks, dodge mechanics
+- Stamina regeneration, invulnerability
+- Combat events, winner detection
+- AI strategy switching, action validation
+- Cooldown handling, stamina management
 
-**Post-Match Processing:**
-- Save match to database
-- Award XP to participants
-- Update gladiator stats
-- Generate loot (future sprint)
-
----
-
-### 6. WebSocket Protocol
-**Status:** 📋 Planned
-
-**Client → Server Messages:**
-```typescript
-// Request CPU match
-{
-  type: 'REQUEST_CPU_MATCH',
-  gladiatorId: string,
-  difficulty: 'easy' | 'normal' | 'hard'
-}
-
-// Submit action
-{
-  type: 'SUBMIT_ACTION',
-  matchId: string,
-  action: 'LIGHT_ATTACK' | 'HEAVY_ATTACK' | 'BLOCK' | 'DODGE'
-}
-```
-
-**Server → Client Messages:**
-```typescript
-// Match start
-{
-  type: 'MATCH_START',
-  matchId: string,
-  player1: GladiatorSnapshot,
-  player2: GladiatorSnapshot
-}
-
-// Tick update
-{
-  type: 'TICK_UPDATE',
-  tick: number,
-  player1: GladiatorState,
-  player2: GladiatorState,
-  actions: { player1: Action, player2: Action },
-  results: DamageResults
-}
-
-// Match end
-{
-  type: 'MATCH_END',
-  winner: 'player1' | 'player2',
-  finalState: MatchState,
-  xpAwarded: number
-}
+**Run Tests:**
+```bash
+cd apps/game-server
+pnpm test
 ```
 
 ---
 
-## Technical Architecture
+## Key Technical Decisions
 
-### Combat Flow
-```
-Client → Request Match → Game Server
-     ↓
-Game Server → Create Match Instance → Memory
-     ↓
-Match Instance → Start Tick Loop (1000ms)
-     ↓
-Each Tick:
-  1. Get queued actions (Player + CPU)
-  2. Validate actions (stamina check)
-  3. Calculate damage
-  4. Update health/stamina
-  5. Broadcast state to client
-  6. Check win condition
-     ↓
-On Win:
-  → Save match to database
-  → Award XP
-  → Cleanup match instance
-```
+### 1. Real-Time vs Turn-Based
+**Decision:** Real-time combat at 20Hz
+**Rationale:** More engaging, skill-based gameplay. 20Hz balances responsiveness with server load.
+
+### 2. Deterministic i-Frames
+**Decision:** Dodge roll has fixed 200ms invulnerability
+**Rationale:** Skill-based timing instead of RNG. Players learn optimal dodge timing.
+
+### 3. 8 Stats Now, 5 Used
+**Decision:** Add all 8 stats to contract/database, use 5 in combat
+**Rationale:** Avoid future migration pain. MRES/ARC/FTH ready for magic system.
+
+### 4. AI Decision Interval
+**Decision:** AI decides every 200ms (not every tick)
+**Rationale:** Prevents jittery/over-reactive AI, creates more natural opponent behavior.
+
+### 5. State Broadcasting
+**Decision:** Broadcast full state every 50ms
+**Rationale:** Simple, robust synchronization. Can optimize to delta updates later.
 
 ---
 
-## Proposed File Structure
+## Known Limitations
 
-**Game Server:**
-```
-apps/game-server/src/
-├── services/
-│   ├── combat-engine.ts        # Core combat logic
-│   ├── cpu-ai.ts               # AI decision making
-│   ├── match-manager.ts        # Match lifecycle
-│   └── progression.ts          # XP and leveling
-├── models/
-│   ├── MatchState.ts
-│   ├── GladiatorState.ts
-│   └── Action.ts
-└── sockets/
-    └── match-handlers.ts       # WebSocket event handlers
-```
+1. **Database migration pending** - Requires `pnpm prisma migrate deploy` when DB accessible
+2. **Sword-only combat** - Other weapons (Spear, Bow, Dagger) in Sprint 4
+3. **No client prediction** - Frontend will add in Sprint 3
+4. **No interpolation** - Frontend will add in Sprint 3
+5. **Magic stats unused** - MRES, ARC, FTH reserved for Sprint 4+
 
 ---
 
-## Combat Balance
+## Next Steps: Sprint 3
 
-**Damage Formulas (Draft):**
-```
-Light Attack Damage = (Strength * 0.5) + 10
-Heavy Attack Damage = (Strength * 1.0) + 20
-Critical Hit = Base Damage * (1 + Technique / 100)
-Block Reduction = Incoming Damage * 0.5
-Dodge Success = Random(0-100) < Agility
-```
+**Frontend - Real-Time Combat UI**
 
-**Stamina Costs:**
-- Light Attack: 15
-- Heavy Attack: 30
-- Block: 20
-- Dodge: 10
-- Regen per tick: 10 (base) + (Endurance / 10)
+- Canvas-based arena renderer (60 FPS)
+- WASD movement input handling
+- Mouse aim for facing direction
+- Client prediction for player movement
+- Interpolation for opponent movement
+- HP/stamina bars above units
+- Match HUD with cooldown indicators
+- Victory/defeat screens
 
-**Tuning Notes:**
-- Values subject to change based on playtesting
-- Goal: Matches last 10-20 ticks (10-20 seconds)
-- Prevent one-strategy dominance (e.g., always block)
+See: `docs/plans/04-sprint-3-frontend-animations.md`
 
 ---
 
-## Testing Requirements
+## Files Summary
 
-**Unit Tests:**
-- Combat engine damage calculations
-- Stamina cost validation
-- Win condition detection
-- CPU AI decision tree
+**New Files (15):**
+- Combat engine: 5 files
+- CPU AI: 2 files
+- Match management: 2 files
+- WebSocket handlers: 1 file
+- Database migration: 1 file
+- Test configuration: 1 file
+- Test files: 2 files
 
-**Integration Tests:**
-- Match creation and lifecycle
-- WebSocket message flow
-- Database persistence
-- XP award calculation
-
-**Manual Testing:**
-- Play 10+ matches against each AI difficulty
-- Verify combat feels balanced
-- Check animations sync with server state
-- Ensure no desync issues
-
----
-
-## Dependencies Required
-
-**Game Server:**
-- None (uses existing Socket.io and Prisma)
-
-**Frontend:**
-- Will be added in Sprint 3 (combat UI)
+**Modified Files (4):**
+- `contracts/contracts/GladiatorNFT.sol`
+- `packages/database/prisma/schema.prisma`
+- `apps/game-server/package.json`
+- `apps/game-server/src/sockets/index.ts`
 
 ---
 
 ## Success Criteria
 
-Sprint 2 succeeds if:
-1. ✅ Player can request a CPU match
-2. ✅ Server creates match instance
-3. ✅ CPU AI makes decisions
-4. ✅ Combat processes tick-by-tick
-5. ✅ Health/stamina update correctly
-6. ✅ Winner determined when health reaches 0
-7. ✅ Match saved to database
-8. ✅ XP awarded to gladiator
-9. ✅ No crashes or memory leaks after 100+ matches
+- [x] Real-time combat at 20Hz
+- [x] Continuous WASD movement
+- [x] Attack system with range/arc detection
+- [x] Dodge roll with i-frames
+- [x] Stamina regeneration
+- [x] CPU AI with adaptive strategies
+- [x] WebSocket state broadcasting
+- [x] Match lifecycle management
+- [x] 8 stats in contract/database
+- [x] Unit tests passing
 
 ---
 
-## Performance Targets
+**Sprint 2: ✅ COMPLETE**
 
-- Match creation: < 100ms
-- Tick processing: < 50ms
-- WebSocket latency: < 100ms
-- Database save: < 200ms
-- Memory per match: < 1MB
-- Concurrent matches: 100+
-
----
-
-## Risks & Mitigation
-
-**Risk:** Combat balance issues (one strategy dominates)
-- **Mitigation:** Extensive playtesting, tunable constants
-
-**Risk:** Server lag with many concurrent matches
-- **Mitigation:** Profile tick loop, optimize calculations
-
-**Risk:** State desync between client/server
-- **Mitigation:** Server is source of truth, client interpolates only
-
-**Risk:** CPU AI too predictable or too random
-- **Mitigation:** Multiple difficulty levels, tunable weights
-
----
-
-## Next Sprint
-
-**Sprint 3: Frontend - Combat UI & Animations**
-
-Focus:
-- Canvas-based arena renderer
-- Gladiator sprite rendering
-- Attack/defend/dodge animations
-- Health/stamina bars
-- Action button UI
-- Combat log
-
-See: [Sprint 3 Plan](plans/04-sprint-3-frontend-animations.md)
-
----
-
-## Notes
-
-This summary represents the planned scope for Sprint 2. Implementation details may change based on technical constraints and feedback from Sprint 1.
-
-Key priorities:
-1. Server-authoritative combat (security)
-2. Smooth tick-based gameplay (UX)
-3. Balanced combat mechanics (fun)
-4. Clean WebSocket protocol (scalability)
-
----
-
-**Sprint 2 Status: 📋 PLANNED**
-
-Ready to begin implementation after Sprint 1 is tested and deployed.
+The combat system is ready for frontend integration in Sprint 3.

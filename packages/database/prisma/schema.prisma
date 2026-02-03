@@ -41,11 +41,15 @@ model Gladiator {
   level                 Int      @default(1)
   xp                    Int      @default(0)
 
-  // Base stats
+  // Base stats (8 total: physical combat + magic)
+  constitution          Int
   strength              Int
-  agility               Int
-  endurance             Int
-  technique             Int
+  dexterity             Int
+  speed                 Int
+  defense               Int
+  magicResist           Int
+  arcana                Int
+  faith                 Int
 
   // Equipment
   equippedWeaponId      String?

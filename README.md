@@ -43,19 +43,20 @@ The demo succeeds when a user can:
 
 ## Status & Roadmap
 
-**Sprint 0 (Setup)** and **Sprint 1 (Auth & NFT Minting)** are complete.
+**Sprint 0 (Setup), Sprint 1 (Auth & NFT Minting), and Sprint 2 (Real-Time Combat)** are complete. **Next: Sprint 3 (Frontend Real-Time Combat UI).**
 
 | Sprint | Focus | Status |
 |--------|--------|--------|
 | **0** | Project setup & infrastructure (monorepo, Supabase, contracts scaffold, CI) | ✅ Complete |
 | **1** | Authentication & NFT minting (social auth, wallet, mint UI, event listener, admin) | ✅ Complete |
-| **2** | Combat system — CPU battles (tick-based engine, actions, stamina, CPU AI, match persistence) | Next |
-| **3** | Frontend — Combat UI & animations (Canvas arena, sprites, health/stamina, action UI, victory/defeat) | Planned |
-| **4** | Progression & loot (XP, leveling, skill trees, equipment, loot engine, crafting, inventory) | Planned |
-| **5** | Multiplayer — Quick Match & friend challenges (matchmaking, friends, challenges, real-time PvP, leaderboard) | Planned |
-| **6** | Polish, testing & deployment (bug fixes, tests, Vercel + Railway, docs, mainnet guide) | Planned |
+| **2** | Combat system — CPU battles (20Hz real-time engine, WASD movement, sword, dodge roll, CPU AI, WebSocket) | ✅ Complete |
+| **3** | Frontend — Real-time combat UI (Canvas 60 FPS, WASD + mouse aim, client prediction, interpolation) | **Next** |
+| **4** | Weapons & projectiles (Sword, Spear, Bow, Dagger; server projectiles, weapon UI) | Planned |
+| **5** | Progression & loot (XP, leveling, skill trees, equipment, loot engine, crafting, inventory) | Planned |
+| **6** | Multiplayer — Real-time PvP (matchmaking, friends, challenges, dual-player WebSocket) | Planned |
+| **7** | Polish, testing & deployment (bug fixes, tests, Vercel + Railway, mainnet guide) | Planned |
 
-**Currently built:** Monorepo (pnpm, Turborepo), Next.js 14 frontend (auth, wallet, mint, admin), Express game server (Socket.io, blockchain event listener), Gladiator NFT contract (Hardhat), Supabase + Prisma.
+**Currently built:** Monorepo (pnpm, Turborepo), Next.js 14 frontend (auth, wallet, mint, admin), Express game server (Socket.io, **20Hz combat engine**, **CPU AI**, **match manager**, **WebSocket match handlers**, blockchain event listener), Gladiator NFT contract (Hardhat, **8 stats**, 5 used in combat), Supabase + Prisma.
 
 Full plan: [Master Implementation Plan](docs/plans/00-MASTER-PLAN.md).
 
@@ -75,7 +76,7 @@ Full plan: [Master Implementation Plan](docs/plans/00-MASTER-PLAN.md).
 ## Key Design Decisions
 
 - **Full TypeScript stack** — Shared types, single language, type-safe combat logic.  
-- **1000 ms tick rate** — Server processes actions every 1 s; balances responsiveness and sync.  
+- **Real-time 20Hz (50ms) server tick** — Continuous WASD movement, client prediction, server-authoritative combat (ROTMG-inspired).  
 - **Social auth + wallet linking** — Sign in with Google/Twitter; link wallet for minting/ownership.  
 - **Supabase** — Postgres + Auth + Realtime; Prisma for schema and migrations.  
 - **Separate game server** — Node.js + Express + Socket.io, independent of Next.js.  
@@ -112,7 +113,7 @@ crucible/
 │   └── database/         # Prisma schema and client
 ├── contracts/            # Gladiator NFT (Hardhat)
 ├── docs/
-│   ├── plans/            # 00-MASTER-PLAN + sprint plans (01–07)
+│   ├── plans/            # 00-MASTER-PLAN + sprint plans (01–08)
 │   ├── guides/           # Development setup, testing, deployment
 │   ├── features/         # Combat, loot, etc.
 │   ├── api/              # REST + WebSocket docs (as added)
@@ -146,13 +147,18 @@ pnpm dev
 | Document | Description |
 |----------|-------------|
 | [concept.md](./concept.md) | Vision, combat model, multiplayer architecture, design constraints |
-| [docs/plans/00-MASTER-PLAN.md](docs/plans/00-MASTER-PLAN.md) | Master implementation plan, sprints 0–6, design decisions, data model, risks |
+| [docs/plans/00-MASTER-PLAN.md](docs/plans/00-MASTER-PLAN.md) | Master implementation plan, sprints 0–7, design decisions, data model, risks |
 | [docs/architecture.md](docs/architecture.md) | System architecture |
 | [docs/plans/01-sprint-0-setup.md](docs/plans/01-sprint-0-setup.md) | Sprint 0 plan (setup) |
 | [docs/plans/02-sprint-1-auth-nft.md](docs/plans/02-sprint-1-auth-nft.md) | Sprint 1 plan (auth & NFT) |
-| [docs/plans/03-sprint-2-combat-cpu.md](docs/plans/03-sprint-2-combat-cpu.md) | Sprint 2 plan (combat CPU) |
+| [docs/plans/03-sprint-2-combat-cpu.md](docs/plans/03-sprint-2-combat-cpu.md) | Sprint 2 plan (real-time combat CPU) |
+| [docs/plans/04-sprint-3-frontend-animations.md](docs/plans/04-sprint-3-frontend-animations.md) | Sprint 3 plan (frontend real-time combat UI) — **next** |
+| [docs/plans/05-sprint-4-weapons-projectiles.md](docs/plans/05-sprint-4-weapons-projectiles.md) | Sprint 4 plan (weapons & projectiles) |
+| [docs/plans/06-sprint-5-progression-loot.md](docs/plans/06-sprint-5-progression-loot.md) | Sprint 5 plan (progression & loot) |
+| [docs/plans/07-sprint-6-multiplayer.md](docs/plans/07-sprint-6-multiplayer.md) | Sprint 6 plan (multiplayer PvP) |
+| [docs/plans/08-sprint-7-deployment.md](docs/plans/08-sprint-7-deployment.md) | Sprint 7 plan (deployment) |
 | [docs/SPRINT-1-SUMMARY.md](docs/SPRINT-1-SUMMARY.md) | Sprint 1 summary (complete) |
-| [docs/SPRINT-2-SUMMARY.md](docs/SPRINT-2-SUMMARY.md) | Sprint 2 summary (combat) |
+| [docs/SPRINT-2-SUMMARY.md](docs/SPRINT-2-SUMMARY.md) | Sprint 2 summary (real-time combat, complete) |
 | [docs/guides/development-setup.md](docs/guides/development-setup.md) | Development environment setup |
 
 ---

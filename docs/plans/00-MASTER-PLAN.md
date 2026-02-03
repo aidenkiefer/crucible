@@ -3,7 +3,7 @@
 **Project:** Competitive 1v1 arena combat game with NFT Gladiators
 **Timeline:** 4-6 weeks
 **Team Size:** 2-3 developers
-**Status:** Planning Phase
+**Status:** In progress — Sprint 0, 1, 2 complete; Sprint 3 (Frontend Real-Time Combat UI) next
 
 ---
 
@@ -95,7 +95,7 @@ Build a working demo of Gladiator Coliseum proving:
 
 ---
 
-## Sprint Breakdown (6 Sprints × 1 Week Each)
+## Sprint Breakdown (7 Sprints)
 
 ### Sprint 0: Project Setup & Infrastructure (Week 1)
 **Goal:** Set up development environment and core infrastructure
@@ -132,40 +132,60 @@ Build a working demo of Gladiator Coliseum proving:
 - Dev 3: Event listener + admin panel
 
 ### Sprint 2: Combat System - CPU Battles (Week 3)
-**Goal:** Players can fight CPU opponents with animated combat
+**Goal:** Players can fight CPU opponents with real-time combat
 
 **Deliverables:**
-- Combat engine (tick-based, 1000ms intervals)
-- Action system (Light/Heavy Attack, Block, Dodge)
-- Stamina and health systems
-- Damage calculation
-- CPU AI (simple decision tree)
-- Match state management
-- Combat result persistence
+- Real-time combat engine (20Hz server tick)
+- Continuous WASD movement with physics
+- Attack and dodge roll actions (Sword weapon)
+- Stamina and HP systems with stat scaling (CON, STR, DEX, SPD, DEF)
+- Dodge roll with i-frames (deterministic, no RNG)
+- CPU AI for movement and combat decisions
+- Match state management at 20Hz
+- Combat result persistence with event log
 
 **Team Split:**
-- Dev 1: Combat engine + game logic
-- Dev 2: CPU AI + match management
-- Dev 3: Database schema for matches + APIs
+- Dev 1: Real-time combat engine + physics
+- Dev 2: CPU AI for real-time movement + actions
+- Dev 3: Match management + WebSocket handlers
 
-### Sprint 3: Frontend - Combat UI & Animations (Week 3-4)
-**Goal:** Smooth 2D combat visualization with programmer art
+### Sprint 3: Frontend - Real-Time Combat UI (Week 4-5)
+**Goal:** Real-time 2D combat visualization with WASD controls
 
 **Deliverables:**
-- Canvas-based arena renderer
-- Gladiator sprite rendering (simple rectangles + color)
-- Attack/defend/dodge animations
-- Health/stamina bars
-- Action button UI
-- Combat log
+- Canvas-based arena renderer (60 FPS)
+- Real-time WASD movement input handling
+- Mouse aim for facing direction
+- Client prediction for player movement
+- Interpolation for opponent movement
+- Gladiator sprite rendering (circles with facing indicators)
+- HP/stamina bars above units
+- Match HUD with cooldown indicators
 - Victory/defeat screens
 
 **Team Split:**
-- Dev 1: Canvas rendering + animation system
-- Dev 2: UI components + combat controls
-- Dev 3: State synchronization with game server
+- Dev 1: Canvas rendering + 60 FPS render loop
+- Dev 2: Input handling (WASD + mouse) + client prediction
+- Dev 3: WebSocket integration + state interpolation
 
-### Sprint 4: Progression & Loot Systems (Week 4-5)
+### Sprint 4: Weapons & Projectiles (Week 5-6)
+**Goal:** Implement additional weapon types and projectile system
+
+**Deliverables:**
+- Weapon system with 4 types (Sword, Spear, Bow, Dagger)
+- Different attack patterns per weapon (arc, thrust, projectile, quick)
+- Server-side projectile simulation
+- Client-side projectile rendering
+- Weapon switching UI
+- Weapon-specific damage scaling (STR/DEX)
+- Weapon-specific cooldowns and stamina costs
+
+**Team Split:**
+- Dev 1: Weapon system + attack patterns
+- Dev 2: Projectile system (server + client)
+- Dev 3: Weapon UI + switching
+
+### Sprint 5: Progression & Loot Systems (Week 6-7)
 **Goal:** Gladiators level up, unlock skills, and earn loot
 
 **Deliverables:**
@@ -182,14 +202,15 @@ Build a working demo of Gladiator Coliseum proving:
 - Dev 2: Loot engine + crafting
 - Dev 3: Inventory + equipment UI
 
-### Sprint 5: Multiplayer - Quick Match & Friend Challenges (Week 5-6)
-**Goal:** Real-time PvP combat working smoothly
+### Sprint 6: Multiplayer - Real-Time PvP (Week 7-8)
+**Goal:** Real-time PvP combat with matchmaking
 
 **Deliverables:**
 - Matchmaking queue system
 - Friend system (add/remove friends)
 - Challenge creation and acceptance
-- Real-time WebSocket combat
+- Dual-player WebSocket synchronization
+- PvP match handling (2 human inputs per tick)
 - Spectator mode (optional)
 - Match history
 - Leaderboard (simple win/loss ranking)
@@ -199,13 +220,13 @@ Build a working demo of Gladiator Coliseum proving:
 - Dev 2: Friend system + challenges
 - Dev 3: Match history + leaderboard
 
-### Sprint 6: Polish, Testing & Deployment (Week 6)
+### Sprint 7: Polish, Testing & Deployment (Week 8-9)
 **Goal:** Production-ready demo deployed and documented
 
 **Deliverables:**
 - Bug fixes and edge case handling
 - Unit tests for critical game logic
-- Performance optimization
+- Performance optimization (especially real-time combat)
 - Deployment to Vercel + Railway
 - User-facing documentation
 - Mainnet migration guide
@@ -242,16 +263,25 @@ Build a working demo of Gladiator Coliseum proving:
 
 **Post-Demo Path:** Migration guide will document mainnet deployment (Polygon or Base)
 
-### 3. Combat Timing: 1000ms Tick Rate
-**Decision:** Server processes actions every 1000ms (1 second)
+### 3. Combat System: Real-Time with 20Hz Server Tick
+**Decision:** Real-time combat with continuous movement and 20Hz (50ms) server tick rate
 
 **Rationale:**
-- Balances responsiveness with network tolerance
-- Allows strategic decision-making (not twitch-based)
-- Easier to synchronize across clients
-- CPU can "think" between ticks
+- ROTMG-inspired "bullet-hell roguelike" feel with free movement
+- More engaging and skill-based than turn-based
+- WASD movement + mouse aim creates action game feel
+- 20Hz balances responsiveness with server load
+- Client prediction provides lag-free local movement
+- Server authority prevents cheating
 
-**Tuning:** Can adjust to 500ms or 1500ms based on playtesting
+**Key Features:**
+- Continuous 2D movement (WASD/arrows)
+- Weapon-based attacks with cooldowns
+- Dodge roll with deterministic i-frames (no RNG)
+- Server-authoritative positions, damage, hit detection
+- Client interpolation for smooth opponent movement
+
+**Alternative Considered:** Turn-based with 1000ms ticks (simpler but less engaging)
 
 ### 4. Art Strategy: Programmer Art First
 **Decision:** Use simple geometric shapes and placeholder sprites for demo
@@ -463,30 +493,29 @@ docs/
 │   ├── 02-sprint-1-auth-nft.md
 │   ├── 03-sprint-2-combat-cpu.md
 │   ├── 04-sprint-3-frontend-animations.md
-│   ├── 05-sprint-4-progression-loot.md
-│   ├── 06-sprint-5-multiplayer.md
-│   ├── 07-sprint-6-deployment.md
-│   ├── architecture.md
-│   ├── data-models.md
-│   ├── combat-system.md
-│   ├── loot-system.md
-│   └── mainnet-migration.md
-├── api/
+│   ├── 05-sprint-4-weapons-projectiles.md
+│   ├── 06-sprint-5-progression-loot.md
+│   ├── 07-sprint-6-multiplayer.md
+│   └── 08-sprint-7-deployment.md
+├── architecture.md
+├── features/
+│   └── combat.md
+├── mainnet-migration.md
+├── SPRINT-1-SUMMARY.md
+├── SPRINT-2-SUMMARY.md
+├── api/                    # (as added)
 │   ├── rest-api.md
 │   └── websocket-protocol.md
 └── guides/
-    ├── development-setup.md
-    ├── testing-guide.md
-    └── deployment-guide.md
+    └── development-setup.md
 ```
 
 ---
 
 ## Next Steps
 
-1. Review this master plan
-2. Review individual sprint plans (01-07)
-3. Set up project infrastructure (Sprint 0)
-4. Begin Sprint 1 development
+1. **Current:** Sprint 3 — Frontend Real-Time Combat UI (Canvas 60 FPS, WASD + mouse aim, client prediction, interpolation). See `docs/plans/04-sprint-3-frontend-animations.md`.
+2. Review individual sprint plans (01-08) for upcoming work.
+3. After Sprint 3: Sprint 4 (Weapons & Projectiles), then Sprint 5 (Progression & Loot), Sprint 6 (Multiplayer), Sprint 7 (Deployment).
 
-**Questions or changes needed?** Provide feedback and we'll iterate on the plan before starting implementation.
+**Questions or changes needed?** Provide feedback and we'll iterate on the plan.

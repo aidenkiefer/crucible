@@ -108,25 +108,40 @@ Gladiator Coliseum is built as a **three-tier architecture** with clear separati
 **Key Services:**
 
 #### MatchManager
-- Creates and manages active matches
-- Coordinates match lifecycle (start → tick → complete)
-- Broadcasts state updates to clients
+- Creates, starts, stops, and removes active matches
+- Tracks all active matches; cleans up completed ones
+- `mapGladiatorStats()` — maps 8 database stats to combat stats
+- `createPlayerConfig()` — creates player config from gladiator data
+
+#### MatchInstance
+- Runs a single match lifecycle
+- Executes combat engine at **20Hz (50ms tick)**
+- Processes player actions via `submitAction()`
+- Generates CPU AI actions automatically
+- Stores state snapshots every 500ms
+- Emits combat events (damage, deaths, dodges)
+- Handles match completion and cleanup
 
 #### CombatEngine
-- Server-authoritative combat simulation
-- Processes actions every 1000ms (tick rate)
-- Calculates damage, stamina, health
+- Server-authoritative **real-time** combat simulation
+- **20Hz (50ms) tick rate** — continuous movement and actions
+- **Physics:** WASD velocity-based movement, 800×600 arena, body collision with push-back
+- **Sword weapon:** 90° arc, 80-unit range; damage scales with STR; stamina 15, cooldown 800ms
+- **Dodge roll:** 200ms deterministic i-frames (no RNG), 100 units in 300ms; stamina 20, cooldown 1000ms
+- **Stamina:** regen 10/s (scales with CON); pool 100 + (CON × 5)
+- **HP:** pool 100 + (CON × 10); DEF provides damage reduction (up to 75% max)
 - Determines match winner
 
 #### MatchmakingService
-- Maintains queue of players seeking matches
+- Maintains queue of players seeking matches (PvP in Sprint 6)
 - Pairs players based on availability (FIFO)
 - Creates PvP match instances
 
 #### CpuAI
-- Makes decisions for CPU opponents
-- Simple decision tree based on health/stamina
-- Three difficulty variants (normal, aggressive, defensive)
+- **3 adaptive strategies:** Aggressive (HP > 70%), Defensive (HP < 30%), Opportunistic (30–70%)
+- Decision interval **200ms** (every 4 ticks) to avoid over-reactive behavior
+- Context-aware: dodge when player attacks and close; attack when in range and player vulnerable; manage stamina and cooldowns
+- Movement: chase, retreat/kite, circular strafing, perpendicular dodge rolls
 
 #### ProgressionService
 - Awards XP after matches
@@ -174,7 +189,7 @@ User
 - Token ID (unique, from blockchain)
 - Owner (User)
 - Class (Duelist, Brute, Assassin)
-- Base stats (strength, agility, endurance, technique)
+- **8 base stats:** constitution, strength, dexterity, speed, defense, magicResist, arcana, faith (5 used in combat: CON, STR, DEX, SPD, DEF; MRES, ARC, FTH reserved for magic/system later)
 - Level and XP
 - Equipped gear
 - Unlocked skills
@@ -222,7 +237,7 @@ User
 **On-Chain Data:**
 - Token ID
 - Class type
-- Base stats (generated pseudo-randomly at mint)
+- **8 base stats** (generated pseudo-randomly at mint): constitution, strength, dexterity, speed, defense, magicResist, arcana, faith (class bonuses: Duelist +DEX/SPD/DEF, Brute +CON/STR/DEF, Assassin +DEX/SPD/ARC)
 - Mint timestamp
 
 **Off-Chain Data (Database):**
@@ -264,34 +279,37 @@ Frontend → Poll/Fetch → Display NFT
 ```
 User → Select Gladiator → Frontend
          ↓
-Frontend → Request CPU Match → Game Server
+Frontend → match:create (CPU) → Game Server (WebSocket)
          ↓
-Game Server → Create MatchInstance → Memory
+Game Server → Create MatchInstance → MatchManager
          ↓
-MatchInstance → Start tick loop (1000ms) → Combat Engine
-         ↓ (every tick)
-Combat Engine → Process actions → Update state
+Frontend → match:start → Game Server
          ↓
-Game Server → Broadcast state → WebSocket
+MatchInstance → Start 20Hz tick loop (50ms) → Combat Engine
+         ↓ (every 50ms)
+Combat Engine → Process player + CPU actions → Physics, damage, stamina
          ↓
-Frontend → Receive state → Render arena
+Game Server → Broadcast match:state + match:events → WebSocket (20Hz)
          ↓
-User → Submit action → Frontend
+Frontend → Receive state → Render arena (Sprint 3: Canvas 60 FPS)
          ↓
-Frontend → Send action → WebSocket → Game Server
+User → WASD / attack / dodge → Frontend
          ↓
-Game Server → Queue action → MatchInstance
-         ↓ (next tick)
-Combat Engine → Apply action → Calculate damage
+Frontend → match:action → Game Server
+         ↓
+MatchInstance → submitAction() → Next tick
          ↓
 [Repeat until health = 0]
          ↓
+Game Server → match:completed → Frontend
 Game Server → Save match → Database
-Game Server → Award XP → Database
-Game Server → Generate loot → Database
+Game Server → Award XP → Database (Sprint 5)
+Game Server → Generate loot → Database (Sprint 5)
          ↓
 Frontend → Show result → User
 ```
+
+**WebSocket events (combat):** Client → Server: `match:create`, `match:start`, `match:action`, `match:join`, `match:leave`. Server → Client: `match:created`, `match:started`, `match:state` (20Hz), `match:events`, `match:completed`, `match:error`.
 
 ### PvP Match Flow
 

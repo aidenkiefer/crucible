@@ -1,13 +1,20 @@
-# Sprint 5: Multiplayer - Quick Match & Friend Challenges
+# Sprint 6: Multiplayer - Real-Time PvP
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Players can fight other players in real-time PvP matches
+**Goal:** Players can fight other players in real-time PvP matches with matchmaking and friend challenges
 
-**Duration:** Week 5-6
-**Prerequisites:** Sprint 4 complete
+**Duration:** Week 7-8
+**Prerequisites:** Sprint 5 complete (progression & loot working)
 
-**Architecture:** Matchmaking queue, friend system with challenges, dual-client WebSocket synchronization
+**Architecture:** Matchmaking queue, friend system with challenges, dual-client WebSocket synchronization for real-time combat
+
+**Key Differences from CPU Matches:**
+- Two human players sending inputs simultaneously
+- Server processes both players' inputs each tick
+- Both clients receive same state snapshots
+- Latency compensation and input prediction
+- No CPU AI
 
 **Tech Stack:**
 - Socket.io (real-time PvP)

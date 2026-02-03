@@ -1,11 +1,11 @@
-# Sprint 6: Polish, Testing & Deployment
+# Sprint 7: Polish, Testing & Deployment
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
 **Goal:** Production-ready demo deployed with documentation
 
-**Duration:** Week 6
-**Prerequisites:** Sprint 5 complete
+**Duration:** Week 8-9
+**Prerequisites:** Sprint 6 complete (multiplayer PvP working)
 
 **Focus Areas:**
 - Bug fixes and edge cases
