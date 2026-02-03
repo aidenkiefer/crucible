@@ -164,18 +164,27 @@ Gladiator Coliseum is built as a **three-tier architecture** with clear separati
 
 **Location:** `packages/database/`
 
+**Design rule:** Templates (equipment, actions) are authored in the DB and **published to JSON/TS**. Runtime combat logic reads **published static data**, not the database. The DB is an authoring and collaboration layer; instances (player-owned items, equipped gear, gladiators) live in the DB.
+
 **Schema Overview:**
 
 ```
 User
 ├── Gladiator (1:N)
-│   ├── Equipment (equipped weapon)
-│   ├── Equipment (equipped armor)
+│   ├── GladiatorEquippedItem (slot → Equipment)  # slot-based equipping
+│   ├── GladiatorLoadout (prepared spells, equipped abilities)
+│   ├── Equipment (legacy: equippedWeapon, equippedArmor — transitional)
 │   └── Match (as player 1 or 2)
-├── Equipment (N, owned items)
+├── Equipment (N, owned instances → EquipmentTemplate)
 ├── Match (as player 1 or 2)
 ├── Friend (N:N with other Users)
 └── Challenge (sent or received)
+
+Game data (authoring / publishing)
+├── GameDataBundle (label, status DRAFT/PUBLISHED/DEPRECATED, export target)
+│   ├── EquipmentTemplate[] (key, type, slot, baseStatMods, scaling, actions)
+│   └── ActionTemplate[] (key, category, cooldown, hitbox/projectile/damage config)
+└── EquipmentTemplateAction (equipment ↔ action join)
 ```
 
 **Key Models:**
@@ -186,35 +195,56 @@ User
 - Created timestamp
 
 **Gladiator**
-- Token ID (unique, from blockchain)
-- Owner (User)
-- Class (Duelist, Brute, Assassin)
-- **8 base stats:** constitution, strength, dexterity, speed, defense, magicResist, arcana, faith (5 used in combat: CON, STR, DEX, SPD, DEF; MRES, ARC, FTH reserved for magic/system later)
-- Level and XP
-- Equipped gear
-- Unlocked skills
+- Token ID (unique, from blockchain), Owner (User), Class (Duelist, Brute, Assassin)
+- **8 base stats:** constitution, strength, dexterity, speed, defense, magicResist, arcana, faith (5 used in combat: CON, STR, DEX, SPD, DEF; MRES, ARC, FTH for magic later)
+- Level, XP, skillPointsAvailable, unlockedSkills (skill IDs)
+- **Legacy:** equippedWeaponId, equippedArmorId (transitional)
+- **Slot-based equipping:** GladiatorEquippedItem (one item per slot: MAIN_HAND, OFF_HAND, HELMET, CHEST, GAUNTLETS, GREAVES)
+- **Loadout:** GladiatorLoadout (preparedSpellIds, equippedAbilityIds — references; behavior from static data)
 
-**Equipment**
-- Owner (User)
-- Type (weapon, armor)
-- Rarity (Common, Rare, Epic)
-- Stat bonuses
+**Equipment** (player-owned instance)
+- Owner (User), templateId → EquipmentTemplate (what the item “is”)
+- rolledMods (JSON), grantedPerkIds (String[])
+- Legacy: type, rarity, name; attackBonus, defenseBonus, speedBonus (transitional)
+- Equipped via GladiatorEquippedItem (slot-based)
+
+**GladiatorEquippedItem**
+- gladiatorId, slot (EquipmentSlot), equipmentId
+- Unique per (gladiatorId, slot) — one item per slot
+
+**GladiatorLoadout**
+- One per gladiator; preparedSpellIds (catalyst spell slots), equippedAbilityIds (class abilities later)
+
+**GameDataBundle**
+- label (e.g. demo-v0, season-1), status (DRAFT/PUBLISHED/DEPRECATED), isActive
+- exportTarget (e.g. R2 path), gitCommitSha
+- Groups EquipmentTemplate and ActionTemplate for publishing
+
+**EquipmentTemplate**
+- key (canonical ID for JSON/TS), name, description, type (WEAPON, ARMOR, CATALYST, TRINKET, AUGMENT), slot (EquipmentSlot), subtype, tags
+- baseStatMods, scaling, rarityRules, ui (JSON)
+- status, version; bundleId (optional)
+- actions: EquipmentTemplateAction → ActionTemplate (actions granted by this item)
+
+**ActionTemplate**
+- key, name, description, category (WEAPON_ATTACK, CAST, MOBILITY, UTILITY)
+- cooldownMs, castTimeMs, staminaCost, manaCost
+- hitboxConfig, projectileConfig, damageConfig, effectConfig (JSON)
+- status, version; bundleId (optional)
+
+**Derived combat stats (runtime)**  
+At match start the server computes an effective build: Gladiator base stats + `EquipmentTemplate.baseStatMods` + `Equipment.rolledMods` + passive perks. This aggregated stat block is immutable for the duration of the match, cached, and the sole input to combat calculations. Runtime combat code must not query templates or instances mid-match. JSON shapes for the config fields and full conventions: **docs/data-glossary.md** §8 (Suggested JSON Shapes), §9 (Derived Combat Stats), §11 (Guiding Principles).
 
 **Match**
-- Players (1 or 2)
-- Gladiators (1 or 2)
-- Winner
-- Match log (JSON)
-- Duration
+- player1Gladiator, player2Gladiator (optional for CPU), isCpuMatch
+- winnerId, matchLog (JSON), durationSeconds
+- player1, player2 (User)
 
-**Friend**
-- User pair
-- Status (pending, accepted)
+**Friend** — User pair, status (pending, accepted)
 
-**Challenge**
-- Challenger and opponent
-- Gladiators
-- Match (linked when accepted)
+**Challenge** — Challenger vs opponent, gladiators, status; matchId when completed
+
+Full field list and enums: **docs/data-glossary.md**. Equipment design: **docs/features/equipment.md**.
 
 ---
 

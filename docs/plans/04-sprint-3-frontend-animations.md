@@ -38,6 +38,8 @@ Sprint 3 implements the **client-side real-time combat UI** that connects to the
 - Client → Server: `match:input` event with `{ moveX, moveY, facing, actions }` at ~60Hz or on input change
 - Server → Client: `match:state` event with full game state at 20Hz (or 10Hz if throttled)
 
+**Game data (reference):** Combat state is driven by the server; action/equipment metadata (e.g. cooldowns, names) can eventually come from published JSON/TS (ActionTemplate, EquipmentTemplate). For Sprint 3, hardcoded or server-provided values are fine. When displaying action or equipment info, align with **docs/data-glossary.md** §8 (JSON shapes) and **docs/features/equipment.md**.
+
 ---
 
 ## Task 1: Canvas Renderer with Real-Time Rendering Loop

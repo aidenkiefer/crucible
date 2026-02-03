@@ -87,11 +87,15 @@ Implement only in directories and files that exist; do not assume other top-leve
 
 ## Core Game Concepts
 
-**Gladiators:** Unique NFTs. Immutable at mint: ID, class (Duelist, Brute, Assassin), **8 base stats** (constitution, strength, dexterity, speed, defense, magicResist, arcana, faith). Mutable off-chain: level, XP, win/loss record, titles, equipped gear, skill tree. Synced to DB via game-server event listener when minted.
+**Gladiators:** Unique NFTs. Immutable at mint: ID, class (Duelist, Brute, Assassin), **8 base stats** (constitution, strength, dexterity, speed, defense, magicResist, arcana, faith). Mutable off-chain: level, XP, skillPointsAvailable, unlockedSkills (skill IDs), equipped gear (slot-based), loadout (prepared spells, equipped abilities). Synced to DB via game-server event listener when minted. Equipping is **slot-based** (GladiatorEquippedItem): MAIN_HAND, OFF_HAND, HELMET, CHEST, GAUNTLETS, GREAVES. Legacy equippedWeaponId/equippedArmorId kept for transition.
 
-**Equipment:** Weapon, Armor. Stats and rarity; swappable; layered sprites. For demo, equipment may be static or pseudo-NFTs; full on-chain minting can be stubbed. Additional weapons (Spear, Bow, Dagger) in Sprint 4.
+**Equipment:** **Template vs instance.** EquipmentTemplate (authoring layer) defines archetypes; authored in DB, **published to JSON/TS** for runtime. Equipment (instance) is player-owned; references template; has rolledMods (JSON), grantedPerkIds; type/rarity/name and stat bonuses (legacy). Runtime combat reads **published static data**, not DB. Types: WEAPON, ARMOR, CATALYST, TRINKET, AUGMENT. Additional weapons (Spear, Bow, Dagger) in Sprint 4.
 
-**Combat actions:** WASD movement, Sword attack, Dodge roll (Sprint 2). Abilities and other weapons in later sprints.
+**Actions:** ActionTemplate defines attacks/casts/mobility/utility; category, cooldown, stamina/mana, hitbox/projectile/damage/effect config (JSON). Equipment grants actions via EquipmentTemplateAction join. Demo: weapon-based kits; class abilities later.
+
+**Derived combat stats:** At match start the server computes an effective build (Gladiator base + template baseStatMods + instance rolledMods + perks); that aggregate is immutable for the match and the sole input to combat. Do not query templates or instances mid-match. JSON shapes and conventions: **docs/data-glossary.md** §8–11.
+
+**Combat actions (implemented):** WASD movement, Sword attack, Dodge roll (Sprint 2). Abilities and other weapons in later sprints.
 
 ---
 
@@ -139,6 +143,8 @@ Focus on clean boundaries, simple flows, and replaceable components.
 | **docs/SPRINT-1-SUMMARY.md** | What was built in Sprint 1 (auth, wallet, mint, listener, admin). |
 | **docs/SPRINT-2-SUMMARY.md** | What was built in Sprint 2 (combat). |
 | **docs/guides/development-setup.md** | Environment, dependencies, running the stack. |
+| **docs/features/equipment.md** | Equipment, loot, abilities — template/instance design, slots, authoring, demo scope. |
+| **docs/data-glossary.md** | Database & game data glossary — schema, enums, templates, actions, JSON conventions. |
 
 Prefer reading the specific files or docs relevant to the task rather than scanning the whole repo.
 
@@ -149,6 +155,7 @@ Prefer reading the specific files or docs relevant to the task rather than scann
 - **Scope:** Implement only what is in the demo scope and the current (or requested) sprint. Do not add features listed under "Out of Scope" in README or concept.md unless the task explicitly requests them.
 - **Contracts:** Use OpenZeppelin templates; keep contracts minimal and auditable.
 - **Server authority:** All match outcomes are server-authoritative; do not trust client-reported results.
+- **Game data (docs/data-glossary.md §11):** No hardcoded equipment slots on Gladiator; no behavior hidden in conditional code paths; no runtime dependency on database templates; templates define behavior, instances define ownership; admin tooling drives content velocity.
 - **Verification:** Prefer reading the specific files or docs that are relevant rather than scanning the whole repo.
 
 ---

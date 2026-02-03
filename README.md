@@ -87,6 +87,21 @@ Details: [Master Plan — Key Design Decisions](docs/plans/00-MASTER-PLAN.md#key
 
 ---
 
+## Game data & equipment
+
+Equipment and combat actions follow a **template / instance** model:
+
+- **Templates** (EquipmentTemplate, ActionTemplate) define item archetypes and actions; they are authored in the DB and **published to JSON/TS** for runtime. Combat logic reads **published static data**, not the database.
+- **Instances** (Equipment) are player-owned items; they reference a template and store rolled stats, rarity, and perks.
+- **Equipping** is **slot-based** (GladiatorEquippedItem): MAIN_HAND, OFF_HAND, HELMET, CHEST, GAUNTLETS, GREAVES (and future slots). One item per slot per gladiator.
+- **Loadouts** (GladiatorLoadout) store prepared spell IDs and equipped ability IDs (references); behavior comes from static definitions.
+- **Derived combat stats:** At match start the server computes an effective build (Gladiator base + template `baseStatMods` + instance `rolledMods` + perks); that aggregate is immutable for the match and the sole input to combat. Runtime never queries templates or instances mid-match.
+- **JSON shapes** for template/action config (e.g. `baseStatMods`, `hitboxConfig`, `damageConfig`) and **guiding principles** (no hardcoded slots, no runtime DB for templates): **[docs/data-glossary.md](docs/data-glossary.md)** §8–11.
+
+See **[docs/features/equipment.md](docs/features/equipment.md)** for design and **[docs/data-glossary.md](docs/data-glossary.md)** for schema, terms, and conventions.
+
+---
+
 ## Out of Scope (Demo)
 
 Not in scope for this demo:
@@ -115,7 +130,7 @@ crucible/
 ├── docs/
 │   ├── plans/            # 00-MASTER-PLAN + sprint plans (01–08)
 │   ├── guides/           # Development setup, testing, deployment
-│   ├── features/         # Combat, loot, etc.
+│   ├── features/         # Combat, equipment, planned-features
 │   ├── api/              # REST + WebSocket docs (as added)
 │   ├── SPRINT-1-SUMMARY.md
 │   └── SPRINT-2-SUMMARY.md
@@ -160,6 +175,8 @@ pnpm dev
 | [docs/SPRINT-1-SUMMARY.md](docs/SPRINT-1-SUMMARY.md) | Sprint 1 summary (complete) |
 | [docs/SPRINT-2-SUMMARY.md](docs/SPRINT-2-SUMMARY.md) | Sprint 2 summary (real-time combat, complete) |
 | [docs/guides/development-setup.md](docs/guides/development-setup.md) | Development environment setup |
+| [docs/features/equipment.md](docs/features/equipment.md) | Equipment, loot, abilities — template/instance design, slots, authoring |
+| [docs/data-glossary.md](docs/data-glossary.md) | Database & game data glossary — schema, enums, templates, actions |
 
 ---
 

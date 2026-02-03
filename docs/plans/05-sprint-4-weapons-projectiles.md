@@ -39,6 +39,8 @@ Sprint 4 expands the combat system with three new weapon types, each with unique
 **From combat.md §5.2:**
 > Weapons define: attack pattern (melee arc, thrust line, projectile), stamina cost, windup time (optional), cooldown time, scaling (STR/DEX)
 
+**Game data alignment:** Weapon and action definitions should align with the template/instance model. Use or mirror the JSON shapes from **docs/data-glossary.md** §8: `ActionTemplate.hitboxConfig` (ARC, LINE, CIRCLE, etc.), `ActionTemplate.projectileConfig`, `ActionTemplate.damageConfig`, `EquipmentTemplate.scaling`. Prefer loading weapon/action data from a **published JSON/TS bundle** (exported from EquipmentTemplate + ActionTemplate) so admin-authored content drives runtime. See **docs/features/equipment.md** and **docs/data-glossary.md** for authoring → publish → runtime flow.
+
 ---
 
 ## Task 1: Weapon System Foundation

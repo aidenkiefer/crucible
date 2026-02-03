@@ -34,6 +34,8 @@
 - Invalid action rejection
 - Wallet ownership verification
 
+**Game data bundle:** Ensure the **published game data bundle** (EquipmentTemplate + ActionTemplate exported to JSON/TS) is built and deployed so runtime loads from it; no live DB template queries in combat. See **docs/data-glossary.md** (authoring → publish → runtime) and **docs/features/equipment.md**.
+
 **UI/UX Polish**
 - Loading states for all async operations
 - Error messages user-friendly

@@ -21,6 +21,8 @@
 - Redis (optional, for queue management)
 - Prisma (friend relationships, challenges)
 
+**Game data (match start):** When creating a match, load each gladiator's **effective build** once (Gladiator base stats + `EquipmentTemplate.baseStatMods` + `Equipment.rolledMods` + perks). That aggregate is immutable for the match; runtime must not query templates or instances mid-match. See **docs/data-glossary.md** §9 (Derived Combat Stats).
+
 ---
 
 ## System Overview

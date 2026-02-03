@@ -72,6 +72,57 @@ npx hardhat node
 
 ## Troubleshooting
 
+### Database connection (Supabase) — P1001 "Can't reach database server"
+
+Prisma needs a working `DATABASE_URL` in `packages/database/.env` (or in root `.env` if the app loads it from there). Supabase has two connection types; **don’t mix them**.
+
+| Connection type | Host | Port | When to use |
+|-----------------|------|------|-------------|
+| **Direct** | `db.[project-ref].supabase.co` | **5432** | Migrations, `db push`, long-lived servers |
+| **Session pooler** | `aws-0-[region].pooler.supabase.com` | **5432** | Same as direct but via pooler (often better from WSL/home networks) |
+| **Transaction pooler** | `aws-0-[region].pooler.supabase.com` | **6543** | Serverless; user is `postgres.[project-ref]` |
+
+**Wrong (causes P1001):** `db.xxx.supabase.co:6543` — direct host with pooler port.
+
+**Fix 1 — Use Direct with port 5432**
+
+1. Supabase Dashboard → your project → **Project Settings** (gear) → **Database**.
+2. Under **Connection string**, choose **URI** and **Direct connection** (not pooler).
+3. Copy the URI. It must use port **5432** and host `db.[project-ref].supabase.co`.
+4. If it shows `:6543`, change it to `:5432` and ensure the password is your **database password** (not the anon key).
+5. Add SSL if needed: `?sslmode=require` at the end.
+6. Put the final URL in `packages/database/.env` as `DATABASE_URL=...`.
+
+Example (direct):
+
+```bash
+DATABASE_URL="postgresql://postgres:YOUR_DB_PASSWORD@db.akrgtcdnditmxhdfowhu.supabase.co:5432/postgres?sslmode=require"
+```
+
+**Fix 2 — Use IPv4 Session pooler (if direct still fails)**
+
+Some networks or WSL block direct DB connections. Use the **pooler** instead:
+
+1. Supabase Dashboard → **Project Settings** → **Database**.
+2. Find **Connection pooling** (or **Session pooler** / **IPv4**).
+3. Copy the **Session** pooler URI (host like `aws-0-us-east-1.pooler.supabase.com`, port **5432**).
+4. User is usually `postgres.[project-ref]`, password is your database password.
+5. Add `?sslmode=require` and use that as `DATABASE_URL` in `packages/database/.env`.
+
+Example (session pooler):
+
+```bash
+DATABASE_URL="postgresql://postgres.akrgtcdnditmxhdfowhu:YOUR_DB_PASSWORD@aws-0-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require"
+```
+
+Then run:
+
+```bash
+cd packages/database && pnpm db:push
+```
+
+**Other checks:** Project not paused (Dashboard → project → Resume if needed). Database password correct (reset under Settings → Database if needed). No firewall blocking outbound 5432/6543.
+
 ### Port Already in Use
 
 Change ports in respective configs:

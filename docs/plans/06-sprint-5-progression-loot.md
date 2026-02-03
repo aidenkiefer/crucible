@@ -22,14 +22,16 @@
 1. Win match → Gain 100 XP
 2. Lose match → Gain 25 XP
 3. Level up at XP thresholds (Level 2 = 100 XP, Level 3 = 200 XP, etc.)
-4. Each level up → +1 skill point + stat increase
-5. Spend skill points on skill tree
+4. Each level up → +1 skill point + stat increase (apply to **8 stats**: constitution, strength, dexterity, speed, defense, magicResist, arcana, faith — see schema)
+5. Spend skill points on skill tree; store unlocked skill **IDs** in `Gladiator.unlockedSkills` (behavior from static definitions)
 
 ### Loot Flow
 1. Win match → Roll for loot drop (70% chance)
-2. Generate item with rarity: Common (70%), Rare (25%), Epic (5%)
-3. Item added to inventory
-4. Equip or craft items
+2. Create **Equipment** instance: set `templateId` (reference EquipmentTemplate), `rolledMods` (JSON per **docs/data-glossary.md** §8.3), `grantedPerkIds`, `ownerId`, `type`, `rarity`, `name`
+3. Item added to user inventory (Equipment rows)
+4. **Equip** via **GladiatorEquippedItem** (slot-based): one row per (gladiatorId, slot). Slots: MAIN_HAND, OFF_HAND, HELMET, CHEST, GAUNTLETS, GREAVES. No hardcoded equippedWeaponId/equippedArmorId in new code.
+
+**References:** **docs/features/equipment.md**, **docs/data-glossary.md** (Equipment, EquipmentTemplate, GladiatorEquippedItem, §8.3 rolledMods).
 
 ---
 
@@ -70,10 +72,14 @@ export class ProgressionService {
         level: newLevel,
         skillPointsAvailable: { increment: skillPointsGained },
         // Stat increases per level
-        strength: { increment: newLevel > gladiator.level ? 2 : 0 },
-        agility: { increment: newLevel > gladiator.level ? 2 : 0 },
-        endurance: { increment: newLevel > gladiator.level ? 2 : 0 },
-        technique: { increment: newLevel > gladiator.level ? 2 : 0 },
+        constitution: { increment: newLevel > gladiator.level ? 1 : 0 },
+        strength: { increment: newLevel > gladiator.level ? 1 : 0 },
+        dexterity: { increment: newLevel > gladiator.level ? 1 : 0 },
+        speed: { increment: newLevel > gladiator.level ? 1 : 0 },
+        defense: { increment: newLevel > gladiator.level ? 1 : 0 },
+        magicResist: { increment: newLevel > gladiator.level ? 1 : 0 },
+        arcana: { increment: newLevel > gladiator.level ? 1 : 0 },
+        faith: { increment: newLevel > gladiator.level ? 1 : 0 },
       },
     })
 

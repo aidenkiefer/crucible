@@ -8,150 +8,163 @@ datasource db {
 }
 
 model User {
-  id            String       @id @default(uuid())
-  email         String       @unique
-  walletAddress String?      @unique
-  username      String       @unique
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  id            String   @id @default(uuid())
+  email         String   @unique
+  walletAddress String?  @unique
+  username      String   @unique
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   // NextAuth fields
   emailVerified DateTime?
   image         String?
   accounts      Account[]
   sessions      Session[]
+  isAdmin       Boolean @default(false)
+  @@index([isAdmin])
 
-  gladiators    Gladiator[]
-  equipment     Equipment[]
-  matchesAsP1   Match[]      @relation("Player1Matches")
-  matchesAsP2   Match[]      @relation("Player2Matches")
-  friends       Friend[]     @relation("UserFriends")
-  friendOf      Friend[]     @relation("FriendOf")
-  challenges    Challenge[]  @relation("Challenger")
-  challengedBy  Challenge[]  @relation("Opponent")
+  gladiators   Gladiator[]
+  equipment    Equipment[]
+  matchesAsP1  Match[]     @relation("Player1Matches")
+  matchesAsP2  Match[]     @relation("Player2Matches")
+  friends      Friend[]    @relation("UserFriends")
+  friendOf     Friend[]    @relation("FriendOf")
+  challenges   Challenge[] @relation("Challenger")
+  challengedBy Challenge[] @relation("Opponent")
 }
 
 model Gladiator {
-  id                    String   @id @default(uuid())
-  tokenId               Int      @unique
-  ownerId               String
-  owner                 User     @relation(fields: [ownerId], references: [id])
+  id      String @id @default(uuid())
+  tokenId Int    @unique
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id])
 
-  class                 String   // Duelist, Brute, Assassin
-  level                 Int      @default(1)
-  xp                    Int      @default(0)
+  class String // Duelist, Brute, Assassin
+  level Int    @default(1)
+  xp    Int    @default(0)
 
   // Base stats (8 total: physical combat + magic)
-  constitution          Int
-  strength              Int
-  dexterity             Int
-  speed                 Int
-  defense               Int
-  magicResist           Int
-  arcana                Int
-  faith                 Int
+  constitution Int
+  strength     Int
+  dexterity    Int
+  speed        Int
+  defense      Int
+  magicResist  Int
+  arcana       Int
+  faith        Int
 
   // Equipment
-  equippedWeaponId      String?
-  equippedWeapon        Equipment? @relation("EquippedWeapon", fields: [equippedWeaponId], references: [id])
-  equippedArmorId       String?
-  equippedArmor         Equipment? @relation("EquippedArmor", fields: [equippedArmorId], references: [id])
+  equippedWeaponId String?
+  equippedWeapon   Equipment? @relation("EquippedWeapon", fields: [equippedWeaponId], references: [id])
+  equippedArmorId  String?
+  equippedArmor    Equipment? @relation("EquippedArmor", fields: [equippedArmorId], references: [id])
 
   // Progression
-  skillPointsAvailable  Int      @default(0)
-  unlockedSkills        String[] // Array of skill IDs
+  skillPointsAvailable Int      @default(0)
+  unlockedSkills       String[] // Array of skill IDs
 
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  matchesAsP1           Match[]  @relation("Gladiator1Matches")
-  matchesAsP2           Match[]  @relation("Gladiator2Matches")
-  challengesAsG1        Challenge[] @relation("ChallengeGladiator1")
-  challengesAsG2        Challenge[] @relation("ChallengeGladiator2")
+  matchesAsP1    Match[]     @relation("Gladiator1Matches")
+  matchesAsP2    Match[]     @relation("Gladiator2Matches")
+  challengesAsG1 Challenge[] @relation("ChallengeGladiator1")
+  challengesAsG2 Challenge[] @relation("ChallengeGladiator2")
+
+  // Opposite Relations
+  equippedItems GladiatorEquippedItem[]
+  loadout       GladiatorLoadout?
 }
 
 model Equipment {
-  id                String   @id @default(uuid())
-  ownerId           String
-  owner             User     @relation(fields: [ownerId], references: [id])
+  id      String @id @default(uuid())
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id])
 
-  type              String   // Weapon, Armor
-  rarity            String   // Common, Rare, Epic
-  name              String
+  templateId String?
+  template   EquipmentTemplate? @relation(fields: [templateId], references: [id])
+
+  rolledMods     Json     @default("{}")
+  grantedPerkIds String[]
+
+  type   String // Weapon, Armor
+  rarity String // Common, Rare, Epic
+  name   String
 
   // Stats (nullable, depends on type)
-  attackBonus       Int?
-  defenseBonus      Int?
-  speedBonus        Int?
+  attackBonus  Int?
+  defenseBonus Int?
+  speedBonus   Int?
 
-  createdAt         DateTime @default(now())
+  createdAt DateTime @default(now())
 
-  equippedByWeapon  Gladiator[] @relation("EquippedWeapon")
-  equippedByArmor   Gladiator[] @relation("EquippedArmor")
+  equippedByWeapon Gladiator[]             @relation("EquippedWeapon")
+  equippedByArmor  Gladiator[]             @relation("EquippedArmor")
+  equippedBy       GladiatorEquippedItem[]
 }
 
 model Match {
-  id                  String   @id @default(uuid())
+  id String @id @default(uuid())
 
-  player1GladiatorId  String
-  player1Gladiator    Gladiator @relation("Gladiator1Matches", fields: [player1GladiatorId], references: [id])
+  player1GladiatorId String
+  player1Gladiator   Gladiator @relation("Gladiator1Matches", fields: [player1GladiatorId], references: [id])
 
-  player2GladiatorId  String?
-  player2Gladiator    Gladiator? @relation("Gladiator2Matches", fields: [player2GladiatorId], references: [id])
+  player2GladiatorId String?
+  player2Gladiator   Gladiator? @relation("Gladiator2Matches", fields: [player2GladiatorId], references: [id])
 
-  isCpuMatch          Boolean  @default(false)
+  isCpuMatch Boolean @default(false)
 
-  winnerId            String?  // Gladiator ID of winner
-  matchLog            Json     // Array of action logs
-  durationSeconds     Int
+  winnerId        String? // Gladiator ID of winner
+  matchLog        Json // Array of action logs
+  durationSeconds Int
 
-  createdAt           DateTime @default(now())
+  createdAt DateTime @default(now())
 
-  player1Id           String
-  player1             User     @relation("Player1Matches", fields: [player1Id], references: [id])
+  player1Id String
+  player1   User   @relation("Player1Matches", fields: [player1Id], references: [id])
 
-  player2Id           String?
-  player2             User?    @relation("Player2Matches", fields: [player2Id], references: [id])
+  player2Id String?
+  player2   User?   @relation("Player2Matches", fields: [player2Id], references: [id])
 
-  challenge           Challenge?
+  challenge Challenge?
 }
 
 model Friend {
-  userId      String
-  user        User     @relation("UserFriends", fields: [userId], references: [id])
+  userId String
+  user   User   @relation("UserFriends", fields: [userId], references: [id])
 
-  friendId    String
-  friend      User     @relation("FriendOf", fields: [friendId], references: [id])
+  friendId String
+  friend   User   @relation("FriendOf", fields: [friendId], references: [id])
 
-  status      String   // pending, accepted
-  createdAt   DateTime @default(now())
+  status    String // pending, accepted
+  createdAt DateTime @default(now())
 
   @@id([userId, friendId])
   @@unique([userId, friendId])
 }
 
 model Challenge {
-  id              String   @id @default(uuid())
+  id String @id @default(uuid())
 
-  challengerId    String
-  challenger      User     @relation("Challenger", fields: [challengerId], references: [id])
+  challengerId String
+  challenger   User   @relation("Challenger", fields: [challengerId], references: [id])
 
-  opponentId      String
-  opponent        User     @relation("Opponent", fields: [opponentId], references: [id])
+  opponentId String
+  opponent   User   @relation("Opponent", fields: [opponentId], references: [id])
 
-  gladiator1Id    String
-  gladiator1      Gladiator @relation("ChallengeGladiator1", fields: [gladiator1Id], references: [id])
+  gladiator1Id String
+  gladiator1   Gladiator @relation("ChallengeGladiator1", fields: [gladiator1Id], references: [id])
 
-  gladiator2Id    String
-  gladiator2      Gladiator @relation("ChallengeGladiator2", fields: [gladiator2Id], references: [id])
+  gladiator2Id String
+  gladiator2   Gladiator @relation("ChallengeGladiator2", fields: [gladiator2Id], references: [id])
 
-  status          String   // pending, accepted, declined, completed
+  status String // pending, accepted, declined, completed
 
-  matchId         String?  @unique
-  match           Match?   @relation(fields: [matchId], references: [id])
+  matchId String? @unique
+  match   Match?  @relation(fields: [matchId], references: [id])
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Account {
@@ -187,4 +200,207 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+//
+// ---------------------------
+// Enums
+// ---------------------------
+//
+
+enum GameDataStatus {
+  DRAFT
+  PUBLISHED
+  DEPRECATED
+}
+
+enum EquipmentType {
+  WEAPON
+  ARMOR
+  CATALYST
+  TRINKET
+  AUGMENT
+}
+
+enum EquipmentSlot {
+  MAIN_HAND
+  OFF_HAND
+  HELMET
+  CHEST
+  GAUNTLETS
+  GREAVES
+  // Future:
+  // RING_1
+  // RING_2
+  // AMULET
+  // RELIC
+  // AUGMENT_1
+  // AUGMENT_2
+}
+
+enum ActionCategory {
+  WEAPON_ATTACK
+  CAST
+  MOBILITY
+  UTILITY
+}
+
+//
+// ---------------------------
+// Template + Publishing Layer
+// ---------------------------
+//
+
+model GameDataBundle {
+  id       String         @id @default(uuid())
+  label    String         @unique // e.g. "demo-v0", "season-1"
+  status   GameDataStatus @default(DRAFT)
+  isActive Boolean        @default(false)
+
+  // Optional: store where export is written (repo path, R2 key, etc.)
+  exportTarget String? // e.g. "r2://crucible-gamedata/bundles/demo-v0.json"
+  gitCommitSha String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  equipmentTemplates EquipmentTemplate[] @relation("BundleEquipmentTemplates")
+  actionTemplates    ActionTemplate[]    @relation("BundleActionTemplates")
+}
+
+model EquipmentTemplate {
+  id          String  @id @default(uuid())
+  key         String  @unique // canonical ID used in JSON/TS (e.g. "iron_longsword")
+  name        String
+  description String?
+
+  status  GameDataStatus @default(DRAFT)
+  version Int            @default(1)
+
+  type    EquipmentType
+  slot    EquipmentSlot
+  subtype String // e.g. "SWORD", "SPEAR", "BOW", "HELM", "CHEST", "STAFF", "SEAL"
+  tags    String[] // e.g. ["starter", "melee", "slash"]
+
+  // Flexible stat modifiers (template baseline)
+  // Example: { "def": 3, "speed": -1, "staminaRegenPct": -5 }
+  baseStatMods Json @default("{}")
+
+  // Scaling rules for weapons/catalysts
+  // Example: { "str": 0.6, "dex": 0.4 } or { "arc": 1.0 }
+  scaling Json @default("{}")
+
+  // Optional rules for rarity/affixes/loot (can ignore for demo)
+  // Example: { "allowedRarities": ["COMMON","RARE"], "affixPools": ["pool:melee_a"], "weights": {...} }
+  rarityRules Json @default("{}")
+
+  // UI/asset metadata for rendering/admin preview
+  // Example: { "iconKey": "sword_iron", "spriteKey": "itm_sword_iron" }
+  ui Json @default("{}")
+
+  // If you want to tie templates to a bundle/version
+  bundleId String?
+  bundle   GameDataBundle? @relation("BundleEquipmentTemplates", fields: [bundleId], references: [id])
+
+  // Join to actions enabled by this equipment (weapon attacks, cast slots, etc.)
+  actions EquipmentTemplateAction[]
+
+  // Reverse relation to player-owned instances (Equipment rows)
+  instances Equipment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ActionTemplate {
+  id          String  @id @default(uuid())
+  key         String  @unique // e.g. "atk_sword_slash_light"
+  name        String
+  description String?
+
+  status  GameDataStatus @default(DRAFT)
+  version Int            @default(1)
+
+  category ActionCategory
+
+  // Core pacing
+  cooldownMs Int @default(0)
+  castTimeMs Int @default(0)
+
+  staminaCost Int @default(0)
+  manaCost    Int @default(0)
+
+  // Flexible behavior definitions:
+  // - hitboxConfig: { shape: "ARC", radius: 1.8, angleDeg: 80 }
+  // - projectileConfig: { speed: 12, radius: 0.2, ttlMs: 1200 }
+  // - damage: { base: 12, type: "PHYSICAL", scaling: { str: 0.7 } }
+  hitboxConfig     Json @default("{}")
+  projectileConfig Json @default("{}")
+  damageConfig     Json @default("{}")
+  effectConfig     Json @default("{}") // buffs, debuffs, on-hit effects, etc.
+
+  // Optional bundle/version link
+  bundleId String?
+  bundle   GameDataBundle? @relation("BundleActionTemplates", fields: [bundleId], references: [id])
+
+  // Backlink to equipment templates
+  equipment EquipmentTemplateAction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model EquipmentTemplateAction {
+  id                  String @id @default(uuid())
+  equipmentTemplateId String
+  actionTemplateId    String
+
+  // Optional: ordering / slot binding (useful for action bars)
+  sortOrder Int @default(0)
+
+  equipmentTemplate EquipmentTemplate @relation(fields: [equipmentTemplateId], references: [id], onDelete: Cascade)
+  actionTemplate    ActionTemplate    @relation(fields: [actionTemplateId], references: [id], onDelete: Cascade)
+
+  @@unique([equipmentTemplateId, actionTemplateId])
+  @@index([equipmentTemplateId])
+  @@index([actionTemplateId])
+}
+
+//
+// ---------------------------
+// Equipping + Loadout Layer
+// ---------------------------
+//
+
+model GladiatorEquippedItem {
+  id          String        @id @default(uuid())
+  gladiatorId String
+  slot        EquipmentSlot
+  equipmentId String
+
+  gladiator Gladiator @relation(fields: [gladiatorId], references: [id], onDelete: Cascade)
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([gladiatorId, slot]) // only one item per slot
+  @@index([equipmentId])
+}
+
+model GladiatorLoadout {
+  id          String    @id @default(uuid())
+  gladiatorId String    @unique
+  gladiator   Gladiator @relation(fields: [gladiatorId], references: [id], onDelete: Cascade)
+
+  // Prepared spells: store IDs matching SpellTemplate keys (future)
+  preparedSpellIds String[] // ordered, corresponds to catalyst spell slots
+
+  // Equipped abilities: for later (class abilities / perks)
+  equippedAbilityIds String[] // ordered/bound to UI slots later
+
+  // Optional: metadata (e.g. "demo loadout 1")
+  label String?
+
+  updatedAt DateTime @updatedAt
 }
