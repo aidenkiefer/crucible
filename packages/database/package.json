@@ -2,6 +2,11 @@
   "name": "@gladiator/database",
   "version": "0.1.0",
   "main": "./src/client.ts",
+  "turbo": {
+    "build": {
+      "outputs": []
+    }
+  },
   "scripts": {
     "build": "prisma generate",
     "db:generate": "prisma generate",

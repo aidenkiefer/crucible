@@ -34,6 +34,7 @@ function AnimatedTorch({ mirror = false }: { mirror?: boolean }) {
               background: 'radial-gradient(circle, rgba(251, 146, 60, 0.4) 0%, rgba(251, 146, 60, 0.15) 40%, transparent 70%)',
             }}
           />
+          {/* eslint-disable-next-line @next/next/no-img-element -- animated gif; next/image not needed */}
           <img
             src="/fire-animation.gif"
             alt=""

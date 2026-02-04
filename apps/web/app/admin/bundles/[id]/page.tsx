@@ -39,6 +39,7 @@ export default function BundleDetailPage() {
 
   useEffect(() => {
     fetchBundle()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run on id change only
   }, [params.id])
 
   async function fetchBundle() {

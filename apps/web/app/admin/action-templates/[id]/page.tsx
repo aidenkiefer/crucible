@@ -33,6 +33,7 @@ export default function EditActionTemplatePage() {
 
   useEffect(() => {
     fetchTemplate()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run on id change only
   }, [params.id])
 
   async function fetchTemplate() {
