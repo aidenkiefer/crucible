@@ -21,8 +21,21 @@ export function useRealTimeMatch(matchId: string, gladiatorId: string) {
     socket.emit('match:join', { matchId })
 
     // Listen for state updates (20Hz from server)
-    socket.on('match:state', (state: CombatState) => {
-      setCombatState(state)
+    socket.on('match:state', (state: any) => {
+      // Convert projectiles array to Map (Sprint 4)
+      const projectilesMap = new Map()
+      if (state.projectiles && Array.isArray(state.projectiles)) {
+        state.projectiles.forEach((p: any) => {
+          projectilesMap.set(p.id, p)
+        })
+      }
+
+      const combatState: CombatState = {
+        ...state,
+        projectiles: projectilesMap,
+      }
+
+      setCombatState(combatState)
 
       if (state.winner != null) {
         setIsComplete(true)

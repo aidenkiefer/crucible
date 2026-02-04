@@ -223,6 +223,8 @@ function startStateBroadcast(matchId: string) {
         isInvulnerable: state.combatant2.isInvulnerable,
         currentAction: state.combatant2.currentAction,
       },
+      // Convert projectiles Map to array for JSON serialization (Sprint 4)
+      projectiles: Array.from(state.projectiles.values()),
       winner: state.winner,
     })
 

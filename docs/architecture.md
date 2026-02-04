@@ -71,18 +71,17 @@ Gladiator Coliseum is built as a **three-tier architecture** with clear separati
 - NextAuth.js
 
 **Key Pages:**
-- `/` - Home
+- `/` - Home (marketing landing when signed out; logged-in dashboard: Forge, Glory Battle, Enter Arena, Arena Status, War Council for admins)
 - `/auth/signin` - Authentication
 - `/mint` - NFT minting
-- `/match/[matchId]` - Combat arena
-- `/inventory` - Equipment management
-- `/quick-match` - Matchmaking
-- `/friends` - Social features
+- `/arena` - Arena entry; create CPU match (**Sprint 3.5**), navigate to `/match/[matchId]`
+- `/match/[matchId]` - Real-time combat (Canvas, sprites, WASD + mouse, client prediction, 4 weapons, projectiles, WeaponSelector, MatchHUD; **Sprints 3–4**)
 - `/admin` - Admin dashboard (game data authoring; **Sprint 2.5**)
   - `/admin/bundles` - List/create bundles, validate, publish, activate
   - `/admin/equipment-templates` - CRUD equipment templates
   - `/admin/action-templates` - CRUD action templates
   - Admin routes are protected by middleware; only users with `isAdmin` can access.
+- *(Planned: `/inventory`, `/quick-match`, `/friends` — Sprints 5–6)*
 
 **State Management:**
 - React Context for global state
@@ -119,22 +118,23 @@ Gladiator Coliseum is built as a **three-tier architecture** with clear separati
 
 #### MatchInstance
 - Runs a single match lifecycle
-- Executes combat engine at **20Hz (50ms tick)**
-- Processes player actions via `submitAction()`
+- Executes combat engine at **20Hz (50ms tick)**; combatants have **equipped weapon** (default Sword)
+- Processes player actions via `submitAction()`; engine dispatches by weapon (melee vs projectile)
 - Generates CPU AI actions automatically
-- Stores state snapshots every 500ms
-- Emits combat events (damage, deaths, dodges)
+- Combat state includes **projectiles** map (Sprint 4); broadcast in `match:state`
+- Emits combat events (damage, deaths, dodges, projectile spawn)
 - Handles match completion and cleanup
 
 #### CombatEngine
-- Server-authoritative **real-time** combat simulation
+- Server-authoritative **real-time** combat simulation (**Sprints 2–4**)
 - **20Hz (50ms) tick rate** — continuous movement and actions
-- **Physics:** WASD velocity-based movement, 800×600 arena, body collision with push-back
-- **Sword weapon:** 90° arc, 80-unit range; damage scales with STR; stamina 15, cooldown 800ms
-- **Dodge roll:** 200ms deterministic i-frames (no RNG), 100 units in 300ms; stamina 20, cooldown 1000ms
-- **Stamina:** regen 10/s (scales with CON); pool 100 + (CON × 5)
-- **HP:** pool 100 + (CON × 10); DEF provides damage reduction (up to 75% max)
-- Determines match winner
+- **Physics:** Uses **shared physics** package (`packages/shared/src/physics`); WASD velocity-based movement, arena bounds, body collision, dodge roll
+- **Multi-weapon (Sprint 4):** Sword (90° arc), Spear (30° thrust), Bow (projectile), Dagger (60° quick); each with range, damage, scaling (STR/DEX), stamina cost, cooldown
+- **Projectiles:** Server-side simulation for Bow; spawn, move, collide, damage; removed on hit/expiry/out-of-bounds
+- **Dodge roll:** Deterministic i-frames; stamina and cooldown from constants
+- **Stamina & HP:** Regen and pools scale with CON; DEF for damage reduction
+- **Damage:** Uses **shared combat** library (`packages/shared/src/combat`) for pure damage calculations
+- Determines match winner; emits combat events (damage, projectile spawn, etc.)
 
 #### MatchmakingService
 - Maintains queue of players seeking matches (PvP in Sprint 6)
@@ -170,7 +170,29 @@ Gladiator Coliseum is built as a **three-tier architecture** with clear separati
 
 ---
 
-### 3. Database (Supabase / PostgreSQL)
+### 3. Shared Libraries (`packages/shared`)
+
+**Physics (Sprint 3.5)** — `src/physics/`
+- Pure, deterministic movement and collision used by **both** game server (authoritative) and frontend (client prediction)
+- Types: Vec2, Velocity, BoundingBox, Circle, Rectangle
+- Vector math: normalize, magnitude, distance, lerp, clampMagnitude
+- Movement: integrate, clampToArena, calculateVelocity, calculateDodgeVelocity
+- Collision: circle-vs-circle, combatant hitbox, melee arc
+- Constants: TICK_RATE, ARENA dimensions, movement/dodge/stamina values
+- No Node-only dependencies; runs in browser and Node
+
+**Combat (Sprint 4)** — `src/combat/`
+- Pure stat and damage calculations; weapon definitions; projectile physics
+- **stats.ts:** calculateDerivedStats, stamina regen, hasStamina, consumeStamina
+- **damage.ts:** calculateRawDamage, calculateFinalDamage, applyDamageToHp
+- **weapons.ts:** WEAPONS constant (Sword, Spear, Bow, Dagger) with range, pattern, damage, scaling, cooldowns
+- **projectiles.ts:** createProjectile, updateProjectilePosition, expiry, bounds, collision checks
+- **types.ts:** BaseAttributes, DerivedStats, WeaponDefinition, ProjectileState, WeaponType, AttackPattern
+- Server uses for authoritative simulation; client can use for prediction or UI (e.g. cooldown display)
+
+---
+
+### 4. Database (Supabase / PostgreSQL)
 
 **Location:** `packages/database/`
 
@@ -259,7 +281,7 @@ Full field list and enums: **docs/data-glossary.md**. Equipment design: **docs/f
 
 ---
 
-### 4. Blockchain Layer
+### 5. Blockchain Layer
 
 **Location:** `contracts/`
 
@@ -318,39 +340,39 @@ Frontend → Poll/Fetch → Display NFT
 ### Combat Flow (CPU Match)
 
 ```
-User → Select Gladiator → Frontend
+User → Open /arena → Frontend (Sprint 3.5: "Fight CPU" → useCreateMatch)
          ↓
 Frontend → match:create (CPU) → Game Server (WebSocket)
          ↓
 Game Server → Create MatchInstance → MatchManager
          ↓
+Frontend → match:created (matchId) → Frontend navigates to /match/[matchId]
+         ↓
 Frontend → match:start → Game Server
          ↓
 MatchInstance → Start 20Hz tick loop (50ms) → Combat Engine
          ↓ (every 50ms)
-Combat Engine → Process player + CPU actions → Physics, damage, stamina
+Combat Engine → Process player + CPU actions → Physics (shared), damage (shared), projectiles (Sprint 4)
          ↓
-Game Server → Broadcast match:state + match:events → WebSocket (20Hz)
+Game Server → Broadcast match:state (combatants + projectiles) → WebSocket (20Hz)
          ↓
-Frontend → Receive state → Render arena (Sprint 3: Canvas 60 FPS)
+Frontend → Receive state → Client prediction for local player (Sprint 3.5); interpolate opponent; render projectiles (Sprint 4)
          ↓
-User → WASD / attack / dodge → Frontend
+User → WASD / mouse / attack (L/R click, Space) / dodge / weapon 1–4 → Frontend
          ↓
-Frontend → match:action → Game Server
+Frontend → match:input (throttled ~60Hz) → Game Server
          ↓
 MatchInstance → submitAction() → Next tick
          ↓
 [Repeat until health = 0]
          ↓
-Game Server → match:completed → Frontend
+Game Server → match:complete → Frontend
 Game Server → Save match → Database
-Game Server → Award XP → Database (Sprint 5)
-Game Server → Generate loot → Database (Sprint 5)
          ↓
-Frontend → Show result → User
+Frontend → Victory/Defeat; "Fight Again" creates new match (Sprint 3.5) → User
 ```
 
-**WebSocket events (combat):** Client → Server: `match:create`, `match:start`, `match:action`, `match:join`, `match:leave`. Server → Client: `match:created`, `match:started`, `match:state` (20Hz), `match:events`, `match:completed`, `match:error`.
+**WebSocket events (combat):** Client → Server: `match:create`, `match:start`, `match:input`, `match:join`, `match:leave`. Server → Client: `match:created`, `match:started`, `match:state` (20Hz; includes projectiles), `match:events`, `match:complete`, `match:error`.
 
 ### PvP Match Flow
 

@@ -1,4 +1,5 @@
 import { CombatantData } from '@gladiator/shared/src/combat/types'
+import type { ProjectileState } from '@gladiator/shared/src/combat'
 import { Direction } from '@/lib/sprites/types'
 
 export class Renderer {
@@ -152,6 +153,43 @@ export class Renderer {
 
     const barY = y - radius - 15
     this.drawStatusBars(combatant, x, barY)
+  }
+
+  /**
+   * Draw projectile (Sprint 4)
+   */
+  drawProjectile(projectile: ProjectileState) {
+    const x = projectile.pos.x
+    const y = projectile.pos.y
+    const radius = projectile.radius * 10 // Scale up for visibility (0.3 → 3px)
+
+    // Draw projectile body (yellow/orange for arrows)
+    this.ctx.fillStyle = '#fbbf24' // Amber/orange
+    this.ctx.beginPath()
+    this.ctx.arc(x, y, radius, 0, Math.PI * 2)
+    this.ctx.fill()
+
+    // Draw projectile trail
+    const trailLength = 8
+    const angle = Math.atan2(projectile.vel.y, projectile.vel.x)
+    const trailX = x - Math.cos(angle) * trailLength
+    const trailY = y - Math.sin(angle) * trailLength
+
+    this.ctx.strokeStyle = '#fbbf24'
+    this.ctx.lineWidth = 2
+    this.ctx.globalAlpha = 0.5
+    this.ctx.beginPath()
+    this.ctx.moveTo(x, y)
+    this.ctx.lineTo(trailX, trailY)
+    this.ctx.stroke()
+    this.ctx.globalAlpha = 1.0
+
+    // Draw glow effect
+    this.ctx.strokeStyle = '#fef3c7' // Light amber
+    this.ctx.lineWidth = 1
+    this.ctx.beginPath()
+    this.ctx.arc(x, y, radius + 1, 0, Math.PI * 2)
+    this.ctx.stroke()
   }
 
   /**

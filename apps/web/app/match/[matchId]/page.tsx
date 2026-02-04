@@ -1,15 +1,20 @@
 'use client'
 
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ArenaCanvas } from '@/components/arena/ArenaCanvas'
 import { MatchHUD } from '@/components/arena/MatchHUD'
+import { WeaponSelector } from '@/components/arena/WeaponSelector'
 import { useRealTimeMatch } from '@/hooks/useRealTimeMatch'
 import { useGameInput } from '@/hooks/useGameInput'
+import { useClientPrediction } from '@/hooks/useClientPrediction'
+import { useCreateMatch } from '@/hooks/useCreateMatch'
+import { WeaponType, Weapons } from '@gladiator/shared/src/combat'
 
 export default function MatchPage() {
   const params = useParams()
+  const router = useRouter()
   const { data: session } = useSession()
   const matchId = params.matchId as string
 
@@ -18,7 +23,42 @@ export default function MatchPage() {
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const { combatState, isConnected, isComplete, submitInput } = useRealTimeMatch(matchId, gladiatorId)
-  const input = useGameInput(canvasRef)
+  const { createMatch, isCreating } = useCreateMatch()
+  const [fightAgainError, setFightAgainError] = useState<string | null>(null)
+
+  // Weapon selection (Sprint 4)
+  const [currentWeapon, setCurrentWeapon] = useState<WeaponType>(WeaponType.Sword)
+  const weapons = Weapons.getAllWeaponTypes()
+
+  const handleWeaponChange = (weaponIndex: number) => {
+    if (weaponIndex >= 0 && weaponIndex < weapons.length) {
+      setCurrentWeapon(weapons[weaponIndex])
+    }
+  }
+
+  const input = useGameInput(canvasRef, {
+    onWeaponChange: handleWeaponChange,
+  })
+
+  // Client-side prediction for local player
+  const playerCombatantData =
+    combatState?.combatant1.id === gladiatorId
+      ? combatState.combatant1
+      : combatState?.combatant2.id === gladiatorId
+        ? combatState.combatant2
+        : null
+
+  const predictedState = useClientPrediction(
+    playerCombatantData
+      ? {
+          position: playerCombatantData.position,
+          facing: playerCombatantData.facingAngle,
+          moveSpeed: 150, // TODO: Get from derived stats when available
+        }
+      : null,
+    input,
+    true // Always predict for local player
+  )
 
   // Submit input continuously
   useEffect(() => {
@@ -73,6 +113,14 @@ export default function MatchPage() {
           <ArenaCanvas
             combatState={combatState}
             playerGladiatorId={gladiatorId}
+            predictedState={predictedState}
+          />
+        </div>
+
+        <div className="flex justify-center mb-4">
+          <WeaponSelector
+            currentWeapon={currentWeapon}
+            onWeaponChange={setCurrentWeapon}
           />
         </div>
 
@@ -88,11 +136,44 @@ export default function MatchPage() {
                   <span className="text-coliseum-red">Defeat</span>
                 )}
               </h2>
+              {fightAgainError && (
+                <p className="text-coliseum-red text-sm mb-4">
+                  {fightAgainError}
+                </p>
+              )}
               <button
-                onClick={() => window.location.reload()}
-                className="btn-primary"
+                onClick={async () => {
+                  setFightAgainError(null)
+
+                  // Create new match with same stats
+                  const mockGladiatorStats = {
+                    constitution: 10,
+                    strength: 10,
+                    dexterity: 10,
+                    speed: 10,
+                    defense: 10,
+                    magicResist: 10,
+                    arcana: 10,
+                    faith: 10,
+                  }
+
+                  const newMatchId = await createMatch({
+                    userId: session?.user?.id || session?.user?.email || 'unknown',
+                    gladiatorId,
+                    gladiatorStats: mockGladiatorStats,
+                    isCpuMatch: true,
+                  })
+
+                  if (newMatchId) {
+                    router.push(`/match/${newMatchId}`)
+                  } else {
+                    setFightAgainError('Failed to create new match')
+                  }
+                }}
+                disabled={isCreating}
+                className="btn-primary disabled:opacity-50"
               >
-                Fight Again
+                {isCreating ? 'Creating Match...' : 'Fight Again'}
               </button>
             </div>
           </div>

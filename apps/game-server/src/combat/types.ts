@@ -67,8 +67,9 @@ export interface Combatant {
   isInvulnerable: boolean // during dodge roll i-frames
   invulnerabilityEndTime: number // timestamp when i-frames end
 
-  // Weapon
+  // Weapon (Sprint 4)
   equippedWeapon: WeaponType
+  weapon: WeaponType // Alias for currently equipped weapon
 
   // Action state
   currentAction: ActionState | null
@@ -139,6 +140,9 @@ export type Action = MoveAction | AttackAction | DodgeAction
 // Combat State
 // ============================================================================
 
+// Import ProjectileState from shared
+import type { ProjectileState } from '@gladiator/shared/src/combat'
+
 export interface CombatState {
   combatant1: Combatant
   combatant2: Combatant
@@ -146,6 +150,7 @@ export interface CombatState {
   elapsedTime: number // milliseconds
   winner: string | null
   arenaSize: Vector2D
+  projectiles: Map<string, ProjectileState> // Sprint 4
 }
 
 // ============================================================================
@@ -161,6 +166,7 @@ export enum CombatEventType {
   DodgeActivated = 'DodgeActivated',
   InvulnerabilityEnded = 'InvulnerabilityEnded',
   ActionFailed = 'ActionFailed', // e.g. insufficient stamina
+  ProjectileSpawned = 'ProjectileSpawned', // Sprint 4
 }
 
 export interface CombatEvent {
@@ -171,43 +177,15 @@ export interface CombatEvent {
 }
 
 // ============================================================================
-// Constants
+// Constants (Re-exported from shared physics)
 // ============================================================================
 
+import { PHYSICS_CONSTANTS } from '@gladiator/shared/src/physics'
+
 export const COMBAT_CONSTANTS = {
-  TICK_RATE: 20, // Hz
-  TICK_INTERVAL: 50, // milliseconds (1000 / 20)
+  ...PHYSICS_CONSTANTS,
 
-  // Arena
-  ARENA_WIDTH: 800,
-  ARENA_HEIGHT: 600,
-
-  // Dodge roll
-  DODGE_DURATION: 300, // milliseconds
-  DODGE_IFRAMES_DURATION: 200, // milliseconds of invulnerability
-  DODGE_DISTANCE: 100, // units traveled during roll
-  DODGE_STAMINA_COST: 20,
-  DODGE_COOLDOWN: 1000, // milliseconds
-
-  // Stamina
-  BASE_STAMINA_REGEN: 10, // per second
-
-  // Movement
-  BASE_MOVE_SPEED: 150, // units per second
-
-  // HP
-  BASE_HP: 100,
-  HP_PER_CONSTITUTION: 10,
-
-  // Stamina pool
-  BASE_STAMINA: 100,
-  STAMINA_PER_CONSTITUTION: 5,
-
-  // Defense
-  DEFENSE_TO_REDUCTION: 0.01, // 1% reduction per defense point
-  MAX_DAMAGE_REDUCTION: 0.75, // max 75% reduction
-
-  // Weapon configs
+  // Weapon configs (game-specific, not in shared physics)
   SWORD_CONFIG: {
     type: WeaponType.Sword,
     damage: 20,

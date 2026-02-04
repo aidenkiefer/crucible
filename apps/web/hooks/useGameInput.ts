@@ -2,14 +2,26 @@
 
 import { useEffect, useRef, useState } from 'react'
 
+export interface GameAction {
+  type: string // 'Attack' | 'Dodge'
+  slot?: 'mainHand' | 'offHand' // For attacks
+}
+
 interface GameInput {
   moveX: number
   moveY: number
   facing: number
-  actions: string[]
+  actions: GameAction[]
 }
 
-export function useGameInput(canvasRef: React.RefObject<HTMLCanvasElement>) {
+interface UseGameInputOptions {
+  onWeaponChange?: (weaponIndex: number) => void
+}
+
+export function useGameInput(
+  canvasRef: React.RefObject<HTMLCanvasElement>,
+  options?: UseGameInputOptions
+) {
   const [input, setInput] = useState<GameInput>({
     moveX: 0,
     moveY: 0,
@@ -24,18 +36,25 @@ export function useGameInput(canvasRef: React.RefObject<HTMLCanvasElement>) {
     const handleKeyDown = (e: KeyboardEvent) => {
       keysPressed.current.add(e.key.toLowerCase())
 
+      // Weapon switching (1-4)
+      if (e.key >= '1' && e.key <= '4' && !e.repeat) {
+        const weaponIndex = parseInt(e.key) - 1
+        options?.onWeaponChange?.(weaponIndex)
+        return
+      }
+
       // Action keys
       if (e.key === ' ' && !e.repeat) {
-        // Space: Attack
+        // Space: Attack with main hand (for accessibility)
         setInput((prev) => ({
           ...prev,
-          actions: [...prev.actions, 'Attack'],
+          actions: [...prev.actions, { type: 'Attack', slot: 'mainHand' }],
         }))
       } else if (e.key === 'Shift' && !e.repeat) {
         // Shift: Dodge
         setInput((prev) => ({
           ...prev,
-          actions: [...prev.actions, 'Dodge'],
+          actions: [...prev.actions, { type: 'Dodge' }],
         }))
       }
     }
@@ -54,9 +73,43 @@ export function useGameInput(canvasRef: React.RefObject<HTMLCanvasElement>) {
       }
     }
 
+    const handleMouseDown = (e: MouseEvent) => {
+      // Only handle clicks on the canvas
+      if (!canvasRef.current) return
+      const target = e.target as HTMLElement
+      if (!canvasRef.current.contains(target)) return
+
+      e.preventDefault() // Prevent default behavior
+
+      if (e.button === 0) {
+        // Left click: Main hand attack
+        setInput((prev) => ({
+          ...prev,
+          actions: [...prev.actions, { type: 'Attack', slot: 'mainHand' }],
+        }))
+      } else if (e.button === 2) {
+        // Right click: Off hand attack
+        setInput((prev) => ({
+          ...prev,
+          actions: [...prev.actions, { type: 'Attack', slot: 'offHand' }],
+        }))
+      }
+    }
+
+    const handleContextMenu = (e: MouseEvent) => {
+      // Prevent context menu on canvas
+      if (!canvasRef.current) return
+      const target = e.target as HTMLElement
+      if (canvasRef.current.contains(target)) {
+        e.preventDefault()
+      }
+    }
+
     window.addEventListener('keydown', handleKeyDown)
     window.addEventListener('keyup', handleKeyUp)
     window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mousedown', handleMouseDown)
+    window.addEventListener('contextmenu', handleContextMenu)
 
     // Update input state based on keys pressed
     const inputInterval = setInterval(() => {
@@ -83,9 +136,11 @@ export function useGameInput(canvasRef: React.RefObject<HTMLCanvasElement>) {
       window.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('keyup', handleKeyUp)
       window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mousedown', handleMouseDown)
+      window.removeEventListener('contextmenu', handleContextMenu)
       clearInterval(inputInterval)
     }
-  }, [canvasRef])
+  }, [canvasRef, options])
 
   return input
 }

@@ -234,7 +234,7 @@ export default async function Home() {
             <div className="h-px flex-1 bg-coliseum-bronze/30" />
           </div>
 
-          <div className={`grid gap-4 ${isAdmin ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}>
+          <div className="grid gap-4 md:grid-cols-3">
             <ActionCard
               href="/mint"
               icon="🔥"

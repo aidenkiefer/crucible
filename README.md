@@ -43,7 +43,7 @@ The demo succeeds when a user can:
 
 ## Status & Roadmap
 
-**Sprint 0 (Setup), Sprint 1 (Auth & NFT Minting), Sprint 2 (Real-Time Combat), and Sprint 2.5 (Admin UI)** are complete. **Sprint 3 (Frontend Real-Time Combat UI)** is **in progress**.
+**Sprint 0 (Setup), Sprint 1 (Auth & NFT Minting), Sprint 2 (Real-Time Combat), Sprint 2.5 (Admin UI), Sprint 3 (Frontend Combat UI), Sprint 3.5 (Remaining UI / Match Flow), and Sprint 4 (Weapons & Projectiles)** are complete. **Next: Sprint 5 (Progression & Loot)**.
 
 | Sprint | Focus | Status |
 |--------|--------|--------|
@@ -51,13 +51,14 @@ The demo succeeds when a user can:
 | **1** | Authentication & NFT minting (social auth, wallet, mint UI, event listener, admin) | ✅ Complete |
 | **2** | Combat system — CPU battles (20Hz real-time engine, WASD movement, sword, dodge roll, CPU AI, WebSocket) | ✅ Complete |
 | **2.5** | Admin UI — game data authoring (bundles, equipment/action templates, validate, publish, export, runtime bundle loader) | ✅ Complete |
-| **3** | Frontend — Real-time combat UI (Canvas 60 FPS, WASD + mouse aim, client prediction, interpolation, match HUD) | 🚧 In progress |
-| **4** | Weapons & projectiles (Sword, Spear, Bow, Dagger; server projectiles, weapon UI) | Planned |
-| **5** | Progression & loot (XP, leveling, skill trees, equipment, loot engine, crafting, inventory) | Planned |
+| **3** | Frontend — Real-time combat UI (Canvas 60 FPS, sprites, WASD + mouse, interpolation, MatchHUD, match page) | ✅ Complete |
+| **3.5** | Frontend — Shared physics, client prediction, mouse main/off-hand, match creation flow, verification | ✅ Complete |
+| **4** | Weapons & projectiles (Sword, Spear, Bow, Dagger; shared combat lib; server projectiles; WeaponSelector; client projectile rendering) | ✅ Complete |
+| **5** | Progression & loot (XP, leveling, skill trees, equipment, loot engine, crafting, inventory) | **Next** |
 | **6** | Multiplayer — Real-time PvP (matchmaking, friends, challenges, dual-player WebSocket) | Planned |
 | **7** | Polish, testing & deployment (bug fixes, tests, Vercel + Railway, mainnet guide) | Planned |
 
-**Currently built:** Monorepo (pnpm, Turborepo), Next.js 14 frontend (auth, wallet, mint, **admin UI for game data**: bundles, equipment/action template CRUD, validation, publish, export to Supabase Storage, **Sprint 3 arena UI scaffolding**: match page, Canvas-based `ArenaCanvas`, `MatchHUD`, home marketing/landing page, Blood & Bronze visual pass), Express game server (Socket.io, **20Hz combat engine**, **CPU AI**, **match manager**, **WebSocket match handlers**, **bundle loader** for published game data, blockchain event listener), Gladiator NFT contract (Hardhat, **8 stats**, 5 used in combat), Supabase + Prisma.
+**Currently built:** Monorepo (pnpm, Turborepo), Next.js 14 frontend (auth, wallet, mint, **admin UI** for game data; **arena entry** at `/arena` with match creation; **match page** with Canvas `ArenaCanvas`, `MatchHUD`, `WeaponSelector`, client prediction, 4 weapons, projectile rendering; home marketing/landing, Blood & Bronze UI), Express game server (Socket.io, **20Hz combat engine** with **multi-weapon** and **server projectiles**, CPU AI, match manager, **match:create/start** handlers, bundle loader, blockchain listener), **packages/shared** (**physics** for movement/collision, **combat** for stats/damage/weapons/projectiles), Gladiator NFT contract (Hardhat, 8 stats), Supabase + Prisma.
 
 Full plan: [Master Implementation Plan](docs/plans/00-MASTER-PLAN.md).
 
@@ -122,20 +123,18 @@ Not in scope for this demo:
 ```
 crucible/
 ├── apps/
-│   ├── web/              # Next.js frontend (auth, wallet, mint, admin UI — bundles, templates, publish/export)
-│   └── game-server/      # Express + Socket.io, combat engine, event listener
+│   ├── web/              # Next.js frontend (auth, wallet, mint, arena, match UI, admin UI)
+│   └── game-server/      # Express + Socket.io, 20Hz combat (multi-weapon, projectiles), event listener
 ├── packages/
-│   ├── shared/           # Shared types and constants
+│   ├── shared/           # Shared types, constants, physics (Sprint 3.5), combat (Sprint 4)
 │   └── database/         # Prisma schema and client
 ├── contracts/            # Gladiator NFT (Hardhat)
 ├── docs/
-│   ├── plans/            # 00-MASTER-PLAN + sprint plans (01–09)
+│   ├── plans/            # 00-MASTER-PLAN + sprint plans (01–09, sprint-3.5)
 │   ├── guides/           # Development setup, testing, deployment
 │   ├── features/         # Combat, equipment, planned-features
-│   ├── api/              # REST + WebSocket docs (as added)
-│   ├── SPRINT-1-SUMMARY.md
-│   ├── SPRINT-2-SUMMARY.md
-│   └── SPRINT-2.5-SUMMARY.md
+│   ├── SPRINT-1-SUMMARY.md … SPRINT-4-SUMMARY.md
+│   └── SPRINT-2.5-SUMMARY.md, SPRINT-3.5-SUMMARY.md
 └── README.md
 ```
 
@@ -170,14 +169,18 @@ pnpm dev
 | [docs/plans/02-sprint-1-auth-nft.md](docs/plans/02-sprint-1-auth-nft.md) | Sprint 1 plan (auth & NFT) |
 | [docs/plans/03-sprint-2-combat-cpu.md](docs/plans/03-sprint-2-combat-cpu.md) | Sprint 2 plan (real-time combat CPU) |
 | [docs/plans/09-sprint-2.5-admin-ui.md](docs/plans/09-sprint-2.5-admin-ui.md) | Sprint 2.5 plan (Admin UI — game data authoring, complete) |
-| [docs/plans/04-sprint-3-frontend-animations.md](docs/plans/04-sprint-3-frontend-animations.md) | Sprint 3 plan (frontend real-time combat UI) — **next** |
+| [docs/plans/04-sprint-3-frontend-animations.md](docs/plans/04-sprint-3-frontend-animations.md) | Sprint 3 plan (frontend real-time combat UI) |
+| [docs/plans/sprint-3.5.md](docs/plans/sprint-3.5.md) | Sprint 3.5 plan (remaining items: client prediction, match creation) |
 | [docs/plans/05-sprint-4-weapons-projectiles.md](docs/plans/05-sprint-4-weapons-projectiles.md) | Sprint 4 plan (weapons & projectiles) |
-| [docs/plans/06-sprint-5-progression-loot.md](docs/plans/06-sprint-5-progression-loot.md) | Sprint 5 plan (progression & loot) |
+| [docs/plans/06-sprint-5-progression-loot.md](docs/plans/06-sprint-5-progression-loot.md) | Sprint 5 plan (progression & loot) — **next** |
 | [docs/plans/07-sprint-6-multiplayer.md](docs/plans/07-sprint-6-multiplayer.md) | Sprint 6 plan (multiplayer PvP) |
 | [docs/plans/08-sprint-7-deployment.md](docs/plans/08-sprint-7-deployment.md) | Sprint 7 plan (deployment) |
 | [docs/SPRINT-1-SUMMARY.md](docs/SPRINT-1-SUMMARY.md) | Sprint 1 summary (complete) |
 | [docs/SPRINT-2-SUMMARY.md](docs/SPRINT-2-SUMMARY.md) | Sprint 2 summary (real-time combat, complete) |
 | [docs/SPRINT-2.5-SUMMARY.md](docs/SPRINT-2.5-SUMMARY.md) | Sprint 2.5 summary (Admin UI — bundles, templates, validate/publish/export, bundle loader, complete) |
+| [docs/SPRINT-3-SUMMARY.md](docs/SPRINT-3-SUMMARY.md) | Sprint 3 summary (Canvas arena, sprites, input, WebSocket, MatchHUD, match page) |
+| [docs/SPRINT-3.5-SUMMARY.md](docs/SPRINT-3.5-SUMMARY.md) | Sprint 3.5 summary (shared physics, client prediction, match creation, verification) |
+| [docs/SPRINT-4-SUMMARY.md](docs/SPRINT-4-SUMMARY.md) | Sprint 4 summary (weapons, projectiles, WeaponSelector, shared combat) |
 | [docs/guides/development-setup.md](docs/guides/development-setup.md) | Development environment setup |
 | [docs/guides/vercel-deployment.md](docs/guides/vercel-deployment.md) | Vercel deployment — Root Directory, env vars, checklist |
 | [docs/features/equipment.md](docs/features/equipment.md) | Equipment, loot, abilities — template/instance design, slots, authoring |

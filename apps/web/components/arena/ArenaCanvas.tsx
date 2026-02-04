@@ -2,6 +2,7 @@
 
 import { useRef, useEffect, useState } from 'react'
 import { CombatState } from '@gladiator/shared/src/combat/types'
+import type { Vec2 } from '@gladiator/shared/src/physics'
 import { Renderer } from './renderer'
 import { interpolatePosition, interpolateAngle } from './interpolation'
 import { spriteLoader } from '@/lib/sprites/SpriteLoader'
@@ -11,9 +12,10 @@ import { LoadedSprite } from '@/lib/sprites/types'
 interface ArenaCanvasProps {
   combatState: CombatState | null
   playerGladiatorId: string
+  predictedState?: { position: Vec2; facing: number } | null
 }
 
-export function ArenaCanvas({ combatState, playerGladiatorId }: ArenaCanvasProps) {
+export function ArenaCanvas({ combatState, playerGladiatorId, predictedState }: ArenaCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const rendererRef = useRef<Renderer | null>(null)
   const animationFrameRef = useRef<number>()
@@ -95,9 +97,17 @@ export function ArenaCanvas({ combatState, playerGladiatorId }: ArenaCanvasProps
         const combatant1 = combatState.combatant1
         const isPlayer1 = combatant1.id === playerGladiatorId
 
-        // Interpolate opponent movement (not player - prediction handled separately)
+        // Use predicted state for player, interpolate for opponent
         let renderCombatant1 = { ...combatant1 }
-        if (!isPlayer1 && prevStateRef.current) {
+        if (isPlayer1 && predictedState) {
+          // Use client prediction for local player
+          renderCombatant1 = {
+            ...combatant1,
+            position: predictedState.position,
+            facingAngle: predictedState.facing,
+          }
+        } else if (!isPlayer1 && prevStateRef.current) {
+          // Interpolate opponent movement
           const prevCombatant1 = prevStateRef.current.combatant1
           renderCombatant1 = {
             ...combatant1,
@@ -122,9 +132,17 @@ export function ArenaCanvas({ combatState, playerGladiatorId }: ArenaCanvasProps
         const combatant2 = combatState.combatant2
         const isPlayer2 = combatant2.id === playerGladiatorId
 
-        // Interpolate opponent movement
+        // Use predicted state for player, interpolate for opponent
         let renderCombatant2 = { ...combatant2 }
-        if (!isPlayer2 && prevStateRef.current) {
+        if (isPlayer2 && predictedState) {
+          // Use client prediction for local player
+          renderCombatant2 = {
+            ...combatant2,
+            position: predictedState.position,
+            facingAngle: predictedState.facing,
+          }
+        } else if (!isPlayer2 && prevStateRef.current) {
+          // Interpolate opponent movement
           const prevCombatant2 = prevStateRef.current.combatant2
           renderCombatant2 = {
             ...combatant2,
@@ -144,6 +162,13 @@ export function ArenaCanvas({ combatState, playerGladiatorId }: ArenaCanvasProps
         }
 
         renderer.drawUnit(renderCombatant2, spriteFrame2, isPlayer2, 'Player 2')
+
+        // Render projectiles (Sprint 4)
+        if (combatState.projectiles) {
+          for (const projectile of combatState.projectiles.values()) {
+            renderer.drawProjectile(projectile)
+          }
+        }
       }
 
       animationFrameRef.current = requestAnimationFrame(renderFrame)
@@ -156,7 +181,7 @@ export function ArenaCanvas({ combatState, playerGladiatorId }: ArenaCanvasProps
         cancelAnimationFrame(animationFrameRef.current)
       }
     }
-  }, [combatState, playerGladiatorId, duelistSprite, animationPlayers])
+  }, [combatState, playerGladiatorId, duelistSprite, animationPlayers, predictedState])
 
   return (
     <div className="relative">

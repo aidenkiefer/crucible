@@ -1,6 +1,7 @@
 /**
  * Physics System
  * Handles movement, collision detection, and dodge roll physics
+ * Now uses shared physics library for deterministic calculations
  */
 
 import {
@@ -11,32 +12,26 @@ import {
   COMBAT_CONSTANTS,
   DodgeAction,
 } from './types'
+import { Vector, Movement, Collision } from '@gladiator/shared/src/physics'
 
 // ============================================================================
-// Vector Math
+// Vector Math (Re-exported from shared)
 // ============================================================================
 
 export function normalizeVector(v: Vector2D): Vector2D {
-  const magnitude = Math.sqrt(v.x * v.x + v.y * v.y)
-  if (magnitude === 0) return { x: 0, y: 0 }
-  return {
-    x: v.x / magnitude,
-    y: v.y / magnitude,
-  }
+  return Vector.normalize(v)
 }
 
 export function vectorMagnitude(v: Vector2D): number {
-  return Math.sqrt(v.x * v.x + v.y * v.y)
+  return Vector.magnitude(v)
 }
 
 export function vectorDistance(a: Vector2D, b: Vector2D): number {
-  const dx = b.x - a.x
-  const dy = b.y - a.y
-  return Math.sqrt(dx * dx + dy * dy)
+  return Vector.distance(a, b)
 }
 
 export function scaleVector(v: Vector2D, scale: number): Vector2D {
-  return { x: v.x * scale, y: v.y * scale }
+  return Vector.scale(v, scale)
 }
 
 // ============================================================================
@@ -46,29 +41,20 @@ export function scaleVector(v: Vector2D, scale: number): Vector2D {
 /**
  * Update combatant position based on velocity
  * Called every tick (50ms)
+ * Uses shared Movement library for deterministic integration
  */
 export function updatePosition(combatant: Combatant, deltaTime: number): void {
-  const deltaSeconds = deltaTime / 1000
-
-  // Calculate displacement
-  const displacement = {
-    x: combatant.velocity.dx * deltaSeconds,
-    y: combatant.velocity.dy * deltaSeconds,
-  }
-
-  // Update position
-  combatant.position.x += displacement.x
-  combatant.position.y += displacement.y
-
-  // Apply arena boundaries (hard clamp)
-  combatant.position.x = Math.max(
-    0,
-    Math.min(COMBAT_CONSTANTS.ARENA_WIDTH, combatant.position.x)
+  const velocity = { x: combatant.velocity.dx, y: combatant.velocity.dy }
+  const newPos = Movement.updatePosition(
+    combatant.position,
+    velocity,
+    deltaTime,
+    COMBAT_CONSTANTS.ARENA_WIDTH,
+    COMBAT_CONSTANTS.ARENA_HEIGHT
   )
-  combatant.position.y = Math.max(
-    0,
-    Math.min(COMBAT_CONSTANTS.ARENA_HEIGHT, combatant.position.y)
-  )
+
+  combatant.position.x = newPos.x
+  combatant.position.y = newPos.y
 }
 
 /**
@@ -105,21 +91,18 @@ export function stopMovement(combatant: Combatant): void {
 /**
  * Perform a dodge roll in the given direction
  * Sets velocity for the duration and activates i-frames
+ * Uses shared Movement library for dodge velocity calculation
  */
 export function performDodgeRoll(
   combatant: Combatant,
   action: DodgeAction,
   currentTime: number
 ): void {
-  const normalized = normalizeVector(action.direction)
-
-  // Calculate dodge speed (distance / duration)
-  const dodgeSpeed =
-    (COMBAT_CONSTANTS.DODGE_DISTANCE / COMBAT_CONSTANTS.DODGE_DURATION) * 1000
+  const dodgeVel = Movement.calculateDodgeVelocity(action.direction)
 
   // Set velocity for dodge roll
-  combatant.velocity.dx = normalized.x * dodgeSpeed
-  combatant.velocity.dy = normalized.y * dodgeSpeed
+  combatant.velocity.dx = dodgeVel.x
+  combatant.velocity.dy = dodgeVel.y
 
   // Activate i-frames
   combatant.isInvulnerable = true
@@ -147,7 +130,7 @@ export function updateInvulnerability(
 
 /**
  * Check if an attack hits the target
- * Uses simple distance-based detection for Sprint 2 (Sword only)
+ * Uses shared Collision library for deterministic hit detection
  */
 export function checkAttackHit(
   attacker: Combatant,
@@ -155,56 +138,35 @@ export function checkAttackHit(
   attackRange: number,
   attackAngle: number = Math.PI / 2 // 90 degrees for sword arc
 ): boolean {
-  // Check if target is in range
-  const distance = vectorDistance(attacker.position, target.position)
-  if (distance > attackRange) {
-    return false
-  }
-
-  // Check if target is within attack arc
-  const directionToTarget = {
-    x: target.position.x - attacker.position.x,
-    y: target.position.y - attacker.position.y,
-  }
-
-  const angleToTarget = Math.atan2(directionToTarget.y, directionToTarget.x)
-  const angleDiff = Math.abs(angleToTarget - attacker.facingAngle)
-
-  // Normalize angle difference to [0, π]
-  const normalizedAngleDiff = Math.min(angleDiff, 2 * Math.PI - angleDiff)
-
-  // Check if within attack arc
-  return normalizedAngleDiff <= attackAngle / 2
+  return Collision.checkMeleeHit(
+    attacker.position,
+    attacker.facingAngle,
+    target.position,
+    attackRange,
+    attackAngle
+  )
 }
 
 /**
  * Check if two combatants are colliding (body collision)
- * Uses simple circle collision with radius 20 units
+ * Uses shared Collision library with BODY_RADIUS constant
  */
 export function checkCombatantCollision(c1: Combatant, c2: Combatant): boolean {
-  const BODY_RADIUS = 20
-  const distance = vectorDistance(c1.position, c2.position)
-  return distance < BODY_RADIUS * 2
+  return Collision.combatantCollision(c1.position, c2.position)
 }
 
 /**
  * Resolve combatant collision by pushing them apart
+ * Uses shared Collision library for deterministic resolution
  */
 export function resolveCombatantCollision(c1: Combatant, c2: Combatant): void {
-  const BODY_RADIUS = 20
-  const distance = vectorDistance(c1.position, c2.position)
+  const { pos1, pos2 } = Collision.resolveCombatantCollision(
+    c1.position,
+    c2.position
+  )
 
-  if (distance < BODY_RADIUS * 2 && distance > 0) {
-    const overlap = BODY_RADIUS * 2 - distance
-    const direction = {
-      x: (c2.position.x - c1.position.x) / distance,
-      y: (c2.position.y - c1.position.y) / distance,
-    }
-
-    // Push both combatants apart by half the overlap
-    c1.position.x -= direction.x * overlap / 2
-    c1.position.y -= direction.y * overlap / 2
-    c2.position.x += direction.x * overlap / 2
-    c2.position.y += direction.y * overlap / 2
-  }
+  c1.position.x = pos1.x
+  c1.position.y = pos1.y
+  c2.position.x = pos2.x
+  c2.position.y = pos2.y
 }

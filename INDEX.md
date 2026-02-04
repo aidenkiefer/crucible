@@ -27,10 +27,10 @@ crucible/
 │   │       │   ├── cpu-ai.ts    # CPU opponent: target selection, action choice, difficulty
 │   │       │   └── __tests__/cpu-ai.test.ts
 │   │       ├── combat/
-│   │       │   ├── engine.ts    # 20Hz combat engine (tick, actions, collisions, events)
-│   │       │   ├── damage-calculator.ts  # HP/stamina, damage, dodge/block
-│   │       │   ├── physics.ts   # Movement, velocity, hitboxes, dodge roll
-│   │       │   ├── types.ts     # Combatant, Action, CombatState, CombatEvent, COMBAT_CONSTANTS
+│   │       │   ├── engine.ts    # 20Hz combat; multi-weapon (Sword, Spear, Bow, Dagger); projectiles (Sprint 4)
+│   │       │   ├── damage-calculator.ts  # Thin wrapper over shared combat; HP/stamina, damage
+│   │       │   ├── physics.ts   # Uses shared physics (Sprint 3.5); movement, hitboxes, dodge
+│   │       │   ├── types.ts     # Combatant, CombatState, CombatEvent, WeaponType, projectiles
 │   │       │   └── __tests__/engine.test.ts
 │   │       ├── services/
 │   │       │   ├── abi.ts               # Gladiator NFT ABI for listener
@@ -63,30 +63,35 @@ crucible/
 │       │   │   ├── action-templates/    # List, [id], new
 │       │   │   ├── unauthorized/page.tsx
 │       │   │   └── components/AdminNav.tsx, JsonEditor.tsx
+│       │   ├── arena/page.tsx   # Sprint 3.5: match creation (Fight CPU), navigate to /match/[matchId]
 │       │   ├── auth/signin/page.tsx
 │       │   ├── mint/page.tsx    # Mint Gladiator NFT
-│       │   ├── match/[matchId]/page.tsx  # Sprint 3: real-time match UI (Canvas, HUD, WebSocket)
+│       │   ├── match/[matchId]/page.tsx  # Sprint 3+: real-time match (Canvas, HUD, prediction, weapons, projectiles)
 │       │   └── api/
 │       │       ├── auth/[...nextauth]/route.ts  # NextAuth API
 │       │       ├── user/link-wallet/route.ts    # Link wallet to user
 │       │       └── admin/   # Admin API (Sprint 2.5): bundles, action-templates, equipment-templates
 │       ├── components/
 │       │   ├── auth/SignInForm.tsx, SignInButton.tsx
-│       │   ├── arena/          # Sprint 3: interpolation.ts, renderer.ts, ArenaCanvas.tsx, MatchHUD.tsx
+│       │   ├── arena/          # Sprint 3–4: interpolation, renderer, ArenaCanvas, MatchHUD, WeaponSelector
 │       │   ├── mint/MintGladiator.tsx
 │       │   ├── providers/SessionProvider.tsx, WagmiProvider.tsx
+│       │   ├── ui/AnimatedTorch.tsx
 │       │   └── wallet/ConnectWallet.tsx
 │       ├── hooks/
 │       │   ├── useMintGladiator.ts
-│       │   ├── useSocket.ts        # Sprint 3: singleton Socket.io to game server
-│       │   ├── useRealTimeMatch.ts # Sprint 3: match:join/state/input/complete
-│       │   └── useGameInput.ts    # Sprint 3: WASD, mouse aim, Space/Shift actions
+│       │   ├── useSocket.ts           # Sprint 3: singleton Socket.io to game server
+│       │   ├── useRealTimeMatch.ts    # Sprint 3: match:join/state/input/complete; projectile Map (Sprint 4)
+│       │   ├── useGameInput.ts        # Sprint 3–3.5: WASD, mouse aim, Space/Shift, L/R click main/off-hand; 1–4 weapon (Sprint 4)
+│       │   ├── useClientPrediction.ts # Sprint 3.5: local player prediction, reconciliation
+│       │   └── useCreateMatch.ts      # Sprint 3.5: match:create, match:start, navigate to match
 │       ├── lib/
 │       │   ├── auth.ts         # NextAuth config, session
+│       │   ├── arena.ts        # Arena status (open/closed messages, NEXT_PUBLIC_ARENA_OPEN)
 │       │   ├── contracts.ts    # Contract addresses, ABIs
 │       │   ├── wagmi.ts        # Wagmi config, chains
 │       │   ├── sprites/        # Sprint 3: types.ts, SpriteLoader.ts, AnimationPlayer.ts
-│       │   └── admin/          # Admin (Sprint 2.5): validator.ts, exporter.ts
+│       │   └── admin/         # Admin (Sprint 2.5): validator.ts, exporter.ts
 │
 ├── contracts/
 │   ├── hardhat.config.ts       # Network config, Solidity version
@@ -110,10 +115,23 @@ crucible/
         ├── package.json
         ├── tsconfig.json
         └── src/
-            ├── index.ts        # Re-exports constants + types
+            ├── index.ts        # Re-exports constants, types, physics, combat
             ├── constants/index.ts   # COMBAT_TICK_INTERVAL, BASE_*, ACTION_CONFIG, XP_*, LOOT_*
             ├── types/index.ts  # GladiatorClass, User, Gladiator, Equipment, Match, etc.
-            └── combat/types.ts  # Sprint 3: CombatState, CombatantData for WebSocket/match UI
+            ├── combat/         # Sprint 4: types, stats, damage, weapons, projectiles, index
+            │   ├── types.ts    # CombatState, WeaponDefinition, ProjectileState, BaseAttributes, etc.
+            │   ├── stats.ts    # Pure derived stats, stamina
+            │   ├── damage.ts   # Pure damage calculations
+            │   ├── weapons.ts  # WEAPONS (Sword, Spear, Bow, Dagger)
+            │   ├── projectiles.ts # Pure projectile position/expiry/collision
+            │   └── index.ts
+            └── physics/        # Sprint 3.5: pure deterministic physics (server + client prediction)
+                ├── types.ts   # Vec2, Velocity, BoundingBox, etc.
+                ├── constants.ts # TICK_RATE, ARENA_*, movement/dodge constants
+                ├── vector.ts   # normalize, magnitude, lerp, clampMagnitude
+                ├── movement.ts # integrate, clampToArena, calculateVelocity
+                ├── collision.ts # circle, combatant, melee arc
+                └── index.ts
 ```
 
 ---
@@ -133,7 +151,9 @@ crucible/
 | **Auth** | [apps/web/app/api/auth/[...nextauth]/route.ts](apps/web/app/api/auth/[...nextauth]/route.ts), [lib/auth.ts](apps/web/lib/auth.ts) |
 | **Wallet & mint** | [apps/web/lib/wagmi.ts](apps/web/lib/wagmi.ts), [lib/contracts.ts](apps/web/lib/contracts.ts), [hooks/useMintGladiator.ts](apps/web/hooks/useMintGladiator.ts) |
 | **Admin UI (bundles, templates, validate/publish/export)** | apps/web/app/admin/*, apps/web/app/api/admin/*, apps/web/lib/admin/validator.ts, apps/web/lib/admin/exporter.ts |
-| **Match UI (Sprint 3)** | apps/web/app/match/[matchId]/page.tsx, components/arena/*, hooks/useSocket.ts, useRealTimeMatch.ts, useGameInput.ts, lib/sprites/* |
+| **Match UI (Sprints 3–4)** | apps/web/app/arena/page.tsx, app/match/[matchId]/page.tsx, components/arena/*, hooks/useSocket.ts, useRealTimeMatch.ts, useGameInput.ts, useClientPrediction.ts, useCreateMatch.ts, lib/sprites/* |
+| **Shared physics (client prediction)** | packages/shared/src/physics/* |
+| **Shared combat (weapons, damage, projectiles)** | packages/shared/src/combat/* |
 | **Runtime game data (bundle loader)** | apps/game-server/src/services/bundle-loader.ts |
 | **Database schema** | [packages/database/prisma/schema.prisma](packages/database/prisma/schema.prisma) |
 | **Shared types & constants** | [packages/shared/src/types/index.ts](packages/shared/src/types/index.ts), [constants/index.ts](packages/shared/src/constants/index.ts) |
@@ -155,10 +175,10 @@ crucible/
 
 - **index.ts** — Entry: load env, create HTTP+WS server, start gladiator sync (blockchain listener).
 - **server.ts** — Express server, Socket.IO mount, CORS; no route logic (match logic in services/sockets).
-- **combat/engine.ts** — 20Hz tick loop: apply actions (move, attack, dodge), physics, damage, collisions, emit CombatEvent.
-- **combat/physics.ts** — Position/velocity, hitboxes, dodge roll, collision resolution.
-- **combat/damage-calculator.ts** — HP/stamina init and regen, damage application, stamina costs, block/dodge outcomes.
-- **combat/types.ts** — Combatant, CombatState, Action/ActionType (Move, Attack, Dodge), CombatEvent, COMBAT_CONSTANTS, WeaponType.
+- **combat/engine.ts** — 20Hz tick; multi-weapon (Sword, Spear, Bow, Dagger); melee + projectile attacks; updateProjectiles(); CombatEvent.
+- **combat/physics.ts** — Uses shared physics package; position/velocity, hitboxes, dodge roll, collision.
+- **combat/damage-calculator.ts** — Thin wrapper over shared combat (damage, stats); HP/stamina, apply damage.
+- **combat/types.ts** — Combatant (weapon), CombatState (projectiles map), CombatEvent, WeaponType, ProjectileState.
 - **ai/cpu-ai.ts** — CPU decision: pick target, choose action (attack/dodge/block), optional difficulty tuning.
 - **services/match-manager.ts** — Create match (CPU or PvP), assign match instance, track active matches.
 - **services/match-instance.ts** — Single match: combat state, tick loop, input application, game-over handling.
@@ -177,7 +197,8 @@ crucible/
 - **app/admin/page.tsx** — Admin dashboard; full Admin UI (Sprint 2.5): bundles, equipment/action template CRUD, validate, publish, export (see app/admin/, app/api/admin/, lib/admin/).
 - **app/auth/signin/page.tsx** — Sign-in page.
 - **app/mint/page.tsx** — Mint Gladiator NFT page (class selection, wallet).
-- **app/match/[matchId]/page.tsx** — Sprint 3: real-time match page (ArenaCanvas, MatchHUD, useRealTimeMatch, useGameInput).
+- **app/arena/page.tsx** — Sprint 3.5: arena entry; create CPU match via useCreateMatch, navigate to /match/[matchId].
+- **app/match/[matchId]/page.tsx** — Sprints 3–4: real-time match (ArenaCanvas, MatchHUD, WeaponSelector, useRealTimeMatch, useGameInput, useClientPrediction; Fight Again creates new match).
 - **app/api/auth/[...nextauth]/route.ts** — NextAuth API route (Google/Twitter, session).
 - **app/api/user/link-wallet/route.ts** — Link wallet address to authenticated user.
 - **lib/auth.ts** — NextAuth config (providers, callbacks, session).
@@ -186,9 +207,13 @@ crucible/
 - **hooks/useMintGladiator.ts** — Mint flow: write contract, wait for tx, optional refresh.
 - **hooks/useSocket.ts** — Singleton Socket.io client to game server (NEXT_PUBLIC_GAME_SERVER_URL).
 - **hooks/useRealTimeMatch.ts** — Match room: match:join/leave, match:state, match:input, match:complete; submitInput throttled.
-- **hooks/useGameInput.ts** — WASD + mouse aim (facing), Space = attack, Shift = dodge; ~60Hz output.
-- **lib/sprites/** — SpriteLoader (manifest + images), AnimationPlayer (frame timing), types (SpriteManifest, Direction, etc.).
-- **components/arena/** — interpolation.ts, renderer.ts (Canvas draw, design-guidelines colors), ArenaCanvas.tsx (60 FPS loop, sprites), MatchHUD.tsx.
+- **hooks/useGameInput.ts** — WASD + mouse aim, Space/Shift; L/R click main/off-hand (Sprint 3.5); 1–4 weapon switch (Sprint 4).
+- **hooks/useClientPrediction.ts** — Sprint 3.5: local player prediction, reconcile with server (shared physics).
+- **hooks/useCreateMatch.ts** — Sprint 3.5: match:create, match:start, returns matchId for navigation.
+- **lib/arena.ts** — Arena status copy (open/closed), getArenaStatus(), NEXT_PUBLIC_ARENA_OPEN.
+- **lib/sprites/** — SpriteLoader, AnimationPlayer, types (SpriteManifest, Direction, etc.).
+- **components/arena/** — interpolation.ts, renderer.ts (drawProjectile in Sprint 4), ArenaCanvas.tsx, MatchHUD.tsx, WeaponSelector.tsx (Sprint 4).
+- **components/ui/AnimatedTorch.tsx** — Reusable torch with sizes, mirror, glow.
 - **components/auth/** — SignInForm, SignInButton.
 - **components/** — ConnectWallet, MintGladiator, SessionProvider, WagmiProvider.
 - **next.config.js**, **tailwind.config.js**, **vercel.json**, **postcss.config.js**, **tsconfig.json**, **.eslintrc.json** — Next/Tailwind/Vercel/TS/ESLint config.
@@ -211,7 +236,8 @@ crucible/
 - **src/index.ts** — Re-exports from constants and types.
 - **src/constants/index.ts** — Combat (tick interval, health/stamina, ACTION_CONFIG), progression (XP_*), loot (LOOT_DROP_RATES).
 - **src/types/index.ts** — GladiatorClass, User, Gladiator, Equipment, Match, etc.
-- **src/combat/types.ts** — Sprint 3: CombatState, CombatantData (and related) for WebSocket and match UI.
+- **src/combat/** — Sprint 4: types (weapon, projectile, stats), stats.ts, damage.ts, weapons.ts (WEAPONS), projectiles.ts, index.
+- **src/physics/** — Sprint 3.5: types, constants, vector, movement, collision, index; used by server and client prediction.
 
 ---
 
@@ -247,6 +273,9 @@ crucible/
     ├── SPRINT-1-SUMMARY.md      # Sprint 1 complete: auth, wallet, mint, event listener, admin
     ├── SPRINT-2-SUMMARY.md      # Sprint 2 complete: 20Hz combat, WASD, sword, dodge, CPU AI, WebSocket
     ├── SPRINT-2.5-SUMMARY.md    # Sprint 2.5 complete: Admin UI — bundles, templates, validate/publish/export, bundle loader
+    ├── SPRINT-3-SUMMARY.md      # Sprint 3 complete: Canvas arena, sprites, input, WebSocket, MatchHUD, match page
+    ├── SPRINT-3.5-SUMMARY.md    # Sprint 3.5 complete: shared physics, client prediction, mouse attacks, match creation, verification
+    ├── SPRINT-4-SUMMARY.md      # Sprint 4 complete: shared combat, 4 weapons, projectiles, WeaponSelector, client projectile rendering
     │
     ├── features/
     │   ├── admin-ui.md          # Admin UI plan: game data authoring, CRUD templates, validation, publish/export, immutable bundles
@@ -266,6 +295,7 @@ crucible/
         ├── 03-sprint-2-combat-cpu.md # Sprint 2: 20Hz combat engine, WASD, sword, dodge, CPU AI, WebSocket
         ├── 09-sprint-2.5-admin-ui.md  # Sprint 2.5: Admin UI — game data authoring, bundles, templates, publish/export (complete)
         ├── 04-sprint-3-frontend-animations.md # Sprint 3: Canvas 60 FPS, WASD + mouse, client prediction, interpolation
+        ├── sprint-3.5.md                      # Sprint 3.5: remaining items (client prediction, mouse attacks, match creation, verification)
         ├── 05-sprint-4-weapons-projectiles.md # Sprint 4: Sword, Spear, Bow, Dagger; projectiles; weapon UI
         ├── 06-sprint-5-progression-loot.md     # Sprint 5: XP, leveling, skill tree, equipment, loot, crafting, inventory
         ├── 07-sprint-6-multiplayer.md          # Sprint 6: matchmaking, friends, challenges, real-time PvP, leaderboard
@@ -286,7 +316,7 @@ crucible/
 | **Combat design** | [docs/features/combat.md](docs/features/combat.md), [docs/SPRINT-2-SUMMARY.md](docs/SPRINT-2-SUMMARY.md) |
 | **Equipment & loot design** | [docs/features/equipment.md](docs/features/equipment.md), [docs/data-glossary.md](docs/data-glossary.md) §5–8 |
 | **Sprint plans (what to build)** | [docs/plans/00-MASTER-PLAN.md](docs/plans/00-MASTER-PLAN.md), [docs/plans/01-sprint-0-setup.md](docs/plans/01-sprint-0-setup.md) … [09-sprint-2.5-admin-ui.md](docs/plans/09-sprint-2.5-admin-ui.md), [08-sprint-7-deployment.md](docs/plans/08-sprint-7-deployment.md) |
-| **What’s been built (Sprints 1, 2, 2.5)** | [docs/SPRINT-1-SUMMARY.md](docs/SPRINT-1-SUMMARY.md), [docs/SPRINT-2-SUMMARY.md](docs/SPRINT-2-SUMMARY.md), [docs/SPRINT-2.5-SUMMARY.md](docs/SPRINT-2.5-SUMMARY.md) |
+| **What’s been built (Sprints 1–4)** | [docs/SPRINT-1-SUMMARY.md](docs/SPRINT-1-SUMMARY.md), [docs/SPRINT-2-SUMMARY.md](docs/SPRINT-2-SUMMARY.md), [docs/SPRINT-2.5-SUMMARY.md](docs/SPRINT-2.5-SUMMARY.md), [docs/SPRINT-3-SUMMARY.md](docs/SPRINT-3-SUMMARY.md), [docs/SPRINT-3.5-SUMMARY.md](docs/SPRINT-3.5-SUMMARY.md), [docs/SPRINT-4-SUMMARY.md](docs/SPRINT-4-SUMMARY.md) |
 | **Getting started (dev env)** | [docs/guides/development-setup.md](docs/guides/development-setup.md), [README.md](README.md) § Development |
 | **Deploy web app (Vercel)** | [docs/guides/vercel-deployment.md](docs/guides/vercel-deployment.md) |
 | **Contract deployment** | [contracts/DEPLOYMENT.md](contracts/DEPLOYMENT.md) |
@@ -301,7 +331,7 @@ crucible/
 
 ### Root
 
-- **README.md** — Entry point: goal, vision, success criteria, status & sprint roadmap (0, 1, 2, 2.5, 3–7), tech stack, game data & equipment summary, out of scope, project structure, quick start, documentation table, post-demo roadmap.
+- **README.md** — Entry point: goal, vision, success criteria, status & sprint roadmap (0, 1, 2, 2.5, 3, 3.5, 4 complete; next 5–7), tech stack, game data & equipment summary, out of scope, project structure, quick start, documentation table, post-demo roadmap.
 - **concept.md** — Foundational vision and constraints: high-level vision, demo scope (in/out), Gladiators & Equipment (abstract), combat model (tick/turn, actions, server/client), multiplayer architecture, rendering & visuals, blockchain, wallets, data & indexing, tech stack, security, design constraints for AI, open questions (post-demo), definition of success.
 - **CLAUDE.md** — Instructions for Claude: project overview, status & roadmap, repo structure, tech stack, architecture summary, core game concepts (Gladiators, Equipment, Actions, derived combat stats), out of scope, design constraints, key documentation table, conventions (incl. game data §11), skills, tool use, no review/QA, no build/compile, summary.
 - **SKILLS_GUIDE.md** — How to discover and invoke agent skills (e.g. superpowers); when to use which skill.
@@ -320,6 +350,9 @@ crucible/
 - **SPRINT-1-SUMMARY.md** — What was delivered in Sprint 1: social auth (NextAuth, Google/Twitter), wallet connection (wagmi), Gladiator NFT contract enhancements, mint UI, blockchain event listener, admin dashboard; files created/modified, testing checklist, known limitations.
 - **SPRINT-2-SUMMARY.md** — What was delivered in Sprint 2: 20Hz real-time combat, WASD movement, sword attacks, dodge roll with i-frames, CPU AI (adaptive strategies), match management, WebSocket handlers, 8-stat Gladiator (5 used in combat); architecture, testing, technical decisions, next steps (Sprint 3).
 - **SPRINT-2.5-SUMMARY.md** — What was delivered in Sprint 2.5: Admin UI for game data management — User isAdmin, admin layout/nav, bundle management (CRUD, validate, publish, activate), action/equipment template CRUD, validation engine, export to Supabase Storage, runtime bundle loader on game server, seed data for demo bundle; architecture (authoring → publish → runtime), deployment considerations, testing checklist.
+- **SPRINT-3-SUMMARY.md** — Sprint 3 complete: sprite loading, Canvas renderer, interpolation, useGameInput (WASD, mouse, Space/Shift), useSocket, useRealTimeMatch, MatchHUD, match page; verification checklist.
+- **SPRINT-3.5-SUMMARY.md** — Sprint 3.5 complete: shared physics package, useClientPrediction, mouse main/off-hand attacks, useCreateMatch, arena page (match creation), Fight Again flow, Sprint 3 verification.
+- **SPRINT-4-SUMMARY.md** — Sprint 4 complete: shared combat library (stats, damage, weapons, projectiles), 4 weapon types (Sword, Spear, Bow, Dagger), server projectiles, WeaponSelector UI, client projectile rendering.
 
 ### docs/features/
 
@@ -342,6 +375,7 @@ crucible/
 - **03-sprint-2-combat-cpu.md** — Sprint 2: real-time combat engine (20Hz), WASD movement, sword and dodge roll, stamina/HP, CPU AI, match lifecycle, WebSocket handlers.
 - **09-sprint-2.5-admin-ui.md** — Sprint 2.5: Admin UI for game data authoring — bundles, equipment/action template CRUD, validation, publish, export to Supabase Storage, runtime bundle loader (complete).
 - **04-sprint-3-frontend-animations.md** — Sprint 3: Canvas arena (60 FPS), WASD + mouse input, client prediction, interpolation, match HUD, victory/defeat; game data reference.
+- **sprint-3.5.md** — Sprint 3.5 (remaining items): client prediction, main/off-hand mouse attacks, match creation flow, verification checklist.
 - **05-sprint-4-weapons-projectiles.md** — Sprint 4: weapon system (Sword, Spear, Bow, Dagger), attack patterns, server projectiles, client rendering, weapon switching; alignment with EquipmentTemplate/ActionTemplate and data-glossary §8.
 - **06-sprint-5-progression-loot.md** — Sprint 5: XP and leveling (8 stats), skill tree, Equipment instances (templateId, rolledMods), GladiatorEquippedItem (slot-based), loot flow, inventory/equipment UI; references equipment.md and data-glossary.
 - **07-sprint-6-multiplayer.md** — Sprint 6: matchmaking queue, friend system, challenges, dual-player WebSocket PvP, match history, leaderboard; effective build at match start (data-glossary §9).

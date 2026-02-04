@@ -51,7 +51,10 @@ export function MatchHUD({ playerUnit }: MatchHUDProps) {
       <div className="flex gap-4 justify-center">
         <div className="text-center">
           <div className={`text-xs mb-1 ${attackCooldown > 0 ? 'text-gray-500' : 'text-green-400'}`}>
-            Attack [SPACE]
+            Main Hand
+          </div>
+          <div className="text-[10px] text-gray-400">
+            [SPACE / L-CLICK]
           </div>
           {attackCooldown > 0 && (
             <div className="text-xs text-gray-400">{(attackCooldown / 1000).toFixed(1)}s</div>
@@ -66,11 +69,23 @@ export function MatchHUD({ playerUnit }: MatchHUDProps) {
             <div className="text-xs text-gray-400">{(dodgeCooldown / 1000).toFixed(1)}s</div>
           )}
         </div>
+
+        <div className="text-center">
+          <div className={`text-xs mb-1 ${attackCooldown > 0 ? 'text-gray-500' : 'text-amber-400'}`}>
+            Off Hand
+          </div>
+          <div className="text-[10px] text-gray-400">
+            [R-CLICK]
+          </div>
+          {attackCooldown > 0 && (
+            <div className="text-xs text-gray-400">{(attackCooldown / 1000).toFixed(1)}s</div>
+          )}
+        </div>
       </div>
 
       {/* Controls hint */}
       <div className="mt-4 pt-3 border-t border-gray-700 text-xs text-gray-500 text-center">
-        WASD: Move | Mouse: Aim | SPACE: Attack | SHIFT: Dodge
+        WASD: Move | Mouse: Aim & Attack | SHIFT: Dodge
       </div>
     </div>
   )
