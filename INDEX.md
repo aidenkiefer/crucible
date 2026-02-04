@@ -49,30 +49,43 @@ crucible/
 │       ├── next.config.js
 │       ├── postcss.config.js
 │       ├── tailwind.config.js
+│       ├── vercel.json         # Vercel: framework Next.js
 │       ├── tsconfig.json
 │       ├── app/
 │       │   ├── layout.tsx       # Root layout, providers
-│       │   ├── page.tsx         # Home
+│       │   ├── page.tsx         # Home (login or welcome + Mint/Admin links)
 │       │   ├── globals.css      # Global styles
 │       │   ├── admin/           # Admin UI (Sprint 2.5): dashboard, bundles, equipment/action templates
-│       │   │   └── page.tsx     # Admin dashboard
+│       │   │   ├── layout.tsx   # Admin layout, AdminNav
+│       │   │   ├── page.tsx     # Admin dashboard
+│       │   │   ├── bundles/     # List + [id] (validate, publish, activate)
+│       │   │   ├── equipment-templates/  # List, [id], new
+│       │   │   ├── action-templates/    # List, [id], new
+│       │   │   ├── unauthorized/page.tsx
+│       │   │   └── components/AdminNav.tsx, JsonEditor.tsx
 │       │   ├── auth/signin/page.tsx
 │       │   ├── mint/page.tsx    # Mint Gladiator NFT
+│       │   ├── match/[matchId]/page.tsx  # Sprint 3: real-time match UI (Canvas, HUD, WebSocket)
 │       │   └── api/
 │       │       ├── auth/[...nextauth]/route.ts  # NextAuth API
 │       │       ├── user/link-wallet/route.ts    # Link wallet to user
 │       │       └── admin/   # Admin API (Sprint 2.5): bundles, action-templates, equipment-templates
 │       ├── components/
-│       │   ├── auth/SignInButton.tsx
+│       │   ├── auth/SignInForm.tsx, SignInButton.tsx
+│       │   ├── arena/          # Sprint 3: interpolation.ts, renderer.ts, ArenaCanvas.tsx, MatchHUD.tsx
 │       │   ├── mint/MintGladiator.tsx
-│       │   ├── providers/SessionProvider.tsx
-│       │   ├── providers/WagmiProvider.tsx
+│       │   ├── providers/SessionProvider.tsx, WagmiProvider.tsx
 │       │   └── wallet/ConnectWallet.tsx
-│       ├── hooks/useMintGladiator.ts
+│       ├── hooks/
+│       │   ├── useMintGladiator.ts
+│       │   ├── useSocket.ts        # Sprint 3: singleton Socket.io to game server
+│       │   ├── useRealTimeMatch.ts # Sprint 3: match:join/state/input/complete
+│       │   └── useGameInput.ts    # Sprint 3: WASD, mouse aim, Space/Shift actions
 │       ├── lib/
 │       │   ├── auth.ts         # NextAuth config, session
 │       │   ├── contracts.ts    # Contract addresses, ABIs
 │       │   ├── wagmi.ts        # Wagmi config, chains
+│       │   ├── sprites/        # Sprint 3: types.ts, SpriteLoader.ts, AnimationPlayer.ts
 │       │   └── admin/          # Admin (Sprint 2.5): validator.ts, exporter.ts
 │
 ├── contracts/
@@ -87,7 +100,7 @@ crucible/
 │
 └── packages/
     ├── database/
-    │   ├── package.json        # Prisma client
+    │   ├── package.json        # Prisma client, build = prisma generate
     │   ├── prisma/
     │   │   ├── schema.prisma   # Full schema: User, Gladiator, Equipment, Match, GameDataBundle, etc.
     │   │   └── migrations/20260203134839_add_8_stats_to_gladiator/migration.sql
@@ -99,7 +112,8 @@ crucible/
         └── src/
             ├── index.ts        # Re-exports constants + types
             ├── constants/index.ts   # COMBAT_TICK_INTERVAL, BASE_*, ACTION_CONFIG, XP_*, LOOT_*
-            └── types/index.ts  # GladiatorClass, User, Gladiator, Equipment, Match, CombatState, etc.
+            ├── types/index.ts  # GladiatorClass, User, Gladiator, Equipment, Match, etc.
+            └── combat/types.ts  # Sprint 3: CombatState, CombatantData for WebSocket/match UI
 ```
 
 ---
@@ -119,6 +133,7 @@ crucible/
 | **Auth** | [apps/web/app/api/auth/[...nextauth]/route.ts](apps/web/app/api/auth/[...nextauth]/route.ts), [lib/auth.ts](apps/web/lib/auth.ts) |
 | **Wallet & mint** | [apps/web/lib/wagmi.ts](apps/web/lib/wagmi.ts), [lib/contracts.ts](apps/web/lib/contracts.ts), [hooks/useMintGladiator.ts](apps/web/hooks/useMintGladiator.ts) |
 | **Admin UI (bundles, templates, validate/publish/export)** | apps/web/app/admin/*, apps/web/app/api/admin/*, apps/web/lib/admin/validator.ts, apps/web/lib/admin/exporter.ts |
+| **Match UI (Sprint 3)** | apps/web/app/match/[matchId]/page.tsx, components/arena/*, hooks/useSocket.ts, useRealTimeMatch.ts, useGameInput.ts, lib/sprites/* |
 | **Runtime game data (bundle loader)** | apps/game-server/src/services/bundle-loader.ts |
 | **Database schema** | [packages/database/prisma/schema.prisma](packages/database/prisma/schema.prisma) |
 | **Shared types & constants** | [packages/shared/src/types/index.ts](packages/shared/src/types/index.ts), [constants/index.ts](packages/shared/src/constants/index.ts) |
@@ -162,14 +177,21 @@ crucible/
 - **app/admin/page.tsx** — Admin dashboard; full Admin UI (Sprint 2.5): bundles, equipment/action template CRUD, validate, publish, export (see app/admin/, app/api/admin/, lib/admin/).
 - **app/auth/signin/page.tsx** — Sign-in page.
 - **app/mint/page.tsx** — Mint Gladiator NFT page (class selection, wallet).
+- **app/match/[matchId]/page.tsx** — Sprint 3: real-time match page (ArenaCanvas, MatchHUD, useRealTimeMatch, useGameInput).
 - **app/api/auth/[...nextauth]/route.ts** — NextAuth API route (Google/Twitter, session).
 - **app/api/user/link-wallet/route.ts** — Link wallet address to authenticated user.
 - **lib/auth.ts** — NextAuth config (providers, callbacks, session).
 - **lib/wagmi.ts** — Wagmi config (chains, transports).
 - **lib/contracts.ts** — Contract addresses and ABIs for frontend.
 - **hooks/useMintGladiator.ts** — Mint flow: write contract, wait for tx, optional refresh.
-- **components/** — SignInButton, ConnectWallet, MintGladiator, SessionProvider, WagmiProvider.
-- **next.config.js**, **tailwind.config.js**, **postcss.config.js**, **tsconfig.json**, **.eslintrc.json** — Next/Tailwind/TS/ESLint config.
+- **hooks/useSocket.ts** — Singleton Socket.io client to game server (NEXT_PUBLIC_GAME_SERVER_URL).
+- **hooks/useRealTimeMatch.ts** — Match room: match:join/leave, match:state, match:input, match:complete; submitInput throttled.
+- **hooks/useGameInput.ts** — WASD + mouse aim (facing), Space = attack, Shift = dodge; ~60Hz output.
+- **lib/sprites/** — SpriteLoader (manifest + images), AnimationPlayer (frame timing), types (SpriteManifest, Direction, etc.).
+- **components/arena/** — interpolation.ts, renderer.ts (Canvas draw, design-guidelines colors), ArenaCanvas.tsx (60 FPS loop, sprites), MatchHUD.tsx.
+- **components/auth/** — SignInForm, SignInButton.
+- **components/** — ConnectWallet, MintGladiator, SessionProvider, WagmiProvider.
+- **next.config.js**, **tailwind.config.js**, **vercel.json**, **postcss.config.js**, **tsconfig.json**, **.eslintrc.json** — Next/Tailwind/Vercel/TS/ESLint config.
 
 ### contracts
 
@@ -188,7 +210,8 @@ crucible/
 
 - **src/index.ts** — Re-exports from constants and types.
 - **src/constants/index.ts** — Combat (tick interval, health/stamina, ACTION_CONFIG), progression (XP_*), loot (LOOT_DROP_RATES).
-- **src/types/index.ts** — GladiatorClass, User, Gladiator, Equipment, Match, CombatState, CombatantState, ActionLog, etc.
+- **src/types/index.ts** — GladiatorClass, User, Gladiator, Equipment, Match, etc.
+- **src/combat/types.ts** — Sprint 3: CombatState, CombatantData (and related) for WebSocket and match UI.
 
 ---
 

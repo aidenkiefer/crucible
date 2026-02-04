@@ -1,61 +1,33 @@
-# Sprint 3: Frontend - Real-Time Combat UI
+# Sprint 3 Frontend Real-Time Combat UI - Implementation Plan
 
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Be sure to also use @agents/skills/skills/game-development/2d-games/SKILL.md and @agents/skills/skills/game-development/multiplayer/SKILL.md
+> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Build real-time 2D combat visualization with WASD controls and smooth movement
+**Goal:** Build real-time 2D combat visualization with WASD controls, smooth movement, and Duelist sprite rendering.
 
-**Duration:** Week 4-5
-**Prerequisites:** Sprint 2 complete (real-time combat engine working)
-
-**Architecture:** Canvas-based real-time rendering with 60 FPS, client prediction, server reconciliation, WebSocket input streaming
+**Architecture:** Canvas-based 60 FPS rendering with sprite animation system, client prediction, server reconciliation via WebSocket, and input streaming.
 
 **Tech Stack:**
-- HTML5 Canvas API
-- React + TypeScript
-- Socket.io-client
-- Keyboard/mouse input handling
+- HTML5 Canvas API (2D context, image rendering)
+- React + TypeScript hooks
+- Socket.io-client (WebSocket)
+- Duelist sprite assets (48x48 pixel art, 4 directions, idle animation)
 
-**Key Challenges:**
-- Real-time WASD movement (not turn-based buttons)
-- Client prediction for local player smoothness
-- Interpolation for opponent movement
-- Mouse aim for facing direction (to aim melee or ranged attacks)
-- Dodge on key press (Space)
-- Attack with Main hand weapon slot using left click, and off-hand slot using right click
+**Key Implementation Notes:**
+- Sprite assets already generated at `apps/web/public/assets/sprites/characters/duelist_base/`
+- Uses `manifest.json` for runtime asset loading
+- Pixel art must use nearest-neighbor scaling (no blur)
+- Design colors from Blood & Bronze palette (Dark Stone #1E1B18, Blood Red #8E1C1C, Cyan #2EE6D6)
 
 ---
 
-## Overview
-
-Sprint 3 implements the **client-side real-time combat UI** that connects to the combat engine from Sprint 2. Unlike turn-based combat, this requires:
-
-1. **Continuous input streaming**: Send WASD + actions to server every frame or on input change
-2. **Client prediction**: Apply movement locally immediately (no lag)
-3. **Server reconciliation**: Smooth correction when client prediction drifts
-4. **Interpolation**: Smooth opponent movement between server snapshots
-5. **Real-time rendering**: 60 FPS canvas render loop
-
-**Networking model:**
-- Client → Server: `match:input` event with `{ moveX, moveY, facing, actions }` at ~60Hz or on input change
-- Server → Client: `match:state` event with full game state at 20Hz (or 10Hz if throttled)
-
-**Game data (reference):** Combat state is driven by the server; action/equipment metadata (e.g. cooldowns, names) can eventually come from published JSON/TS (ActionTemplate, EquipmentTemplate). For Sprint 3, hardcoded or server-provided values are fine. When displaying action or equipment info, align with **docs/data-glossary.md** §8 (JSON shapes) and **docs/features/equipment.md**.
-
----
-
-## Task 0: Asset Integration - Sprite Loading System
-
-**Owner:** Dev 1
-**Time:** 2 hours
+## Task 1: Sprite Loading System
 
 **Files:**
+- Create: `apps/web/lib/sprites/types.ts`
 - Create: `apps/web/lib/sprites/SpriteLoader.ts`
 - Create: `apps/web/lib/sprites/AnimationPlayer.ts`
-- Create: `apps/web/lib/sprites/types.ts`
 
-**Overview:** Load and manage the Duelist character sprites and animations we generated with PixelLab. This provides the foundation for rendering actual pixel art instead of placeholder shapes.
-
-### Step 1: Create sprite types
+### Step 1: Create sprite type definitions
 
 **File:** `apps/web/lib/sprites/types.ts`
 
@@ -104,7 +76,9 @@ export interface LoadedSprite {
 }
 ```
 
-### Step 2: Create sprite loader
+**Expected:** TypeScript types compile without errors.
+
+### Step 2: Implement sprite loader
 
 **File:** `apps/web/lib/sprites/SpriteLoader.ts`
 
@@ -185,7 +159,9 @@ export class SpriteLoader {
 export const spriteLoader = new SpriteLoader()
 ```
 
-### Step 3: Create animation player
+**Expected:** SpriteLoader can load manifest and images asynchronously.
+
+### Step 3: Implement animation player
 
 **File:** `apps/web/lib/sprites/AnimationPlayer.ts`
 
@@ -254,26 +230,87 @@ export class AnimationPlayer {
 }
 ```
 
+**Expected:** AnimationPlayer advances frames at correct rate, loops appropriately.
+
+### Step 4: Commit sprite system
+
+```bash
+git add apps/web/lib/sprites/
+git commit -m "feat(sprites): add sprite loading and animation system
+
+- Add type definitions for sprites and animations
+- Implement SpriteLoader with caching
+- Implement AnimationPlayer with frame timing
+- Supports 4-directional sprites and looping animations"
+```
+
 ---
 
-## Task 1: Canvas Renderer with Sprite Support
-
-**Owner:** Dev 1
-**Time:** 3 hours
+## Task 2: Canvas Renderer with Sprite Support
 
 **Files:**
-- Create: `apps/web/components/arena/ArenaCanvas.tsx`
-- Create: `apps/web/components/arena/renderer.ts`
 - Create: `apps/web/components/arena/interpolation.ts`
+- Create: `apps/web/components/arena/renderer.ts`
 
-### Step 1: Create canvas renderer utilities with sprite support
+### Step 1: Create interpolation utilities
+
+**File:** `apps/web/components/arena/interpolation.ts`
+
+```typescript
+import { Vec2 } from '@gladiator/shared/src/combat/types'
+
+export interface InterpolatedState {
+  pos: Vec2
+  facing: number
+}
+
+/**
+ * Interpolate between two positions for smooth movement
+ */
+export function interpolatePosition(
+  from: Vec2,
+  to: Vec2,
+  alpha: number
+): Vec2 {
+  return {
+    x: from.x + (to.x - from.x) * alpha,
+    y: from.y + (to.y - from.y) * alpha,
+  }
+}
+
+/**
+ * Interpolate angle (handles wraparound)
+ */
+export function interpolateAngle(
+  from: number,
+  to: number,
+  alpha: number
+): number {
+  let diff = to - from
+  // Normalize to [-PI, PI]
+  while (diff > Math.PI) diff -= 2 * Math.PI
+  while (diff < -Math.PI) diff += 2 * Math.PI
+
+  return from + diff * alpha
+}
+
+/**
+ * Smooth lerp for reconciliation
+ */
+export function lerp(from: number, to: number, alpha: number): number {
+  return from + (to - from) * alpha
+}
+```
+
+**Expected:** Interpolation functions handle position and angle smoothly.
+
+### Step 2: Implement canvas renderer with sprite support
 
 **File:** `apps/web/components/arena/renderer.ts`
 
 ```typescript
-import { UnitState, Vec2 } from '@gladiator/shared/src/combat/types'
+import { UnitState } from '@gladiator/shared/src/combat/types'
 import { Direction } from '@/lib/sprites/types'
-import { AnimationPlayer } from '@/lib/sprites/AnimationPlayer'
 
 export class Renderer {
   private ctx: CanvasRenderingContext2D
@@ -447,57 +484,29 @@ export class Renderer {
 }
 ```
 
-### Step 2: Create interpolation utilities
+**Expected:** Renderer draws sprites with pixel-perfect scaling and fallback circles.
 
-**File:** `apps/web/components/arena/interpolation.ts`
+### Step 3: Commit renderer
 
-```typescript
-import { Vec2, UnitState } from '@gladiator/shared/src/combat/types'
+```bash
+git add apps/web/components/arena/interpolation.ts apps/web/components/arena/renderer.ts
+git commit -m "feat(arena): add canvas renderer with sprite support
 
-export interface InterpolatedState {
-  pos: Vec2
-  facing: number
-}
-
-/**
- * Interpolate between two positions for smooth movement
- */
-export function interpolatePosition(
-  from: Vec2,
-  to: Vec2,
-  alpha: number
-): Vec2 {
-  return {
-    x: from.x + (to.x - from.x) * alpha,
-    y: from.y + (to.y - from.y) * alpha,
-  }
-}
-
-/**
- * Interpolate angle (handles wraparound)
- */
-export function interpolateAngle(
-  from: number,
-  to: number,
-  alpha: number
-): number {
-  let diff = to - from
-  // Normalize to [-PI, PI]
-  while (diff > Math.PI) diff -= 2 * Math.PI
-  while (diff < -Math.PI) diff += 2 * Math.PI
-
-  return from + diff * alpha
-}
-
-/**
- * Smooth lerp for reconciliation
- */
-export function lerp(from: number, to: number, alpha: number): number {
-  return from + (to - from) * alpha
-}
+- Implement interpolation utilities for smooth movement
+- Add Renderer class with sprite drawing
+- Support fallback to colored circles if sprites fail
+- Use design guidelines colors (Dark Stone, Blood Red, Cyan)
+- Disable image smoothing for crisp pixel art"
 ```
 
-### Step 3: Create ArenaCanvas component with sprite rendering
+---
+
+## Task 3: Arena Canvas Component
+
+**Files:**
+- Create: `apps/web/components/arena/ArenaCanvas.tsx`
+
+### Step 1: Implement ArenaCanvas with sprite loading
 
 **File:** `apps/web/components/arena/ArenaCanvas.tsx`
 
@@ -505,7 +514,7 @@ export function lerp(from: number, to: number, alpha: number): number {
 'use client'
 
 import { useRef, useEffect, useState } from 'react'
-import { CombatState, UnitState } from '@gladiator/shared/src/combat/types'
+import { CombatState } from '@gladiator/shared/src/combat/types'
 import { Renderer } from './renderer'
 import { interpolatePosition, interpolateAngle } from './interpolation'
 import { spriteLoader } from '@/lib/sprites/SpriteLoader'
@@ -657,18 +666,29 @@ export function ArenaCanvas({ combatState, playerUnitId }: ArenaCanvasProps) {
 }
 ```
 
+**Expected:** Canvas renders at 60 FPS with sprite animation, shows loading state.
+
+### Step 2: Commit ArenaCanvas
+
+```bash
+git add apps/web/components/arena/ArenaCanvas.tsx
+git commit -m "feat(arena): add ArenaCanvas component with sprite rendering
+
+- Load Duelist sprite on mount
+- Create animation player for idle animation
+- Render sprites at 60 FPS with interpolation
+- Show loading state while sprites load
+- Update animation players each frame"
+```
+
 ---
 
-## Task 2: Real-Time Input Handler
-
-**Owner:** Dev 2
-**Time:** 3 hours
+## Task 4: Input Handling
 
 **Files:**
 - Create: `apps/web/hooks/useGameInput.ts`
-- Create: `apps/web/hooks/useClientPrediction.ts`
 
-### Step 1: Create input handler hook
+### Step 1: Implement input handler hook
 
 **File:** `apps/web/hooks/useGameInput.ts`
 
@@ -676,13 +696,12 @@ export function ArenaCanvas({ combatState, playerUnitId }: ArenaCanvasProps) {
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { CombatAction } from '@gladiator/shared/src/combat/types'
 
 interface GameInput {
   moveX: number
   moveY: number
   facing: number
-  actions: CombatAction[]
+  actions: string[]
 }
 
 export function useGameInput(canvasRef: React.RefObject<HTMLCanvasElement>) {
@@ -695,7 +714,6 @@ export function useGameInput(canvasRef: React.RefObject<HTMLCanvasElement>) {
 
   const keysPressed = useRef<Set<string>>(new Set())
   const mousePos = useRef({ x: 0, y: 0 })
-  const canvasPos = useRef({ x: 0, y: 0 })
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -706,13 +724,13 @@ export function useGameInput(canvasRef: React.RefObject<HTMLCanvasElement>) {
         // Space: Attack
         setInput((prev) => ({
           ...prev,
-          actions: [...prev.actions, CombatAction.Attack],
+          actions: [...prev.actions, 'Attack'],
         }))
       } else if (e.key === 'Shift' && !e.repeat) {
         // Shift: Dodge
         setInput((prev) => ({
           ...prev,
-          actions: [...prev.actions, CombatAction.Dodge],
+          actions: [...prev.actions, 'Dodge'],
         }))
       }
     }
@@ -728,10 +746,6 @@ export function useGameInput(canvasRef: React.RefObject<HTMLCanvasElement>) {
       mousePos.current = {
         x: e.clientX - rect.left,
         y: e.clientY - rect.top,
-      }
-      canvasPos.current = {
-        x: rect.left,
-        y: rect.top,
       }
     }
 
@@ -749,7 +763,7 @@ export function useGameInput(canvasRef: React.RefObject<HTMLCanvasElement>) {
       if (keysPressed.current.has('a') || keysPressed.current.has('arrowleft')) moveX = -1
       if (keysPressed.current.has('d') || keysPressed.current.has('arrowright')) moveX = 1
 
-      // Calculate facing from mouse (simplified - you may want to use canvas center as origin)
+      // Calculate facing from mouse position relative to canvas center
       const facing = Math.atan2(mousePos.current.y - 250, mousePos.current.x - 250)
 
       setInput((prev) => ({
@@ -772,80 +786,78 @@ export function useGameInput(canvasRef: React.RefObject<HTMLCanvasElement>) {
 }
 ```
 
-### Step 2: Create client prediction hook (optional for MVP)
+**Expected:** Input hook captures WASD, mouse position, and action keys at 60Hz.
 
-**File:** `apps/web/hooks/useClientPrediction.ts`
+### Step 2: Commit input hook
 
-```typescript
-'use client'
+```bash
+git add apps/web/hooks/useGameInput.ts
+git commit -m "feat(input): add useGameInput hook for WASD + mouse controls
 
-import { useRef, useEffect } from 'react'
-import { UnitState, Vec2 } from '@gladiator/shared/src/combat/types'
-import { Physics } from '@gladiator/shared/src/combat/physics'
-
-/**
- * Client-side prediction for local player
- * Applies movement locally immediately, then reconciles with server
- */
-export function useClientPrediction(
-  serverState: UnitState | null,
-  localInput: { moveX: number; moveY: number }
-) {
-  const predictedState = useRef<UnitState | null>(null)
-
-  useEffect(() => {
-    if (serverState) {
-      // Reconcile: smooth lerp toward server position
-      if (predictedState.current) {
-        const diff = Math.hypot(
-          serverState.pos.x - predictedState.current.pos.x,
-          serverState.pos.y - predictedState.current.pos.y
-        )
-
-        // If difference is large, snap to server
-        if (diff > 2) {
-          predictedState.current = { ...serverState }
-        } else {
-          // Smooth lerp
-          predictedState.current.pos.x += (serverState.pos.x - predictedState.current.pos.x) * 0.3
-          predictedState.current.pos.y += (serverState.pos.y - predictedState.current.pos.y) * 0.3
-        }
-      } else {
-        predictedState.current = { ...serverState }
-      }
-    }
-  }, [serverState])
-
-  // Apply local prediction
-  useEffect(() => {
-    if (!predictedState.current) return
-
-    const interval = setInterval(() => {
-      if (!predictedState.current) return
-
-      // Apply movement locally
-      Physics.applyMovement(predictedState.current, localInput.moveX, localInput.moveY)
-      Physics.updatePosition(predictedState.current, 0.016) // ~60 FPS
-    }, 16)
-
-    return () => clearInterval(interval)
-  }, [localInput])
-
-  return predictedState.current
-}
+- Capture WASD movement keys at 60Hz
+- Track mouse position for facing calculation
+- Handle Space (attack) and Shift (dodge) actions
+- Clear one-time actions after reading"
 ```
 
 ---
 
-## Task 3: WebSocket Integration for Real-Time Combat
-
-**Owner:** Dev 2
-**Time:** 2 hours
+## Task 5: WebSocket Integration
 
 **Files:**
 - Create: `apps/web/hooks/useRealTimeMatch.ts`
 
-### Step 1: Create real-time match hook
+### Step 1: Check if useSocket hook exists
+
+Run: `ls apps/web/hooks/useSocket.ts`
+
+**Expected:** Either file exists (from Sprint 2) or needs to be created.
+
+**If file doesn't exist**, create it:
+
+**File:** `apps/web/hooks/useSocket.ts`
+
+```typescript
+'use client'
+
+import { useEffect, useState } from 'react'
+import { io, Socket } from 'socket.io-client'
+
+let socket: Socket | null = null
+
+export function useSocket() {
+  const [isConnected, setIsConnected] = useState(false)
+
+  useEffect(() => {
+    if (!socket) {
+      socket = io(process.env.NEXT_PUBLIC_GAME_SERVER_URL || 'http://localhost:3001', {
+        transports: ['websocket'],
+      })
+
+      socket.on('connect', () => {
+        console.log('Socket connected')
+        setIsConnected(true)
+      })
+
+      socket.on('disconnect', () => {
+        console.log('Socket disconnected')
+        setIsConnected(false)
+      })
+    }
+
+    return () => {
+      if (socket) {
+        socket.off('connect')
+        socket.off('disconnect')
+      }
+    }
+  }, [])
+
+  return socket
+}
+```
+
+### Step 2: Implement real-time match hook
 
 **File:** `apps/web/hooks/useRealTimeMatch.ts`
 
@@ -925,18 +937,28 @@ export function useRealTimeMatch(matchId: string, gladiatorId: string) {
 }
 ```
 
+**Expected:** Hook connects to match via WebSocket, receives 20Hz state updates.
+
+### Step 3: Commit WebSocket hooks
+
+```bash
+git add apps/web/hooks/useSocket.ts apps/web/hooks/useRealTimeMatch.ts
+git commit -m "feat(websocket): add real-time match WebSocket integration
+
+- Add useSocket hook for Socket.io connection
+- Implement useRealTimeMatch for match state + input submission
+- Throttle input to 60Hz to avoid flooding server
+- Handle match:state (20Hz) and match:complete events"
+```
+
 ---
 
-## Task 4: Match Page with Real-Time Controls
-
-**Owner:** Dev 3
-**Time:** 2 hours
+## Task 6: Match HUD Component
 
 **Files:**
-- Create: `apps/web/app/match/[matchId]/page.tsx`
 - Create: `apps/web/components/arena/MatchHUD.tsx`
 
-### Step 1: Create match HUD
+### Step 1: Implement MatchHUD
 
 **File:** `apps/web/components/arena/MatchHUD.tsx`
 
@@ -1018,7 +1040,28 @@ export function MatchHUD({ playerUnit }: MatchHUDProps) {
 }
 ```
 
-### Step 2: Create match page
+**Expected:** HUD displays HP, stamina, cooldowns, and controls hint.
+
+### Step 2: Commit MatchHUD
+
+```bash
+git add apps/web/components/arena/MatchHUD.tsx
+git commit -m "feat(arena): add MatchHUD component for player status
+
+- Display HP and stamina bars with percentages
+- Show attack and dodge cooldowns
+- Indicate controls (WASD, Space, Shift)
+- Position at bottom center of screen"
+```
+
+---
+
+## Task 7: Match Page
+
+**Files:**
+- Create: `apps/web/app/match/[matchId]/page.tsx`
+
+### Step 1: Implement match page
 
 **File:** `apps/web/app/match/[matchId]/page.tsx`
 
@@ -1038,8 +1081,8 @@ export default function MatchPage() {
   const { data: session } = useSession()
   const matchId = params.matchId as string
 
-  // Assume gladiator ID is passed via query param or loaded from API
-  const gladiatorId = 'player-gladiator-id' // TODO: Load from match data
+  // TODO: Load gladiator ID from match data or query param
+  const gladiatorId = 'player-gladiator-id'
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const { combatState, isConnected, isComplete, submitInput } = useRealTimeMatch(matchId, gladiatorId)
@@ -1054,7 +1097,7 @@ export default function MatchPage() {
 
   if (!isConnected) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-[#1E1B18]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto mb-4" />
           <p className="text-gray-400">Connecting to match...</p>
@@ -1066,7 +1109,7 @@ export default function MatchPage() {
   const playerUnit = combatState?.units.get(gladiatorId) ?? null
 
   return (
-    <div className="min-h-screen bg-gray-950 p-8">
+    <div className="min-h-screen bg-[#1E1B18] p-8">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-2xl font-bold text-center mb-6 text-white">
           Combat Arena
@@ -1106,9 +1149,57 @@ export default function MatchPage() {
 }
 ```
 
+**Expected:** Match page connects, renders arena + HUD, handles victory/defeat.
+
+### Step 2: Commit match page
+
+```bash
+git add apps/web/app/match/\[matchId\]/page.tsx
+git commit -m "feat(match): add match page with real-time combat UI
+
+- Connect to WebSocket for match state
+- Render ArenaCanvas with sprite animations
+- Display MatchHUD with player status
+- Handle victory/defeat screen
+- Submit WASD + mouse input continuously"
+```
+
 ---
 
-## Verification Checklist
+## Verification
+
+### Manual Testing
+
+Run: `npm run dev` (in apps/web)
+
+**Test sprite loading:**
+1. Navigate to `/match/test-match-id`
+2. Verify "Loading sprites..." appears briefly
+3. Verify Duelist sprite renders after loading
+4. Verify idle animation plays smoothly (4 frames @ 8 FPS)
+
+**Test input:**
+1. Press WASD keys
+2. Move mouse around canvas
+3. Verify sprite rotates to face mouse direction
+4. Press Space (attack)
+5. Press Shift (dodge)
+
+**Test rendering:**
+1. Open browser DevTools > Performance
+2. Record for 5 seconds
+3. Verify consistent 60 FPS
+4. Verify no frame drops or stuttering
+
+**Test fallback:**
+1. Temporarily break sprite path in manifest.json
+2. Reload page
+3. Verify colored circles render instead
+4. Fix path and verify sprites return
+
+### Checklist
+
+Sprint 3 verification checklist from plan:
 
 **Sprite Rendering:**
 - [ ] Duelist sprite loads successfully
@@ -1151,14 +1242,21 @@ export default function MatchPage() {
 
 ---
 
-## Next Sprint
+## Summary
 
-**Sprint 4: Additional Weapons & Projectiles**
+**Deliverables:**
+- Sprite loading system (types, loader, animation player)
+- Canvas renderer with sprite support
+- ArenaCanvas component with 60 FPS rendering
+- Input handling (WASD + mouse + actions)
+- WebSocket integration (match state + input submission)
+- MatchHUD component (HP, stamina, cooldowns)
+- Match page with complete combat UI
 
-Focus:
-- Add Spear, Bow, Dagger weapon types
-- Implement projectile system (server + client)
-- Weapon switching UI
-- More attack animations
+**Total commits:** 7
 
-See: `docs/plans/05-sprint-4-progression-loot.md` (to be updated)
+**Next steps:** Once Sprint 3 is verified working, proceed to Sprint 4 (Additional Weapons & Projectiles).
+
+---
+
+**Plan complete!**
