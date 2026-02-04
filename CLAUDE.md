@@ -12,7 +12,7 @@ This file provides guidance to Claude when working with the **Crucible (Gladiato
 
 **Timeline:** 4–6 weeks · **Team:** 2–3 developers.
 
-**Current state:** Sprint 0 (Setup), Sprint 1 (Auth & NFT Minting), and Sprint 2 (Real-Time Combat) are complete. **Sprint 3 (Frontend Real-Time Combat UI) is next.** The codebase includes: monorepo (pnpm, Turborepo), Next.js 14 frontend (social auth, wallet connection, mint Gladiator NFT, admin dashboard), Express game server (Socket.io, **20Hz combat engine**, **CPU AI**, **match manager**, **WebSocket match handlers**, blockchain event listener), Gladiator NFT contract (Hardhat, **8 stats**, 5 used in combat), Supabase + Prisma.
+**Current state:** Sprint 0 (Setup), Sprint 1 (Auth & NFT Minting), Sprint 2 (Real-Time Combat), and Sprint 2.5 (Admin UI) are complete. **Sprint 3 (Frontend Real-Time Combat UI) is next.** The codebase includes: monorepo (pnpm, Turborepo), Next.js 14 frontend (social auth, wallet connection, mint Gladiator NFT, **admin UI for game data** — bundles, equipment/action template CRUD, validation, publish, export to Supabase Storage), Express game server (Socket.io, **20Hz combat engine**, **CPU AI**, **match manager**, **WebSocket match handlers**, **bundle loader** for published game data, blockchain event listener), Gladiator NFT contract (Hardhat, **8 stats**, 5 used in combat), Supabase + Prisma.
 
 ---
 
@@ -23,6 +23,7 @@ This file provides guidance to Claude when working with the **Crucible (Gladiato
 | **0** | Project setup & infrastructure | ✅ Complete |
 | **1** | Authentication & NFT minting | ✅ Complete |
 | **2** | Combat system — CPU battles (20Hz, WASD, sword, dodge, CPU AI) | ✅ Complete |
+| **2.5** | Admin UI — game data authoring (bundles, templates, validate, publish, export, bundle loader) | ✅ Complete |
 | **3** | Frontend — Real-time combat UI (Canvas, WASD + mouse, client prediction) | **Next** |
 | **4** | Weapons & projectiles | Planned |
 | **5** | Progression & loot | Planned |
@@ -38,19 +39,20 @@ When implementing, align with the current or target sprint. Use **docs/plans/00-
 ```
 crucible/
 ├── apps/
-│   ├── web/              # Next.js 14 (App Router): auth, wallet, mint, admin
+│   ├── web/              # Next.js 14 (App Router): auth, wallet, mint, admin UI (bundles, templates, publish/export)
 │   └── game-server/       # Express, Socket.io, 20Hz combat engine, CPU AI, match manager, WebSocket match handlers, blockchain event listener
 ├── packages/
 │   ├── shared/            # Shared types and constants
 │   └── database/          # Prisma schema and client (Supabase)
 ├── contracts/             # Gladiator NFT (Hardhat, Solidity)
 ├── docs/
-│   ├── plans/             # 00-MASTER-PLAN + sprint plans (01–08)
+│   ├── plans/             # 00-MASTER-PLAN + sprint plans (01–09)
 │   ├── guides/            # Development setup, testing, deployment
 │   ├── features/          # Combat, loot, etc.
 │   ├── api/               # REST + WebSocket docs (as added)
 │   ├── SPRINT-1-SUMMARY.md
-│   └── SPRINT-2-SUMMARY.md
+│   ├── SPRINT-2-SUMMARY.md
+│   └── SPRINT-2.5-SUMMARY.md
 ├── concept.md
 ├── README.md
 └── CLAUDE.md
@@ -75,7 +77,7 @@ Implement only in directories and files that exist; do not assume other top-leve
 
 ## Architecture (Summary)
 
-**Game server:** Node.js + Express + Socket.io. **MatchInstance** runs combat at **20Hz (50ms)**; **MatchManager** creates/starts/stops matches; **CombatEngine** handles WASD movement, sword attacks (90° arc, 80-unit range), dodge roll (200ms i-frames), stamina/HP with stat scaling (CON, STR, DEX, SPD, DEF); **CpuAI** uses 3 adaptive strategies (Aggressive/Defensive/Opportunistic). WebSocket events: `match:create`, `match:start`, `match:action`, `match:state` (20Hz), `match:events`, `match:completed`. Blockchain event listener syncs GladiatorMinted → DB.
+**Game server:** Node.js + Express + Socket.io. **MatchInstance** runs combat at **20Hz (50ms)**; **MatchManager** creates/starts/stops matches; **CombatEngine** handles WASD movement, sword attacks (90° arc, 80-unit range), dodge roll (200ms i-frames), stamina/HP with stat scaling (CON, STR, DEX, SPD, DEF); **CpuAI** uses 3 adaptive strategies (Aggressive/Defensive/Opportunistic). **BundleLoader** loads the active published game data bundle from Supabase Storage at startup (equipment/action templates); combat can read templates via getEquipmentTemplate(key), getActionTemplate(key). WebSocket events: `match:create`, `match:start`, `match:action`, `match:state` (20Hz), `match:events`, `match:completed`. Blockchain event listener syncs GladiatorMinted → DB.
 
 **Frontend:** Next.js 14. Receives combat state via WebSocket (match:state at 20Hz). Sprint 3 adds Canvas 60 FPS, WASD + mouse aim, client prediction, interpolation. Auth via NextAuth; wallet via wagmi/viem.
 
@@ -139,11 +141,14 @@ Focus on clean boundaries, simple flows, and replaceable components.
 | **docs/plans/01-sprint-0-setup.md** | Sprint 0 setup (reference). |
 | **docs/plans/02-sprint-1-auth-nft.md** | Sprint 1 auth & NFT (reference). |
 | **docs/plans/03-sprint-2-combat-cpu.md** | Sprint 2 plan (real-time combat CPU, complete). |
+| **docs/plans/09-sprint-2.5-admin-ui.md** | Sprint 2.5 plan (Admin UI — game data authoring, complete). |
 | **docs/plans/04-sprint-3-frontend-animations.md** | Sprint 3 plan (frontend real-time combat UI) — **current sprint plan**. |
 | **docs/SPRINT-1-SUMMARY.md** | What was built in Sprint 1 (auth, wallet, mint, listener, admin). |
 | **docs/SPRINT-2-SUMMARY.md** | What was built in Sprint 2 (combat). |
+| **docs/SPRINT-2.5-SUMMARY.md** | What was built in Sprint 2.5 (Admin UI — bundles, templates, validate/publish/export, bundle loader). |
 | **docs/guides/development-setup.md** | Environment, dependencies, running the stack. |
 | **docs/features/equipment.md** | Equipment, loot, abilities — template/instance design, slots, authoring, demo scope. |
+| **docs/features/admin-ui.md** | Admin UI plan — game data authoring, CRUD, validation, publish/export. |
 | **docs/data-glossary.md** | Database & game data glossary — schema, enums, templates, actions, JSON conventions. |
 
 Prefer reading the specific files or docs relevant to the task rather than scanning the whole repo.
@@ -198,6 +203,6 @@ Testing and QA are handled by the human. Running builds and tests burns tokens a
 
 ## Summary
 
-- **What this is:** Crucible — Gladiator Coliseum: 1v1 arena combat demo with NFT Gladiators, server-authoritative real-time combat (20Hz), and web multiplayer. Sprint 0 + 1 + 2 complete (monorepo, Next.js auth/wallet/mint/admin, Express game server with 20Hz combat engine, CPU AI, match manager, WebSocket match handlers, event listener, Gladiator NFT contract with 8 stats, Supabase + Prisma). Sprint 3 (Frontend Real-Time Combat UI) is next.
-- **Where to look:** README.md for overview and roadmap; concept.md for vision and constraints; docs/plans/00-MASTER-PLAN.md for full plan; docs/plans/04-sprint-3-frontend-animations.md for current sprint; docs/SPRINT-1-SUMMARY.md and docs/SPRINT-2-SUMMARY.md for what’s built; docs/architecture.md for architecture.
+- **What this is:** Crucible — Gladiator Coliseum: 1v1 arena combat demo with NFT Gladiators, server-authoritative real-time combat (20Hz), and web multiplayer. Sprint 0, 1, 2, and 2.5 complete (monorepo, Next.js auth/wallet/mint/admin UI for game data, Express game server with 20Hz combat engine, CPU AI, match manager, WebSocket match handlers, bundle loader, event listener, Gladiator NFT contract with 8 stats, Supabase + Prisma). Sprint 3 (Frontend Real-Time Combat UI) is next.
+- **Where to look:** README.md for overview and roadmap; concept.md for vision and constraints; docs/plans/00-MASTER-PLAN.md for full plan; docs/plans/04-sprint-3-frontend-animations.md for current sprint; docs/SPRINT-1-SUMMARY.md, docs/SPRINT-2-SUMMARY.md, and docs/SPRINT-2.5-SUMMARY.md for what’s built; docs/architecture.md for architecture.
 - **What to respect:** Demo scope and out-of-scope list, design constraints (no overbuild, modular, blockchain = ownership), server-authoritative outcomes, and the sprint roadmap (do not implement later-sprint or out-of-scope features unless requested).

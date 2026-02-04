@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Inter, VT323 } from 'next/font/google'
 import './globals.css'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
@@ -7,6 +7,7 @@ import { SessionProvider } from '@/components/providers/SessionProvider'
 import { WagmiProvider } from '@/components/providers/WagmiProvider'
 
 const inter = Inter({ subsets: ['latin'] })
+const vt323 = VT323({ weight: '400', subsets: ['latin'], variable: '--font-vt323' })
 
 export const metadata: Metadata = {
   title: 'Gladiator Coliseum',
@@ -22,7 +23,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={`${inter.className} ${vt323.variable}`}>
         <WagmiProvider>
           <SessionProvider session={session}>
             {children}

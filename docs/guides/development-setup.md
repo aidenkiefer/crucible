@@ -37,6 +37,11 @@ Required environment variables:
 - OAuth credentials (Google, Twitter)
 - Blockchain RPC URLs
 
+For **Admin UI (Sprint 2.5)** — publish/export and game server bundle loading:
+- `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` (web app, for export to Storage)
+- Game server: `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` (for BundleLoader to download published bundles)
+- Create a **Supabase Storage** bucket named `gamedata` (Dashboard → Storage → New bucket).
+
 ### 4. Database Setup
 
 ```bash
@@ -44,7 +49,17 @@ cd packages/database
 pnpm db:push
 ```
 
-### 5. Run Development Servers
+### 5. (Optional) Seed demo game data (Sprint 2.5)
+
+To create a demo bundle with sample equipment and action templates:
+
+```bash
+cd packages/database
+pnpm seed:admin
+cd ../..
+```
+
+### 6. Run Development Servers
 
 Terminal 1 - Frontend:
 ```bash
@@ -142,3 +157,14 @@ cd contracts
 pnpm clean
 pnpm compile
 ```
+
+### Admin UI access (Sprint 2.5)
+
+Admin routes (`/admin`, `/admin/bundles`, `/admin/equipment-templates`, `/admin/action-templates`) require the user to have `isAdmin = true` in the database. After signing in, set it manually:
+
+```sql
+-- In Supabase SQL Editor or via Prisma Studio / psql
+UPDATE "User" SET "isAdmin" = true WHERE email = 'your-email@example.com';
+```
+
+Then reload the app and navigate to `/admin`. Non-admin users are redirected to `/admin/unauthorized`.

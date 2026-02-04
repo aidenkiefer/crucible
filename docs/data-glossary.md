@@ -55,6 +55,7 @@ Represents a player account.
 - `email`: login identity
 - `walletAddress`: optional blockchain wallet address (unique when present)
 - `username`: public identity (unique)
+- `isAdmin`: Boolean; when true, user can access Admin UI routes (`/admin/*`) for game data authoring (Sprint 2.5)
 - `createdAt`, `updatedAt`: audit timestamps
 
 **NextAuth tables**

@@ -21,12 +21,16 @@ export const authOptions: NextAuthOptions = {
     async session({ session, user }) {
       if (session.user) {
         session.user.id = user.id
-        // Attach wallet address if linked
+        // Fetch full user data including isAdmin
         const dbUser = await prisma.user.findUnique({
           where: { id: user.id },
-          select: { walletAddress: true },
+          select: {
+            walletAddress: true,
+            isAdmin: true
+          },
         })
         session.user.walletAddress = dbUser?.walletAddress
+        session.user.isAdmin = dbUser?.isAdmin ?? false
       }
       return session
     },

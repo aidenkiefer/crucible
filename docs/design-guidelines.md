@@ -277,6 +277,6 @@ Below are **5 palette directions**. Each can be used for UI, HUD, and marketing.
 
 - concept.md
 - equipment.md
-- admin-ui-plan.md
+- admin-ui.md (Admin UI plan; implemented in Sprint 2.5 — see SPRINT-2.5-SUMMARY.md)
 - data-glossary.md
 - Future: Figma boards, sprite sheets, arena mockups

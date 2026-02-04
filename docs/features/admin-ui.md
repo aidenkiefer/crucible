@@ -3,6 +3,9 @@
 This document defines how we will implement an internal Admin UI that allows developers (Aiden/Ben) to author, validate, and publish game data such as:
 
 **Implementation context:** The Admin UI is implemented on the **Next.js website** (`apps/web`). All admin routes live under the Next.js app (e.g. `/admin`, `/admin/bundles`, `/admin/equipment-templates`, `/admin/action-templates`). The same design system and auth stack (NextAuth, session) apply; admin-only access is enforced via middleware and role checks.
+
+**Implementation status:** ✅ Implemented in Sprint 2.5. See [SPRINT-2.5-SUMMARY.md](../SPRINT-2.5-SUMMARY.md) for what was built (bundles, templates CRUD, validation, publish/export, BundleLoader on game server, seed data).
+
 - Equipment templates (weapons/armor/catalysts)
 - Action templates (attacks, casts, mobility, utility)
 - Spell templates (later)

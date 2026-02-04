@@ -3,7 +3,7 @@
 **Project:** Competitive 1v1 arena combat game with NFT Gladiators
 **Timeline:** 4-6 weeks
 **Team Size:** 2-3 developers
-**Status:** In progress — Sprint 0, 1, 2 complete; Sprint 3 (Frontend Real-Time Combat UI) next
+**Status:** In progress — Sprint 0, 1, 2, 2.5 complete; Sprint 3 (Frontend Real-Time Combat UI) next
 
 ---
 
@@ -148,6 +148,19 @@ Build a working demo of Gladiator Coliseum proving:
 - Dev 1: Real-time combat engine + physics
 - Dev 2: CPU AI for real-time movement + actions
 - Dev 3: Match management + WebSocket handlers
+
+### Sprint 2.5: Admin UI — Game Data Authoring (inserted)
+**Goal:** Content authors can create, validate, publish, and activate game data bundles; game server loads published data at runtime.
+
+**Deliverables (complete):**
+- User `isAdmin` flag and middleware protecting `/admin/*`
+- Admin UI: dashboard, bundles (create/clone, validate, publish, activate), equipment templates CRUD, action templates CRUD
+- Validation engine (keys, refs, JSON, slot/type rules)
+- Export to Supabase Storage (`gamedata` bucket); manifest + equipment/actions JSON
+- BundleLoader on game server: load active bundle at startup, cache templates in memory
+- Seed script for demo bundle (`pnpm seed:admin`)
+
+See **docs/SPRINT-2.5-SUMMARY.md** and **docs/features/admin-ui.md**.
 
 ### Sprint 3: Frontend - Real-Time Combat UI (Week 4-5)
 **Goal:** Real-time 2D combat visualization with WASD controls

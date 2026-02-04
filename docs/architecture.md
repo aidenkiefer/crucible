@@ -78,7 +78,11 @@ Gladiator Coliseum is built as a **three-tier architecture** with clear separati
 - `/inventory` - Equipment management
 - `/quick-match` - Matchmaking
 - `/friends` - Social features
-- `/admin` - Admin dashboard
+- `/admin` - Admin dashboard (game data authoring; **Sprint 2.5**)
+  - `/admin/bundles` - List/create bundles, validate, publish, activate
+  - `/admin/equipment-templates` - CRUD equipment templates
+  - `/admin/action-templates` - CRUD action templates
+  - Admin routes are protected by middleware; only users with `isAdmin` can access.
 
 **State Management:**
 - React Context for global state
@@ -158,6 +162,12 @@ Gladiator Coliseum is built as a **three-tier architecture** with clear separati
 - Syncs minted NFTs to database
 - Indexes ownership changes
 
+#### BundleLoader (**Sprint 2.5**)
+- Loads the **active** published game data bundle from Supabase Storage at server startup
+- Fetches `equipment.templates.json`, `actions.templates.json`, and `manifest.json` from the bundle’s `exportTarget` path
+- Caches templates in memory for O(1) lookups: `getEquipmentTemplate(key)`, `getActionTemplate(key)`
+- Combat and match logic read template data from BundleLoader; no runtime DB queries for templates
+
 ---
 
 ### 3. Database (Supabase / PostgreSQL)
@@ -192,6 +202,7 @@ Game data (authoring / publishing)
 **User**
 - Social auth data (email, username)
 - Wallet address (linked)
+- **isAdmin** (Boolean): gates access to `/admin/*` routes (Admin UI for game data authoring; **Sprint 2.5**)
 - Created timestamp
 
 **Gladiator**
@@ -363,6 +374,26 @@ Game Server → Broadcast state → Both clients
          ↓
 Game Server → Save match → Database
 Game Server → Award XP → Both gladiators
+```
+
+### Game Data Flow (Authoring → Runtime) (**Sprint 2.5**)
+
+```
+Admin → Next.js Admin UI (/admin/*) → Create/edit EquipmentTemplate, ActionTemplate in DB (per bundle)
+         ↓
+Admin → Validate bundle → API runs validation engine (keys, refs, JSON, slot/type rules)
+         ↓
+Admin → Publish bundle → Mark templates PUBLISHED, export to Supabase Storage (gamedata bucket)
+         ↓
+         bundles/{label}/equipment.templates.json, actions.templates.json, manifest.json
+         ↓
+Admin → Activate bundle → Set bundle isActive = true (only one active)
+         ↓
+Game Server (on startup) → BundleLoader.load() → Fetch active bundle exportTarget from DB
+         ↓
+BundleLoader → Download JSON from Supabase Storage → Cache in memory
+         ↓
+Combat / match code → getEquipmentTemplate(key), getActionTemplate(key) (no DB at runtime)
 ```
 
 ---
