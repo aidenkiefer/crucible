@@ -43,7 +43,7 @@ The demo succeeds when a user can:
 
 ## Status & Roadmap
 
-**Sprint 0 (Setup), Sprint 1 (Auth & NFT Minting), Sprint 2 (Real-Time Combat), and Sprint 2.5 (Admin UI)** are complete. **Next: Sprint 3 (Frontend Real-Time Combat UI).**
+**Sprint 0 (Setup), Sprint 1 (Auth & NFT Minting), Sprint 2 (Real-Time Combat), and Sprint 2.5 (Admin UI)** are complete. **Sprint 3 (Frontend Real-Time Combat UI)** is **in progress**.
 
 | Sprint | Focus | Status |
 |--------|--------|--------|
@@ -51,13 +51,13 @@ The demo succeeds when a user can:
 | **1** | Authentication & NFT minting (social auth, wallet, mint UI, event listener, admin) | ✅ Complete |
 | **2** | Combat system — CPU battles (20Hz real-time engine, WASD movement, sword, dodge roll, CPU AI, WebSocket) | ✅ Complete |
 | **2.5** | Admin UI — game data authoring (bundles, equipment/action templates, validate, publish, export, runtime bundle loader) | ✅ Complete |
-| **3** | Frontend — Real-time combat UI (Canvas 60 FPS, WASD + mouse aim, client prediction, interpolation) | **Next** |
+| **3** | Frontend — Real-time combat UI (Canvas 60 FPS, WASD + mouse aim, client prediction, interpolation, match HUD) | 🚧 In progress |
 | **4** | Weapons & projectiles (Sword, Spear, Bow, Dagger; server projectiles, weapon UI) | Planned |
 | **5** | Progression & loot (XP, leveling, skill trees, equipment, loot engine, crafting, inventory) | Planned |
 | **6** | Multiplayer — Real-time PvP (matchmaking, friends, challenges, dual-player WebSocket) | Planned |
 | **7** | Polish, testing & deployment (bug fixes, tests, Vercel + Railway, mainnet guide) | Planned |
 
-**Currently built:** Monorepo (pnpm, Turborepo), Next.js 14 frontend (auth, wallet, mint, **admin UI for game data**: bundles, equipment/action template CRUD, validation, publish, export to Supabase Storage), Express game server (Socket.io, **20Hz combat engine**, **CPU AI**, **match manager**, **WebSocket match handlers**, **bundle loader** for published game data, blockchain event listener), Gladiator NFT contract (Hardhat, **8 stats**, 5 used in combat), Supabase + Prisma.
+**Currently built:** Monorepo (pnpm, Turborepo), Next.js 14 frontend (auth, wallet, mint, **admin UI for game data**: bundles, equipment/action template CRUD, validation, publish, export to Supabase Storage, **Sprint 3 arena UI scaffolding**: match page, Canvas-based `ArenaCanvas`, `MatchHUD`, home marketing/landing page, Blood & Bronze visual pass), Express game server (Socket.io, **20Hz combat engine**, **CPU AI**, **match manager**, **WebSocket match handlers**, **bundle loader** for published game data, blockchain event listener), Gladiator NFT contract (Hardhat, **8 stats**, 5 used in combat), Supabase + Prisma.
 
 Full plan: [Master Implementation Plan](docs/plans/00-MASTER-PLAN.md).
 

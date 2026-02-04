@@ -254,14 +254,6 @@ export default async function Home() {
               title="Enter Arena"
               description="Test your Gladiator against CPU opponents in brutal combat."
             />
-            {isAdmin && (
-              <ActionCard
-                href="/admin"
-                icon="📜"
-                title="War Council"
-                description="Manage game data, bundles, and templates."
-              />
-            )}
           </div>
         </div>
 
@@ -286,6 +278,15 @@ export default async function Home() {
             </div>
           </div>
         </div>
+
+        {/* War Council shortcut for admins */}
+        {isAdmin && (
+          <div className="mt-6 flex justify-center">
+            <Link href="/admin" className="btn-secondary">
+              War Council
+            </Link>
+          </div>
+        )}
 
         {/* Sign out */}
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">

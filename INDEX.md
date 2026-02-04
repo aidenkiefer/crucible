@@ -53,8 +53,8 @@ crucible/
 │       ├── tsconfig.json
 │       ├── app/
 │       │   ├── layout.tsx       # Root layout, providers
-│       │   ├── page.tsx         # Home (login or welcome + Mint/Admin links)
-│       │   ├── globals.css      # Global styles
+│       │   ├── page.tsx         # Home (marketing landing + logged-in dashboard: Forge, Glory Battle, Enter Arena, Arena Status, admin shortcuts)
+│       │   ├── globals.css      # Global styles (Blood & Bronze palette, shared components)
 │       │   ├── admin/           # Admin UI (Sprint 2.5): dashboard, bundles, equipment/action templates
 │       │   │   ├── layout.tsx   # Admin layout, AdminNav
 │       │   │   ├── page.tsx     # Admin dashboard
@@ -242,7 +242,7 @@ crucible/
 └── docs/
     ├── architecture.md          # System architecture: frontend, game server, database, blockchain, data flow, security, deployment
     ├── data-glossary.md         # Database & game data: schema, enums, templates, instances, JSON shapes (§8), derived stats (§9), principles (§11)
-    ├── design-guidelines.md     # Design principles: visual direction, typography, color, motion, accessibility, tone (placeholders)
+    ├── design-guidelines.md     # Design principles: visual direction, typography, color, motion, accessibility, tone — source of the Blood & Bronze UI pass
     ├── mainnet-migration.md     # Mainnet migration (post-demo)
     ├── SPRINT-1-SUMMARY.md      # Sprint 1 complete: auth, wallet, mint, event listener, admin
     ├── SPRINT-2-SUMMARY.md      # Sprint 2 complete: 20Hz combat, WASD, sword, dodge, CPU AI, WebSocket
