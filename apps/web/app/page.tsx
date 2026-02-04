@@ -234,13 +234,19 @@ export default async function Home() {
             <div className="h-px flex-1 bg-coliseum-bronze/30" />
           </div>
 
-          <div className={`grid gap-4 ${isAdmin ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
+          <div className={`grid gap-4 ${isAdmin ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}>
             <ActionCard
               href="/mint"
               icon="🔥"
               title="The Forge"
               description="Mint a new Gladiator to fight in your name. Each warrior is unique."
               primary
+            />
+            <ActionCard
+              href="/arena"
+              icon="🪙"
+              title="Glory Battle"
+              description="Ranked battles — fight for glory and climb the ladder. Coming soon."
             />
             <ActionCard
               href="/arena"
