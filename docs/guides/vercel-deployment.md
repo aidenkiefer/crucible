@@ -62,6 +62,18 @@ npx turbo-ignore @gladiator/web
 
 (or the equivalent for your turbo pipeline). Requires `turbo-ignore` in the repo; otherwise leave the step empty so every push builds.
 
+## Troubleshooting
+
+### Redirected to login after signing in with Google
+
+- **NEXTAUTH_URL** must exactly match the URL you’re visiting (e.g. `https://your-project.vercel.app`). If you use a custom domain, set `NEXTAUTH_URL` to that. For Preview deployments, set it to the preview URL.
+- In **Google Cloud Console** → your OAuth client → **Authorized redirect URIs**, add `https://<your-vercel-url>/api/auth/callback/google` (and the same for any custom or preview URL you use).
+- The app uses `trustHost: true` so NextAuth trusts the request host; redeploy if you only just set a new URL.
+
+### WalletConnect / Reown console errors (403, “Project ID Not Configured”)
+
+The app only enables the WalletConnect connector when `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` is set. If it’s missing, you’ll see no WalletConnect option in the wallet UI, but **login and admin work**. To enable WalletConnect (e.g. for the mint page): create a project at [Reown (WalletConnect) Cloud](https://cloud.reown.com), copy the Project ID, and add `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` in Vercel (and in `.env` locally).
+
 ## Related
 
 - [Development Setup](./development-setup.md) — local env and `.env.example`
