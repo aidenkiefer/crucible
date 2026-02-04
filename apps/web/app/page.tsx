@@ -1,6 +1,7 @@
 import { getServerSession } from 'next-auth'
 import Link from 'next/link'
 import { authOptions } from '@/lib/auth'
+import { getArenaStatus } from '@/lib/arena'
 import { SignInForm } from '@/components/auth/SignInForm'
 import { SignInButton } from '@/components/auth/SignInButton'
 import { AnimatedTorch } from '@/components/ui/AnimatedTorch'
@@ -177,6 +178,7 @@ export default async function Home() {
 
   const isAdmin = (session.user as { isAdmin?: boolean })?.isAdmin === true
   const userName = session.user?.name ?? session.user?.email?.split('@')[0] ?? 'Gladiator'
+  const arenaStatus = getArenaStatus()
 
   return (
     <main className="min-h-screen bg-coliseum-black">
@@ -265,7 +267,7 @@ export default async function Home() {
                 Arena Status
               </p>
               <p className="text-coliseum-sand font-display text-lg uppercase">
-                Gates Open
+                {arenaStatus}
               </p>
             </div>
             <div className="text-right">

@@ -6,6 +6,10 @@ import { prisma } from '@gladiator/database'
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as NextAuthOptions['adapter'],
+  session: {
+    strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -18,19 +22,24 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async session({ session, user }) {
-      if (session.user) {
-        session.user.id = user.id
-        // Fetch full user data including isAdmin
+    async jwt({ token, user: triggerUser }) {
+      // On sign-in, triggerUser is the DB user from the adapter; persist id and isAdmin into the JWT
+      if (triggerUser) {
+        token.id = triggerUser.id
         const dbUser = await prisma.user.findUnique({
-          where: { id: user.id },
-          select: {
-            walletAddress: true,
-            isAdmin: true
-          },
+          where: { id: triggerUser.id },
+          select: { isAdmin: true, walletAddress: true },
         })
-        session.user.walletAddress = dbUser?.walletAddress
-        session.user.isAdmin = dbUser?.isAdmin ?? false
+        token.isAdmin = dbUser?.isAdmin ?? false
+        token.walletAddress = dbUser?.walletAddress ?? null
+      }
+      return token
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id as string
+        session.user.isAdmin = token.isAdmin === true
+        session.user.walletAddress = token.walletAddress ?? undefined
       }
       return session
     },
