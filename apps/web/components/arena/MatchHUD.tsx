@@ -11,8 +11,8 @@ interface MatchHUDProps {
 export function MatchHUD({ playerUnit }: MatchHUDProps) {
   if (!playerUnit) return null
 
-  const hpPercent = (playerUnit.hp / playerUnit.derived.hpMax) * 100
-  const stamPercent = (playerUnit.stamina / playerUnit.derived.stamMax) * 100
+  const hpPercent = (playerUnit.hp / playerUnit.derived.maxHp) * 100
+  const stamPercent = (playerUnit.stamina / playerUnit.derived.maxStamina) * 100
 
   const attackCooldown = playerUnit.cooldowns?.['Attack'] ?? 0
   const dodgeCooldown = playerUnit.cooldowns?.['Dodge'] ?? 0
@@ -23,7 +23,7 @@ export function MatchHUD({ playerUnit }: MatchHUDProps) {
       <div className="mb-3">
         <div className="flex justify-between text-sm text-gray-400 mb-1">
           <span>Health</span>
-          <span>{Math.round(playerUnit.hp)} / {playerUnit.derived.hpMax}</span>
+          <span>{Math.round(playerUnit.hp)} / {playerUnit.derived.maxHp}</span>
         </div>
         <div className="w-full bg-gray-700 rounded-full h-3">
           <div
@@ -37,7 +37,7 @@ export function MatchHUD({ playerUnit }: MatchHUDProps) {
       <div className="mb-4">
         <div className="flex justify-between text-sm text-gray-400 mb-1">
           <span>Stamina</span>
-          <span>{Math.round(playerUnit.stamina)} / {playerUnit.derived.stamMax}</span>
+          <span>{Math.round(playerUnit.stamina)} / {playerUnit.derived.maxStamina}</span>
         </div>
         <div className="w-full bg-gray-700 rounded-full h-2">
           <div

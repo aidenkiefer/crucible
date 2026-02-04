@@ -96,7 +96,7 @@ export default function MatchPage() {
         stamina: playerCombatant.currentStamina,
         isInvulnerable: playerCombatant.isInvulnerable,
         currentAction: playerCombatant.currentAction,
-        derived: { hpMax: 100, stamMax: 100, staminaRegen: 1, moveSpeed: 1, damageReduction: 0 },
+        derived: { maxHp: 100, maxStamina: 100, staminaRegen: 1, moveSpeed: 1, damageReduction: 0 },
         cooldowns: {} as Record<string, number>,
       }
     : null

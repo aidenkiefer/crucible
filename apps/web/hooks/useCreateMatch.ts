@@ -7,7 +7,6 @@
 
 import { useState } from 'react'
 import { useSocket } from '@/hooks/useSocket'
-import { v4 as uuidv4 } from 'uuid'
 
 interface CreateMatchOptions {
   userId: string
@@ -39,7 +38,7 @@ export function useCreateMatch() {
     setIsCreating(true)
     setError(null)
 
-    const matchId = uuidv4()
+    const matchId = crypto.randomUUID()
 
     return new Promise((resolve) => {
       // Listen for match creation response

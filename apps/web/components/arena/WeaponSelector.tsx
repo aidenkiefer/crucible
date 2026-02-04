@@ -1,6 +1,7 @@
 'use client'
 
-import { WeaponType, WEAPONS } from '@gladiator/shared/src/combat/weapons'
+import { WeaponType } from '@gladiator/shared/src/combat/types'
+import { WEAPONS } from '@gladiator/shared/src/combat/weapons'
 
 interface WeaponSelectorProps {
   currentWeapon: WeaponType

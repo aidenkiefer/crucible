@@ -4,16 +4,17 @@
  * TODO: Load from published bundle system
  */
 
-import type { WeaponType, WeaponDefinition, AttackPattern } from './types'
+import { WeaponType, AttackPattern } from './types'
+import type { WeaponDefinition } from './types'
 
 // ============================================================================
 // Weapon Definitions (Hardcoded Fallback)
 // ============================================================================
 
 export const WEAPONS: Record<WeaponType, WeaponDefinition> = {
-  Sword: {
-    type: 'Sword',
-    attackPattern: 'MeleeArc',
+  [WeaponType.Sword]: {
+    type: WeaponType.Sword,
+    attackPattern: AttackPattern.MeleeArc,
     range: 2.0,
     arcAngle: Math.PI / 2, // 90 degrees
     baseDamage: 15,
@@ -25,9 +26,9 @@ export const WEAPONS: Record<WeaponType, WeaponDefinition> = {
     cooldown: 500,
   },
 
-  Spear: {
-    type: 'Spear',
-    attackPattern: 'MeleeThrust',
+  [WeaponType.Spear]: {
+    type: WeaponType.Spear,
+    attackPattern: AttackPattern.MeleeThrust,
     range: 3.5, // Longer range than sword
     lineWidth: 0.5, // Narrow hitbox
     baseDamage: 18,
@@ -39,9 +40,9 @@ export const WEAPONS: Record<WeaponType, WeaponDefinition> = {
     cooldown: 600,
   },
 
-  Bow: {
-    type: 'Bow',
-    attackPattern: 'Projectile',
+  [WeaponType.Bow]: {
+    type: WeaponType.Bow,
+    attackPattern: AttackPattern.Projectile,
     range: 1.0, // Spawn distance
     baseDamage: 12,
     scaling: {
@@ -54,9 +55,9 @@ export const WEAPONS: Record<WeaponType, WeaponDefinition> = {
     projectileLifetime: 2000, // 2 seconds
   },
 
-  Dagger: {
-    type: 'Dagger',
-    attackPattern: 'MeleeQuick',
+  [WeaponType.Dagger]: {
+    type: WeaponType.Dagger,
+    attackPattern: AttackPattern.MeleeQuick,
     range: 1.5, // Shorter than sword
     arcAngle: Math.PI / 3, // 60 degrees (narrower)
     baseDamage: 10,

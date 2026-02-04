@@ -138,4 +138,6 @@ export interface CombatState {
   combatant1: CombatantData
   combatant2: CombatantData
   winner: string | null
+  /** Projectiles in flight (Sprint 4); keyed by id */
+  projectiles?: Map<string, ProjectileState>
 }

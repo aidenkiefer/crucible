@@ -61,7 +61,7 @@ export function useRealTimeMatch(matchId: string, gladiatorId: string) {
     moveX: number
     moveY: number
     facing?: number
-    actions?: string[]
+    actions?: Array<{ type: string; slot?: string }>
   }) => {
     if (!socket || !isConnected) return
 
