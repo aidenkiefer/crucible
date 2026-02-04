@@ -115,36 +115,36 @@ export default function BundleDetailPage() {
   }
 
   if (loading) {
-    return <div className="max-w-7xl mx-auto p-8 text-stone-400">Loading...</div>
+    return <div className="max-w-7xl mx-auto p-8 text-coliseum-sand/50">Loading...</div>
   }
 
   if (!bundle) {
-    return <div className="max-w-7xl mx-auto p-8 text-stone-400">Bundle not found</div>
+    return <div className="max-w-7xl mx-auto p-8 text-coliseum-sand/50">Bundle not found</div>
   }
 
   return (
     <div className="max-w-7xl mx-auto p-8">
       <div className="mb-8">
-        <Link href="/admin/bundles" className="text-amber-500 hover:text-amber-400 text-sm font-bold uppercase">
+        <Link href="/admin/bundles" className="text-coliseum-bronze hover:text-coliseum-sand text-sm font-bold uppercase transition-colors">
           ← Back to Bundles
         </Link>
-        <h1 className="text-4xl font-bold uppercase tracking-wide text-amber-500 mt-4">
+        <h1 className="font-display text-4xl uppercase tracking-wide text-coliseum-bronze mt-4">
           {bundle.label}
         </h1>
       </div>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-900 border-2 border-red-600 text-red-200">
+        <div className="mb-6 p-4 bg-coliseum-red/20 border-2 border-coliseum-red text-coliseum-sand">
           {error}
         </div>
       )}
 
       {/* Bundle Info */}
-      <div className="mb-8 p-6 bg-stone-800 border-2 border-stone-700 rounded">
-        <h2 className="text-2xl font-bold uppercase text-amber-500 mb-4">Bundle Info</h2>
+      <div className="mb-8 panel p-6 inner-shadow">
+        <h2 className="font-display text-3xl uppercase tracking-wide text-coliseum-sand mb-4">Bundle Info</h2>
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <div className="text-stone-400 uppercase text-xs font-bold mb-1">Status</div>
+            <div className="text-coliseum-sand/50 uppercase text-[10px] font-bold tracking-wider mb-1">Status</div>
             <span className={`text-xs font-bold uppercase px-2 py-1 rounded ${
               bundle.status === 'PUBLISHED' ? 'bg-green-900 text-green-300' :
               bundle.status === 'DRAFT' ? 'bg-blue-900 text-blue-300' :
@@ -154,24 +154,24 @@ export default function BundleDetailPage() {
             </span>
           </div>
           <div>
-            <div className="text-stone-400 uppercase text-xs font-bold mb-1">Active</div>
-            <div className="text-stone-200">{bundle.isActive ? '✓ Yes' : 'No'}</div>
+            <div className="text-coliseum-sand/50 uppercase text-[10px] font-bold tracking-wider mb-1">Active</div>
+            <div className="text-coliseum-sand">{bundle.isActive ? '✓ Yes' : 'No'}</div>
           </div>
           <div>
-            <div className="text-stone-400 uppercase text-xs font-bold mb-1">Equipment Templates</div>
-            <div className="text-stone-200">{bundle._count.equipmentTemplates}</div>
+            <div className="text-coliseum-sand/50 uppercase text-[10px] font-bold tracking-wider mb-1">Equipment Templates</div>
+            <div className="text-coliseum-sand">{bundle._count.equipmentTemplates}</div>
           </div>
           <div>
-            <div className="text-stone-400 uppercase text-xs font-bold mb-1">Action Templates</div>
-            <div className="text-stone-200">{bundle._count.actionTemplates}</div>
+            <div className="text-coliseum-sand/50 uppercase text-[10px] font-bold tracking-wider mb-1">Action Templates</div>
+            <div className="text-coliseum-sand">{bundle._count.actionTemplates}</div>
           </div>
           <div>
-            <div className="text-stone-400 uppercase text-xs font-bold mb-1">Export Target</div>
-            <div className="text-stone-200 font-mono text-xs">{bundle.exportTarget || 'Not exported'}</div>
+            <div className="text-coliseum-sand/50 uppercase text-[10px] font-bold tracking-wider mb-1">Export Target</div>
+            <div className="text-coliseum-sand/80 font-mono text-xs">{bundle.exportTarget || 'Not exported'}</div>
           </div>
           <div>
-            <div className="text-stone-400 uppercase text-xs font-bold mb-1">Updated</div>
-            <div className="text-stone-200">{new Date(bundle.updatedAt).toLocaleString()}</div>
+            <div className="text-coliseum-sand/50 uppercase text-[10px] font-bold tracking-wider mb-1">Updated</div>
+            <div className="text-coliseum-sand">{new Date(bundle.updatedAt).toLocaleString()}</div>
           </div>
         </div>
       </div>
@@ -181,7 +181,7 @@ export default function BundleDetailPage() {
         <button
           onClick={handleValidate}
           disabled={validating}
-          className="px-6 py-3 bg-blue-700 text-black font-bold uppercase tracking-wide hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {validating ? 'Validating...' : 'Validate'}
         </button>
@@ -189,7 +189,7 @@ export default function BundleDetailPage() {
         <button
           onClick={handlePublish}
           disabled={publishing || bundle.status === 'PUBLISHED'}
-          className="px-6 py-3 bg-amber-700 text-black font-bold uppercase tracking-wide hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {publishing ? 'Publishing...' : 'Publish'}
         </button>
@@ -197,7 +197,7 @@ export default function BundleDetailPage() {
         <button
           onClick={handleActivate}
           disabled={activating || bundle.status !== 'PUBLISHED' || bundle.isActive}
-          className="px-6 py-3 bg-green-700 text-black font-bold uppercase tracking-wide hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {activating ? 'Activating...' : 'Activate'}
         </button>

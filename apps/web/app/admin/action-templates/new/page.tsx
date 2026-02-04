@@ -53,23 +53,23 @@ export default function NewActionTemplatePage() {
 
   return (
     <div className="max-w-4xl mx-auto p-8">
-      <h1 className="text-4xl font-bold uppercase tracking-wide text-amber-500 mb-8">
+      <h1 className="font-display text-4xl uppercase tracking-wide text-coliseum-bronze mb-8">
         Create Action Template
       </h1>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-900 border-2 border-red-600 text-red-200">
+        <div className="mb-6 p-4 bg-coliseum-red/20 border-2 border-coliseum-red text-coliseum-sand">
           {error}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Identity */}
-        <div className="p-6 bg-stone-800 border-2 border-stone-700 rounded space-y-4">
-          <h2 className="text-xl font-bold uppercase text-stone-200">Identity</h2>
+        <div className="panel p-6 space-y-4 inner-shadow">
+          <h2 className="font-display text-2xl uppercase tracking-wide text-coliseum-sand">Identity</h2>
 
           <div>
-            <label className="block text-sm font-bold uppercase text-stone-300 mb-2">
+            <label className="block text-sm font-bold uppercase text-coliseum-sand/70 mb-2">
               Key *
             </label>
             <input
@@ -77,14 +77,14 @@ export default function NewActionTemplatePage() {
               value={formData.key}
               onChange={(e) => setFormData({ ...formData, key: e.target.value })}
               placeholder="atk_sword_slash_light"
-              className="w-full px-4 py-2 bg-stone-900 border-2 border-stone-600 text-stone-100 font-mono focus:border-amber-600 focus:outline-none"
+              className="input font-mono"
               required
             />
-            <p className="mt-1 text-xs text-stone-400">Lowercase snake_case, unique, stable</p>
+            <p className="mt-1 text-xs text-coliseum-sand/50">Lowercase snake_case, unique, stable</p>
           </div>
 
           <div>
-            <label className="block text-sm font-bold uppercase text-stone-300 mb-2">
+            <label className="block text-sm font-bold uppercase text-coliseum-sand/70 mb-2">
               Name *
             </label>
             <input
@@ -92,31 +92,31 @@ export default function NewActionTemplatePage() {
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="Light Sword Slash"
-              className="w-full px-4 py-2 bg-stone-900 border-2 border-stone-600 text-stone-100 focus:border-amber-600 focus:outline-none"
+              className="input"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-bold uppercase text-stone-300 mb-2">
+            <label className="block text-sm font-bold uppercase text-coliseum-sand/70 mb-2">
               Description
             </label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="A quick horizontal slash"
-              className="w-full h-24 px-4 py-2 bg-stone-900 border-2 border-stone-600 text-stone-100 focus:border-amber-600 focus:outline-none"
+              className="input h-24"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-bold uppercase text-stone-300 mb-2">
+            <label className="block text-sm font-bold uppercase text-coliseum-sand/70 mb-2">
               Category *
             </label>
             <select
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              className="w-full px-4 py-2 bg-stone-900 border-2 border-stone-600 text-stone-100 focus:border-amber-600 focus:outline-none"
+              className="input"
             >
               {CATEGORY_OPTIONS.map((cat) => (
                 <option key={cat} value={cat}>{cat}</option>
@@ -126,63 +126,63 @@ export default function NewActionTemplatePage() {
         </div>
 
         {/* Timing & Costs */}
-        <div className="p-6 bg-stone-800 border-2 border-stone-700 rounded space-y-4">
-          <h2 className="text-xl font-bold uppercase text-stone-200">Timing & Costs</h2>
+        <div className="panel p-6 space-y-4 inner-shadow">
+          <h2 className="font-display text-2xl uppercase tracking-wide text-coliseum-sand">Timing & Costs</h2>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-bold uppercase text-stone-300 mb-2">
+              <label className="block text-sm font-bold uppercase text-coliseum-sand/70 mb-2">
                 Cooldown (ms)
               </label>
               <input
                 type="number"
                 value={formData.cooldownMs}
                 onChange={(e) => setFormData({ ...formData, cooldownMs: Number(e.target.value) })}
-                className="w-full px-4 py-2 bg-stone-900 border-2 border-stone-600 text-stone-100 focus:border-amber-600 focus:outline-none"
+                className="input"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-bold uppercase text-stone-300 mb-2">
+              <label className="block text-sm font-bold uppercase text-coliseum-sand/70 mb-2">
                 Cast Time (ms)
               </label>
               <input
                 type="number"
                 value={formData.castTimeMs}
                 onChange={(e) => setFormData({ ...formData, castTimeMs: Number(e.target.value) })}
-                className="w-full px-4 py-2 bg-stone-900 border-2 border-stone-600 text-stone-100 focus:border-amber-600 focus:outline-none"
+                className="input"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-bold uppercase text-stone-300 mb-2">
+              <label className="block text-sm font-bold uppercase text-coliseum-sand/70 mb-2">
                 Stamina Cost
               </label>
               <input
                 type="number"
                 value={formData.staminaCost}
                 onChange={(e) => setFormData({ ...formData, staminaCost: Number(e.target.value) })}
-                className="w-full px-4 py-2 bg-stone-900 border-2 border-stone-600 text-stone-100 focus:border-amber-600 focus:outline-none"
+                className="input"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-bold uppercase text-stone-300 mb-2">
+              <label className="block text-sm font-bold uppercase text-coliseum-sand/70 mb-2">
                 Mana Cost
               </label>
               <input
                 type="number"
                 value={formData.manaCost}
                 onChange={(e) => setFormData({ ...formData, manaCost: Number(e.target.value) })}
-                className="w-full px-4 py-2 bg-stone-900 border-2 border-stone-600 text-stone-100 focus:border-amber-600 focus:outline-none"
+                className="input"
               />
             </div>
           </div>
         </div>
 
         {/* JSON Configs */}
-        <div className="p-6 bg-stone-800 border-2 border-stone-700 rounded space-y-4">
-          <h2 className="text-xl font-bold uppercase text-stone-200">Behavior Configs (JSON)</h2>
+        <div className="panel p-6 space-y-4 inner-shadow">
+          <h2 className="font-display text-2xl uppercase tracking-wide text-coliseum-sand">Behavior Configs (JSON)</h2>
 
           <JsonEditor
             label="Hitbox Config"
@@ -239,14 +239,14 @@ export default function NewActionTemplatePage() {
           <button
             type="submit"
             disabled={saving}
-            className="px-8 py-3 bg-green-700 text-black font-bold uppercase tracking-wide hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
+            className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {saving ? 'Creating...' : 'Create Template'}
           </button>
           <button
             type="button"
             onClick={() => router.back()}
-            className="px-8 py-3 bg-stone-700 text-stone-200 font-bold uppercase tracking-wide hover:bg-stone-600 transition"
+            className="btn-secondary"
           >
             Cancel
           </button>

@@ -62,59 +62,61 @@ export default function BundlesPage() {
   }
 
   if (loading) {
-    return <div className="max-w-7xl mx-auto p-8 text-stone-400">Loading...</div>
+    return <div className="max-w-7xl mx-auto p-8 text-coliseum-sand/50">Loading...</div>
   }
 
   return (
     <div className="max-w-7xl mx-auto p-8">
-      <h1 className="text-4xl font-bold uppercase tracking-wide text-amber-500 mb-8">
+      <h1 className="font-display text-4xl uppercase tracking-wide text-coliseum-bronze mb-8">
         Game Data Bundles
       </h1>
 
       {/* Create Bundle Form */}
-      <div className="mb-8 p-6 bg-stone-800 border-2 border-stone-700 rounded">
-        <h2 className="text-xl font-bold uppercase text-stone-200 mb-4">Create New Bundle</h2>
+      <div className="mb-8 panel p-6 inner-shadow">
+        <h2 className="font-display text-2xl uppercase tracking-wide text-coliseum-sand mb-4">
+          Create New Bundle
+        </h2>
         <form onSubmit={handleCreateBundle} className="flex gap-4">
           <input
             type="text"
             value={newLabel}
             onChange={(e) => setNewLabel(e.target.value)}
             placeholder="e.g. demo-v0.2"
-            className="flex-1 px-4 py-2 bg-stone-900 border-2 border-stone-600 text-stone-100 focus:border-amber-600 focus:outline-none"
+            className="input flex-1"
             required
           />
           <button
             type="submit"
             disabled={creating}
-            className="px-6 py-2 bg-amber-700 text-black font-bold uppercase tracking-wide hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
+            className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {creating ? 'Creating...' : 'Create (Clone from Active)'}
           </button>
         </form>
-        {error && <div className="mt-4 text-red-400 text-sm">{error}</div>}
-        <p className="mt-4 text-sm text-stone-400">
+        {error && <div className="mt-4 text-coliseum-red text-sm">{error}</div>}
+        <p className="mt-4 text-sm text-coliseum-sand/60">
           Creates a new draft bundle by cloning all templates from the current active bundle.
         </p>
       </div>
 
       {/* Bundles List */}
-      <div className="bg-stone-800 border-2 border-stone-700 rounded overflow-hidden">
+      <div className="panel overflow-hidden">
         <table className="min-w-full">
-          <thead className="bg-stone-950 border-b-2 border-stone-700">
+          <thead className="bg-coliseum-black/50 border-b border-coliseum-bronze/20">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-bold uppercase text-stone-400">Label</th>
-              <th className="px-6 py-3 text-left text-xs font-bold uppercase text-stone-400">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-bold uppercase text-stone-400">Active</th>
-              <th className="px-6 py-3 text-left text-xs font-bold uppercase text-stone-400">Equipment</th>
-              <th className="px-6 py-3 text-left text-xs font-bold uppercase text-stone-400">Actions</th>
-              <th className="px-6 py-3 text-left text-xs font-bold uppercase text-stone-400">Updated</th>
-              <th className="px-6 py-3 text-left text-xs font-bold uppercase text-stone-400">Actions</th>
+              <th className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-coliseum-sand/50">Label</th>
+              <th className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-coliseum-sand/50">Status</th>
+              <th className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-coliseum-sand/50">Active</th>
+              <th className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-coliseum-sand/50">Equipment</th>
+              <th className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-coliseum-sand/50">Actions</th>
+              <th className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-coliseum-sand/50">Updated</th>
+              <th className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-coliseum-sand/50">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-stone-700">
+          <tbody className="divide-y divide-coliseum-bronze/10">
             {bundles.map((bundle) => (
-              <tr key={bundle.id} className="hover:bg-stone-750">
-                <td className="px-6 py-4 font-bold text-stone-100">{bundle.label}</td>
+              <tr key={bundle.id} className="hover:bg-coliseum-black/30 transition-colors">
+                <td className="px-6 py-4 font-bold text-coliseum-sand">{bundle.label}</td>
                 <td className="px-6 py-4">
                   <span className={`text-xs font-bold uppercase px-2 py-1 rounded ${
                     bundle.status === 'PUBLISHED' ? 'bg-green-900 text-green-300' :
@@ -126,20 +128,20 @@ export default function BundlesPage() {
                 </td>
                 <td className="px-6 py-4">
                   {bundle.isActive && (
-                    <span className="text-xs font-bold uppercase px-2 py-1 rounded bg-amber-900 text-amber-300">
+                    <span className="tag">
                       ✓ Active
                     </span>
                   )}
                 </td>
-                <td className="px-6 py-4 text-stone-300">{bundle._count.equipmentTemplates}</td>
-                <td className="px-6 py-4 text-stone-300">{bundle._count.actionTemplates}</td>
-                <td className="px-6 py-4 text-sm text-stone-400">
+                <td className="px-6 py-4 text-coliseum-sand/70">{bundle._count.equipmentTemplates}</td>
+                <td className="px-6 py-4 text-coliseum-sand/70">{bundle._count.actionTemplates}</td>
+                <td className="px-6 py-4 text-sm text-coliseum-sand/50">
                   {new Date(bundle.updatedAt).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4">
                   <Link
                     href={`/admin/bundles/${bundle.id}`}
-                    className="text-amber-500 hover:text-amber-400 font-bold text-sm"
+                    className="text-coliseum-bronze hover:text-coliseum-sand font-bold text-sm transition-colors"
                   >
                     View →
                   </Link>

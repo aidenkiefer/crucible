@@ -78,67 +78,67 @@ export default function NewEquipmentTemplatePage() {
 
   return (
     <div className="max-w-4xl mx-auto p-8">
-      <h1 className="text-4xl font-bold uppercase tracking-wide text-amber-500 mb-8">
+      <h1 className="font-display text-4xl uppercase tracking-wide text-coliseum-bronze mb-8">
         Create Equipment Template
       </h1>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-900 border-2 border-red-600 text-red-200">
+        <div className="mb-6 p-4 bg-coliseum-red/20 border-2 border-coliseum-red text-coliseum-sand">
           {error}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Identity */}
-        <div className="p-6 bg-stone-800 border-2 border-stone-700 rounded space-y-4">
-          <h2 className="text-xl font-bold uppercase text-stone-200">Identity</h2>
+        <div className="panel p-6 space-y-4 inner-shadow">
+          <h2 className="font-display text-2xl uppercase tracking-wide text-coliseum-sand">Identity</h2>
 
           <div>
-            <label className="block text-sm font-bold uppercase text-stone-300 mb-2">Key *</label>
+            <label className="block text-sm font-bold uppercase text-coliseum-sand/70 mb-2">Key *</label>
             <input
               type="text"
               value={formData.key}
               onChange={(e) => setFormData({ ...formData, key: e.target.value })}
               placeholder="iron_longsword"
-              className="w-full px-4 py-2 bg-stone-900 border-2 border-stone-600 text-stone-100 font-mono focus:border-amber-600 focus:outline-none"
+              className="input font-mono"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-bold uppercase text-stone-300 mb-2">Name *</label>
+            <label className="block text-sm font-bold uppercase text-coliseum-sand/70 mb-2">Name *</label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="Iron Longsword"
-              className="w-full px-4 py-2 bg-stone-900 border-2 border-stone-600 text-stone-100 focus:border-amber-600 focus:outline-none"
+              className="input"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-bold uppercase text-stone-300 mb-2">Description</label>
+            <label className="block text-sm font-bold uppercase text-coliseum-sand/70 mb-2">Description</label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="A reliable sword for beginners"
-              className="w-full h-24 px-4 py-2 bg-stone-900 border-2 border-stone-600 text-stone-100 focus:border-amber-600 focus:outline-none"
+              className="input h-24"
             />
           </div>
         </div>
 
         {/* Classification */}
-        <div className="p-6 bg-stone-800 border-2 border-stone-700 rounded space-y-4">
-          <h2 className="text-xl font-bold uppercase text-stone-200">Classification</h2>
+        <div className="panel p-6 space-y-4 inner-shadow">
+          <h2 className="font-display text-2xl uppercase tracking-wide text-coliseum-sand">Classification</h2>
 
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-bold uppercase text-stone-300 mb-2">Type *</label>
+              <label className="block text-sm font-bold uppercase text-coliseum-sand/70 mb-2">Type *</label>
               <select
                 value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                className="w-full px-4 py-2 bg-stone-900 border-2 border-stone-600 text-stone-100 focus:border-amber-600 focus:outline-none"
+                className="input"
               >
                 {TYPE_OPTIONS.map((type) => (
                   <option key={type} value={type}>{type}</option>
@@ -147,11 +147,11 @@ export default function NewEquipmentTemplatePage() {
             </div>
 
             <div>
-              <label className="block text-sm font-bold uppercase text-stone-300 mb-2">Slot *</label>
+              <label className="block text-sm font-bold uppercase text-coliseum-sand/70 mb-2">Slot *</label>
               <select
                 value={formData.slot}
                 onChange={(e) => setFormData({ ...formData, slot: e.target.value })}
-                className="w-full px-4 py-2 bg-stone-900 border-2 border-stone-600 text-stone-100 focus:border-amber-600 focus:outline-none"
+                className="input"
               >
                 {SLOT_OPTIONS.map((slot) => (
                   <option key={slot} value={slot}>{slot}</option>
@@ -160,38 +160,38 @@ export default function NewEquipmentTemplatePage() {
             </div>
 
             <div>
-              <label className="block text-sm font-bold uppercase text-stone-300 mb-2">Subtype *</label>
+              <label className="block text-sm font-bold uppercase text-coliseum-sand/70 mb-2">Subtype *</label>
               <input
                 type="text"
                 value={formData.subtype}
                 onChange={(e) => setFormData({ ...formData, subtype: e.target.value })}
                 placeholder="SWORD"
-                className="w-full px-4 py-2 bg-stone-900 border-2 border-stone-600 text-stone-100 focus:border-amber-600 focus:outline-none"
+                className="input"
                 required
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-bold uppercase text-stone-300 mb-2">Tags (comma-separated)</label>
+            <label className="block text-sm font-bold uppercase text-coliseum-sand/70 mb-2">Tags (comma-separated)</label>
             <input
               type="text"
               value={formData.tags.join(', ')}
               onChange={(e) => setFormData({ ...formData, tags: e.target.value.split(',').map(s => s.trim()) })}
               placeholder="starter, melee, slash"
-              className="w-full px-4 py-2 bg-stone-900 border-2 border-stone-600 text-stone-100 focus:border-amber-600 focus:outline-none"
+              className="input"
             />
           </div>
         </div>
 
         {/* Granted Actions */}
-        <div className="p-6 bg-stone-800 border-2 border-stone-700 rounded space-y-4">
-          <h2 className="text-xl font-bold uppercase text-stone-200">Granted Actions</h2>
-          <p className="text-sm text-stone-400">Select actions this equipment grants to the wielder</p>
+        <div className="panel p-6 space-y-4 inner-shadow">
+          <h2 className="font-display text-2xl uppercase tracking-wide text-coliseum-sand">Granted Actions</h2>
+          <p className="text-sm text-coliseum-sand/60">Select actions this equipment grants to the wielder</p>
 
           <div className="space-y-2 max-h-64 overflow-y-auto">
             {actionTemplates.map((action) => (
-              <label key={action.id} className="flex items-center space-x-3 p-3 bg-stone-900 hover:bg-stone-850 cursor-pointer rounded">
+              <label key={action.id} className="flex items-center space-x-3 p-3 bg-coliseum-black/40 hover:bg-coliseum-black/60 cursor-pointer border border-coliseum-bronze/20">
                 <input
                   type="checkbox"
                   checked={(formData.actionTemplateIds as string[]).includes(action.id)}
@@ -206,18 +206,18 @@ export default function NewEquipmentTemplatePage() {
                   className="w-5 h-5"
                 />
                 <div className="flex-1">
-                  <div className="text-stone-100 font-bold">{action.name}</div>
-                  <div className="text-xs text-stone-400 font-mono">{action.key}</div>
+                  <div className="text-coliseum-sand font-bold">{action.name}</div>
+                  <div className="text-xs text-coliseum-sand/50 font-mono">{action.key}</div>
                 </div>
-                <div className="text-xs text-stone-500">{action.category}</div>
+                <div className="text-xs text-coliseum-sand/50">{action.category}</div>
               </label>
             ))}
           </div>
         </div>
 
         {/* JSON Configs */}
-        <div className="p-6 bg-stone-800 border-2 border-stone-700 rounded space-y-4">
-          <h2 className="text-xl font-bold uppercase text-stone-200">Stats & Modifiers (JSON)</h2>
+        <div className="panel p-6 space-y-4 inner-shadow">
+          <h2 className="font-display text-2xl uppercase tracking-wide text-coliseum-sand">Stats & Modifiers (JSON)</h2>
 
           <JsonEditor
             label="Base Stat Mods"
@@ -269,14 +269,14 @@ export default function NewEquipmentTemplatePage() {
           <button
             type="submit"
             disabled={saving}
-            className="px-8 py-3 bg-green-700 text-black font-bold uppercase tracking-wide hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
+            className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {saving ? 'Creating...' : 'Create Template'}
           </button>
           <button
             type="button"
             onClick={() => router.back()}
-            className="px-8 py-3 bg-stone-700 text-stone-200 font-bold uppercase tracking-wide hover:bg-stone-600 transition"
+            className="btn-secondary"
           >
             Cancel
           </button>

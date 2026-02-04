@@ -118,77 +118,77 @@ export default function EditEquipmentTemplatePage() {
   }
 
   if (loading) {
-    return <div className="max-w-4xl mx-auto p-8 text-stone-400">Loading...</div>
+    return <div className="max-w-4xl mx-auto p-8 text-coliseum-sand/50">Loading...</div>
   }
 
   return (
     <div className="max-w-4xl mx-auto p-8">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-4xl font-bold uppercase tracking-wide text-amber-500">
+        <h1 className="font-display text-4xl uppercase tracking-wide text-coliseum-bronze">
           Edit Equipment Template
         </h1>
         <button
           onClick={handleDelete}
           disabled={deleting}
-          className="px-4 py-2 bg-red-800 text-red-200 font-bold uppercase text-sm hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          className="px-4 py-2 bg-coliseum-red/30 text-coliseum-sand font-bold uppercase text-sm border border-coliseum-red hover:bg-coliseum-red/40 disabled:opacity-50 disabled:cursor-not-allowed transition"
         >
           {deleting ? 'Deleting...' : 'Delete'}
         </button>
       </div>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-900 border-2 border-red-600 text-red-200">
+        <div className="mb-6 p-4 bg-coliseum-red/20 border-2 border-coliseum-red text-coliseum-sand">
           {error}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Identity */}
-        <div className="p-6 bg-stone-800 border-2 border-stone-700 rounded space-y-4">
-          <h2 className="text-xl font-bold uppercase text-stone-200">Identity</h2>
+        <div className="panel p-6 space-y-4 inner-shadow">
+          <h2 className="font-display text-2xl uppercase tracking-wide text-coliseum-sand">Identity</h2>
 
           <div>
-            <label className="block text-sm font-bold uppercase text-stone-300 mb-2">Key (Read-only)</label>
+            <label className="block text-sm font-bold uppercase text-coliseum-sand/70 mb-2">Key (Read-only)</label>
             <input
               type="text"
               value={formData.key}
               disabled
-              className="w-full px-4 py-2 bg-stone-900 border-2 border-stone-600 text-stone-500 font-mono cursor-not-allowed"
+              className="input font-mono opacity-60 cursor-not-allowed"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-bold uppercase text-stone-300 mb-2">Name</label>
+            <label className="block text-sm font-bold uppercase text-coliseum-sand/70 mb-2">Name</label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-4 py-2 bg-stone-900 border-2 border-stone-600 text-stone-100 focus:border-amber-600 focus:outline-none"
+              className="input"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-bold uppercase text-stone-300 mb-2">Description</label>
+            <label className="block text-sm font-bold uppercase text-coliseum-sand/70 mb-2">Description</label>
             <textarea
               value={formData.description || ''}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full h-24 px-4 py-2 bg-stone-900 border-2 border-stone-600 text-stone-100 focus:border-amber-600 focus:outline-none"
+              className="input h-24"
             />
           </div>
         </div>
 
         {/* Classification */}
-        <div className="p-6 bg-stone-800 border-2 border-stone-700 rounded space-y-4">
-          <h2 className="text-xl font-bold uppercase text-stone-200">Classification</h2>
+        <div className="panel p-6 space-y-4 inner-shadow">
+          <h2 className="font-display text-2xl uppercase tracking-wide text-coliseum-sand">Classification</h2>
 
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-bold uppercase text-stone-300 mb-2">Type</label>
+              <label className="block text-sm font-bold uppercase text-coliseum-sand/70 mb-2">Type</label>
               <select
                 value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                className="w-full px-4 py-2 bg-stone-900 border-2 border-stone-600 text-stone-100 focus:border-amber-600 focus:outline-none"
+                className="input"
               >
                 {TYPE_OPTIONS.map((type) => (
                   <option key={type} value={type}>{type}</option>
@@ -197,11 +197,11 @@ export default function EditEquipmentTemplatePage() {
             </div>
 
             <div>
-              <label className="block text-sm font-bold uppercase text-stone-300 mb-2">Slot</label>
+              <label className="block text-sm font-bold uppercase text-coliseum-sand/70 mb-2">Slot</label>
               <select
                 value={formData.slot}
                 onChange={(e) => setFormData({ ...formData, slot: e.target.value })}
-                className="w-full px-4 py-2 bg-stone-900 border-2 border-stone-600 text-stone-100 focus:border-amber-600 focus:outline-none"
+                className="input"
               >
                 {SLOT_OPTIONS.map((slot) => (
                   <option key={slot} value={slot}>{slot}</option>
@@ -210,12 +210,12 @@ export default function EditEquipmentTemplatePage() {
             </div>
 
             <div>
-              <label className="block text-sm font-bold uppercase text-stone-300 mb-2">Subtype</label>
+              <label className="block text-sm font-bold uppercase text-coliseum-sand/70 mb-2">Subtype</label>
               <input
                 type="text"
                 value={formData.subtype}
                 onChange={(e) => setFormData({ ...formData, subtype: e.target.value })}
-                className="w-full px-4 py-2 bg-stone-900 border-2 border-stone-600 text-stone-100 focus:border-amber-600 focus:outline-none"
+                className="input"
                 required
               />
             </div>
@@ -223,21 +223,21 @@ export default function EditEquipmentTemplatePage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-bold uppercase text-stone-300 mb-2">Tags (comma-separated)</label>
+              <label className="block text-sm font-bold uppercase text-coliseum-sand/70 mb-2">Tags (comma-separated)</label>
               <input
                 type="text"
                 value={(formData.tags as string[]).join(', ')}
                 onChange={(e) => setFormData({ ...formData, tags: e.target.value.split(',').map(s => s.trim()) })}
-                className="w-full px-4 py-2 bg-stone-900 border-2 border-stone-600 text-stone-100 focus:border-amber-600 focus:outline-none"
+                className="input"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-bold uppercase text-stone-300 mb-2">Status</label>
+              <label className="block text-sm font-bold uppercase text-coliseum-sand/70 mb-2">Status</label>
               <select
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full px-4 py-2 bg-stone-900 border-2 border-stone-600 text-stone-100 focus:border-amber-600 focus:outline-none"
+                className="input"
               >
                 {STATUS_OPTIONS.map((status) => (
                   <option key={status} value={status}>{status}</option>
@@ -248,13 +248,13 @@ export default function EditEquipmentTemplatePage() {
         </div>
 
         {/* Granted Actions */}
-        <div className="p-6 bg-stone-800 border-2 border-stone-700 rounded space-y-4">
-          <h2 className="text-xl font-bold uppercase text-stone-200">Granted Actions</h2>
-          <p className="text-sm text-stone-400">Select actions this equipment grants to the wielder</p>
+        <div className="panel p-6 space-y-4 inner-shadow">
+          <h2 className="font-display text-2xl uppercase tracking-wide text-coliseum-sand">Granted Actions</h2>
+          <p className="text-sm text-coliseum-sand/60">Select actions this equipment grants to the wielder</p>
 
           <div className="space-y-2 max-h-64 overflow-y-auto">
             {actionTemplates.map((action) => (
-              <label key={action.id} className="flex items-center space-x-3 p-3 bg-stone-900 hover:bg-stone-850 cursor-pointer rounded">
+              <label key={action.id} className="flex items-center space-x-3 p-3 bg-coliseum-black/40 hover:bg-coliseum-black/60 cursor-pointer border border-coliseum-bronze/20">
                 <input
                   type="checkbox"
                   checked={(formData.actionTemplateIds as string[]).includes(action.id)}
@@ -269,18 +269,18 @@ export default function EditEquipmentTemplatePage() {
                   className="w-5 h-5"
                 />
                 <div className="flex-1">
-                  <div className="text-stone-100 font-bold">{action.name}</div>
-                  <div className="text-xs text-stone-400 font-mono">{action.key}</div>
+                  <div className="text-coliseum-sand font-bold">{action.name}</div>
+                  <div className="text-xs text-coliseum-sand/50 font-mono">{action.key}</div>
                 </div>
-                <div className="text-xs text-stone-500">{action.category}</div>
+                <div className="text-xs text-coliseum-sand/50">{action.category}</div>
               </label>
             ))}
           </div>
         </div>
 
         {/* JSON Configs */}
-        <div className="p-6 bg-stone-800 border-2 border-stone-700 rounded space-y-4">
-          <h2 className="text-xl font-bold uppercase text-stone-200">Stats & Modifiers (JSON)</h2>
+        <div className="panel p-6 space-y-4 inner-shadow">
+          <h2 className="font-display text-2xl uppercase tracking-wide text-coliseum-sand">Stats & Modifiers (JSON)</h2>
 
           <JsonEditor
             label="Base Stat Mods"
@@ -332,14 +332,14 @@ export default function EditEquipmentTemplatePage() {
           <button
             type="submit"
             disabled={saving}
-            className="px-8 py-3 bg-green-700 text-black font-bold uppercase tracking-wide hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
+            className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {saving ? 'Saving...' : 'Save Changes'}
           </button>
           <button
             type="button"
             onClick={() => router.back()}
-            className="px-8 py-3 bg-stone-700 text-stone-200 font-bold uppercase tracking-wide hover:bg-stone-600 transition"
+            className="btn-secondary"
           >
             Cancel
           </button>

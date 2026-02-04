@@ -14,11 +14,11 @@ export default function AdminNav() {
   const pathname = usePathname()
 
   return (
-    <nav className="bg-stone-950 border-b-2 border-amber-700">
+    <nav className="bg-coliseum-black border-b-2 border-coliseum-bronze/40">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-8">
-            <Link href="/admin" className="text-amber-500 font-bold text-xl uppercase tracking-wider">
+            <Link href="/admin" className="text-coliseum-bronze font-display text-xl uppercase tracking-wider">
               Crucible Admin
             </Link>
             <div className="flex space-x-1">
@@ -32,8 +32,8 @@ export default function AdminNav() {
                     className={`
                       px-4 py-2 text-sm font-bold uppercase tracking-wide transition
                       ${isActive
-                        ? 'bg-amber-700 text-black'
-                        : 'text-stone-300 hover:bg-stone-800'
+                        ? 'bg-coliseum-bronze text-coliseum-black'
+                        : 'text-coliseum-sand/70 hover:bg-coliseum-stone/60 hover:text-coliseum-sand'
                       }
                     `}
                   >
@@ -46,7 +46,7 @@ export default function AdminNav() {
           </div>
           <Link
             href="/"
-            className="text-stone-400 hover:text-stone-200 text-sm font-bold uppercase"
+            className="text-coliseum-sand/50 hover:text-coliseum-sand text-sm font-bold uppercase transition-colors"
           >
             ← Exit Admin
           </Link>

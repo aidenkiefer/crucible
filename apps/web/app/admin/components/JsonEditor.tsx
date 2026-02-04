@@ -46,12 +46,12 @@ export default function JsonEditor({
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <label className="text-sm font-bold uppercase text-stone-300">{label}</label>
+        <label className="text-sm font-bold uppercase text-coliseum-sand/70">{label}</label>
         {insertSkeleton && (
           <button
             type="button"
             onClick={handleInsertSkeleton}
-            className="text-xs px-3 py-1 bg-stone-700 text-stone-200 hover:bg-stone-600 transition"
+            className="btn-secondary px-3 py-1 text-xs"
           >
             Insert Skeleton
           </button>
@@ -61,10 +61,10 @@ export default function JsonEditor({
         value={textValue}
         onChange={(e) => handleChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full h-48 px-4 py-2 bg-stone-900 border-2 border-stone-600 text-stone-100 font-mono text-sm focus:border-amber-600 focus:outline-none"
+        className="input h-48 font-mono text-sm"
       />
-      {error && <div className="mt-2 text-red-400 text-xs font-mono">{error}</div>}
-      {helperText && <div className="mt-2 text-stone-400 text-xs">{helperText}</div>}
+      {error && <div className="mt-2 text-coliseum-red text-xs font-mono">{error}</div>}
+      {helperText && <div className="mt-2 text-coliseum-sand/50 text-xs">{helperText}</div>}
     </div>
   )
 }

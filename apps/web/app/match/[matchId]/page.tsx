@@ -29,10 +29,12 @@ export default function MatchPage() {
 
   if (!isConnected) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#1E1B18]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto mb-4" />
-          <p className="text-gray-400">Connecting to match...</p>
+      <div className="flex items-center justify-center min-h-screen bg-coliseum-black">
+        <div className="text-center panel px-8 py-10 inner-shadow">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-coliseum-bronze mx-auto mb-4" />
+          <p className="text-coliseum-sand/70 uppercase tracking-widest text-xs">
+            Connecting to match...
+          </p>
         </div>
       </div>
     )
@@ -60,9 +62,10 @@ export default function MatchPage() {
     : null
 
   return (
-    <div className="min-h-screen bg-[#1E1B18] p-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold text-center mb-6 text-white">
+    <div className="min-h-screen bg-coliseum-black">
+      <div className="h-1 bg-gradient-to-r from-transparent via-coliseum-bronze to-transparent" />
+      <div className="max-w-4xl mx-auto p-8">
+        <h1 className="font-display text-3xl sm:text-4xl text-center mb-6 text-coliseum-sand uppercase tracking-wide">
           Combat Arena
         </h1>
 
@@ -77,17 +80,17 @@ export default function MatchPage() {
 
         {isComplete && (
           <div className="fixed inset-0 bg-black/80 flex items-center justify-center">
-            <div className="bg-gray-900 p-8 rounded-lg border-2 border-gray-700 text-center">
-              <h2 className="text-3xl font-bold mb-4">
+            <div className="panel p-8 text-center max-w-md w-[min(28rem,calc(100vw-2rem))] inner-shadow">
+              <h2 className="font-display text-3xl uppercase tracking-wide mb-4">
                 {combatState?.winner === gladiatorId ? (
-                  <span className="text-green-500">Victory!</span>
+                  <span className="text-coliseum-bronze">Victory</span>
                 ) : (
-                  <span className="text-red-500">Defeat</span>
+                  <span className="text-coliseum-red">Defeat</span>
                 )}
               </h2>
               <button
                 onClick={() => window.location.reload()}
-                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg"
+                className="btn-primary"
               >
                 Fight Again
               </button>

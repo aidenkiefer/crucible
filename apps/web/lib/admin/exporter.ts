@@ -1,9 +1,16 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY! // Use service role key for admin operations
-)
+function getSupabaseAdmin() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY // server-only
+
+  // Important: do NOT instantiate the client at module-load time.
+  // Next.js may import API route modules during build, and missing env would crash the build.
+  if (!supabaseUrl) throw new Error('NEXT_PUBLIC_SUPABASE_URL is required.')
+  if (!serviceRoleKey) throw new Error('SUPABASE_SERVICE_ROLE_KEY is required.')
+
+  return createClient(supabaseUrl, serviceRoleKey)
+}
 
 interface ExportManifest {
   bundleLabel: string
@@ -17,6 +24,8 @@ export async function exportBundleToStorage(
   bundleId: string,
   prisma: any
 ): Promise<string> {
+  const supabase = getSupabaseAdmin()
+
   // Fetch bundle
   const bundle = await prisma.gameDataBundle.findUnique({
     where: { id: bundleId },

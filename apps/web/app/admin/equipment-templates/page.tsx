@@ -43,18 +43,18 @@ export default function EquipmentTemplatesPage() {
   )
 
   if (loading) {
-    return <div className="max-w-7xl mx-auto p-8 text-stone-400">Loading...</div>
+    return <div className="max-w-7xl mx-auto p-8 text-coliseum-sand/50">Loading...</div>
   }
 
   return (
     <div className="max-w-7xl mx-auto p-8">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-4xl font-bold uppercase tracking-wide text-amber-500">
+        <h1 className="font-display text-4xl uppercase tracking-wide text-coliseum-bronze">
           Equipment Templates
         </h1>
         <Link
           href="/admin/equipment-templates/new"
-          className="px-6 py-3 bg-green-700 text-black font-bold uppercase tracking-wide hover:bg-green-600 transition"
+          className="btn-primary"
         >
           + Create Equipment
         </Link>
@@ -67,33 +67,33 @@ export default function EquipmentTemplatesPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by key or name..."
-          className="w-full px-4 py-2 bg-stone-900 border-2 border-stone-600 text-stone-100 focus:border-amber-600 focus:outline-none"
+          className="input"
         />
       </div>
 
       {/* Templates List */}
-      <div className="bg-stone-800 border-2 border-stone-700 rounded overflow-hidden">
+      <div className="panel overflow-hidden">
         <table className="min-w-full">
-          <thead className="bg-stone-950 border-b-2 border-stone-700">
+          <thead className="bg-coliseum-black/50 border-b border-coliseum-bronze/20">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-bold uppercase text-stone-400">Key</th>
-              <th className="px-6 py-3 text-left text-xs font-bold uppercase text-stone-400">Name</th>
-              <th className="px-6 py-3 text-left text-xs font-bold uppercase text-stone-400">Type</th>
-              <th className="px-6 py-3 text-left text-xs font-bold uppercase text-stone-400">Slot</th>
-              <th className="px-6 py-3 text-left text-xs font-bold uppercase text-stone-400">Subtype</th>
-              <th className="px-6 py-3 text-left text-xs font-bold uppercase text-stone-400">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-bold uppercase text-stone-400">Actions</th>
-              <th className="px-6 py-3 text-left text-xs font-bold uppercase text-stone-400">Edit</th>
+              <th className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-coliseum-sand/50">Key</th>
+              <th className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-coliseum-sand/50">Name</th>
+              <th className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-coliseum-sand/50">Type</th>
+              <th className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-coliseum-sand/50">Slot</th>
+              <th className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-coliseum-sand/50">Subtype</th>
+              <th className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-coliseum-sand/50">Status</th>
+              <th className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-coliseum-sand/50">Actions</th>
+              <th className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-coliseum-sand/50">Edit</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-stone-700">
+          <tbody className="divide-y divide-coliseum-bronze/10">
             {filteredTemplates.map((template) => (
-              <tr key={template.id} className="hover:bg-stone-750">
-                <td className="px-6 py-4 font-mono text-sm text-cyan-400">{template.key}</td>
-                <td className="px-6 py-4 font-bold text-stone-100">{template.name}</td>
-                <td className="px-6 py-4 text-stone-300">{template.type}</td>
-                <td className="px-6 py-4 text-stone-300">{template.slot}</td>
-                <td className="px-6 py-4 text-stone-300">{template.subtype}</td>
+              <tr key={template.id} className="hover:bg-coliseum-black/30 transition-colors">
+                <td className="px-6 py-4 font-mono text-sm text-coliseum-bronze">{template.key}</td>
+                <td className="px-6 py-4 font-bold text-coliseum-sand">{template.name}</td>
+                <td className="px-6 py-4 text-coliseum-sand/70">{template.type}</td>
+                <td className="px-6 py-4 text-coliseum-sand/70">{template.slot}</td>
+                <td className="px-6 py-4 text-coliseum-sand/70">{template.subtype}</td>
                 <td className="px-6 py-4">
                   <span className={`text-xs font-bold uppercase px-2 py-1 rounded ${
                     template.status === 'PUBLISHED' ? 'bg-green-900 text-green-300' :
@@ -103,7 +103,7 @@ export default function EquipmentTemplatesPage() {
                     {template.status}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-sm text-stone-400">
+                <td className="px-6 py-4 text-sm text-coliseum-sand/60">
                   {template.actions.length > 0
                     ? template.actions.map(a => a.actionTemplate.key).join(', ')
                     : 'None'}
@@ -111,7 +111,7 @@ export default function EquipmentTemplatesPage() {
                 <td className="px-6 py-4">
                   <Link
                     href={`/admin/equipment-templates/${template.id}`}
-                    className="text-amber-500 hover:text-amber-400 font-bold text-sm"
+                    className="text-coliseum-bronze hover:text-coliseum-sand font-bold text-sm transition-colors"
                   >
                     Edit →
                   </Link>
