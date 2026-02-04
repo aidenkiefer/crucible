@@ -1,0 +1,59 @@
+{
+  "characterKey": "duelist_base",
+  "className": "Duelist",
+  "canvasSize": 48,
+  "directions": 4,
+  "basePath": "/assets/sprites/characters/duelist_base",
+  "rotations": {
+    "south": "rotations/south.png",
+    "west": "rotations/west.png",
+    "east": "rotations/east.png",
+    "north": "rotations/north.png"
+  },
+  "animations": {
+    "idle": {
+      "sourceAnimation": "breathing-idle",
+      "frameCount": 4,
+      "frameRate": 8,
+      "loop": true,
+      "frames": {
+        "south": [
+          "animations/breathing-idle/south/frame_000.png",
+          "animations/breathing-idle/south/frame_001.png",
+          "animations/breathing-idle/south/frame_002.png",
+          "animations/breathing-idle/south/frame_003.png"
+        ],
+        "west": [
+          "animations/breathing-idle/west/frame_000.png",
+          "animations/breathing-idle/west/frame_001.png",
+          "animations/breathing-idle/west/frame_002.png",
+          "animations/breathing-idle/west/frame_003.png"
+        ],
+        "east": [
+          "animations/breathing-idle/east/frame_000.png",
+          "animations/breathing-idle/east/frame_001.png",
+          "animations/breathing-idle/east/frame_002.png",
+          "animations/breathing-idle/east/frame_003.png"
+        ],
+        "north": [
+          "animations/breathing-idle/north/frame_000.png",
+          "animations/breathing-idle/north/frame_001.png",
+          "animations/breathing-idle/north/frame_002.png",
+          "animations/breathing-idle/north/frame_003.png"
+        ]
+      }
+    }
+  },
+  "metadata": {
+    "generated": "2026-02-04T04:42:29.582844+00:00",
+    "pixelLabCharacterId": "b3add1e6-12af-435f-8711-b7d57f65d743",
+    "prompt": "Roman Duelist gladiator, heroic proportions, battle-hardened warrior, minimal cloth tunic and leather belt, bronze arm wraps, iron sword sheathed at side, scarred and weathered skin, determined expression, gritty coliseum fighter, dark stone and bronze color palette with blood red accents, retro 16-bit pixel art inspiration, strong readable silhouette at small size, moody shadows, worn and dusty materials, transparent background"
+  },
+  "notes": [
+    "This is the base Duelist character with minimal viable animations (idle only).",
+    "Walk, attack, and death animations are pending due to PixelLab trial limits.",
+    "For Sprint 3 integration, you can use the idle animation as a placeholder for all states.",
+    "Character is 48x48px canvas with ~29px tall actual sprite.",
+    "All paths are relative to basePath."
+  ]
+}
