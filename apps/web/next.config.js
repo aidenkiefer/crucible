@@ -9,8 +9,12 @@ const nextConfig = {
     outputFileTracingRoot: path.join(__dirname, '../../'),
     // Force-include Prisma engine binary (paths relative to outputFileTracingRoot = repo root)
     outputFileTracingIncludes: {
-      '/api/auth/[...nextauth]': ['node_modules/.pnpm/**/.prisma/client/**'],
-      '/api/**': ['node_modules/.pnpm/**/.prisma/client/**'],
+      '/api/auth/[...nextauth]': [
+        'packages/database/node_modules/.prisma/client/**'
+      ],
+      '/api/**': [
+        'packages/database/node_modules/.prisma/client/**'
+      ],
     },
   },
   webpack: (config, { isServer }) => {
