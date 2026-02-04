@@ -27,6 +27,8 @@ Configure these in **Vercel → Project → Settings → Environment Variables**
 
 Do **not** put secrets (database URL, service role key, OAuth secrets, `NEXTAUTH_SECRET`) in `NEXT_PUBLIC_*` — they would be exposed to the client.
 
+**Required for the app to run in production:** You must set `NEXTAUTH_SECRET` and `NEXTAUTH_URL`. Without them, NextAuth will throw `NO_SECRET` and refuse to start. Set `NEXTAUTH_URL` to your Vercel app URL (e.g. `https://your-project.vercel.app`).
+
 ### Server-only (never use `NEXT_PUBLIC_`)
 
 | Variable | Description | Production | Preview |
