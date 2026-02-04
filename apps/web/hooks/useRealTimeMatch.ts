@@ -24,7 +24,7 @@ export function useRealTimeMatch(matchId: string, gladiatorId: string) {
     socket.on('match:state', (state: CombatState) => {
       setCombatState(state)
 
-      if (state.isComplete) {
+      if (state.winner != null) {
         setIsComplete(true)
       }
     })

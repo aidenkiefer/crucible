@@ -63,6 +63,9 @@ importers:
       '@gladiator/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@gladiator/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       '@supabase/supabase-js':
         specifier: ^2.39.3
         version: 2.93.3(bufferutil@4.1.0)(utf-8-validate@5.0.10)

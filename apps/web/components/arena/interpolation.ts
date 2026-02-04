@@ -1,7 +1,7 @@
-import { Vec2 } from '@gladiator/shared/src/combat/types'
+import { Vector2D } from '@gladiator/shared/src/combat/types'
 
 export interface InterpolatedState {
-  pos: Vec2
+  pos: Vector2D
   facing: number
 }
 
@@ -9,10 +9,10 @@ export interface InterpolatedState {
  * Interpolate between two positions for smooth movement
  */
 export function interpolatePosition(
-  from: Vec2,
-  to: Vec2,
+  from: Vector2D,
+  to: Vector2D,
   alpha: number
-): Vec2 {
+): Vector2D {
   return {
     x: from.x + (to.x - from.x) * alpha,
     y: from.y + (to.y - from.y) * alpha,

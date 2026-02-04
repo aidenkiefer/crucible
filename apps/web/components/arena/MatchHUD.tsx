@@ -2,8 +2,10 @@
 
 import { UnitState } from '@gladiator/shared/src/combat/types'
 
+export type PlayerUnitForHUD = UnitState & { cooldowns?: Record<string, number> }
+
 interface MatchHUDProps {
-  playerUnit: UnitState | null
+  playerUnit: PlayerUnitForHUD | null
 }
 
 export function MatchHUD({ playerUnit }: MatchHUDProps) {
@@ -12,8 +14,8 @@ export function MatchHUD({ playerUnit }: MatchHUDProps) {
   const hpPercent = (playerUnit.hp / playerUnit.derived.hpMax) * 100
   const stamPercent = (playerUnit.stamina / playerUnit.derived.stamMax) * 100
 
-  const attackCooldown = playerUnit.cooldowns['Attack'] ?? 0
-  const dodgeCooldown = playerUnit.cooldowns['Dodge'] ?? 0
+  const attackCooldown = playerUnit.cooldowns?.['Attack'] ?? 0
+  const dodgeCooldown = playerUnit.cooldowns?.['Dodge'] ?? 0
 
   return (
     <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-gray-900/90 p-4 rounded-lg border border-gray-700 min-w-[400px]">

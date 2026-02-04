@@ -38,7 +38,26 @@ export default function MatchPage() {
     )
   }
 
-  const playerUnit = combatState?.units.get(gladiatorId) ?? null
+  const playerCombatant =
+    combatState?.combatant1.id === gladiatorId
+      ? combatState.combatant1
+      : combatState?.combatant2.id === gladiatorId
+        ? combatState.combatant2
+        : null
+  const playerUnit = playerCombatant
+    ? {
+        id: playerCombatant.id,
+        name: '',
+        pos: playerCombatant.position,
+        facing: playerCombatant.facingAngle,
+        hp: playerCombatant.currentHp,
+        stamina: playerCombatant.currentStamina,
+        isInvulnerable: playerCombatant.isInvulnerable,
+        currentAction: playerCombatant.currentAction,
+        derived: { hpMax: 100, stamMax: 100, staminaRegen: 1, moveSpeed: 1, damageReduction: 0 },
+        cooldowns: {} as Record<string, number>,
+      }
+    : null
 
   return (
     <div className="min-h-screen bg-[#1E1B18] p-8">
@@ -50,7 +69,7 @@ export default function MatchPage() {
         <div className="flex justify-center mb-4">
           <ArenaCanvas
             combatState={combatState}
-            playerUnitId={gladiatorId}
+            playerGladiatorId={gladiatorId}
           />
         </div>
 
@@ -60,7 +79,7 @@ export default function MatchPage() {
           <div className="fixed inset-0 bg-black/80 flex items-center justify-center">
             <div className="bg-gray-900 p-8 rounded-lg border-2 border-gray-700 text-center">
               <h2 className="text-3xl font-bold mb-4">
-                {combatState?.winnerId === gladiatorId ? (
+                {combatState?.winner === gladiatorId ? (
                   <span className="text-green-500">Victory!</span>
                 ) : (
                   <span className="text-red-500">Defeat</span>
