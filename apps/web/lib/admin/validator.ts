@@ -97,7 +97,7 @@ export async function validateBundle(
 
   // Validate equipment templates
   const equipKeys = new Set<string>()
-  const actionIdMap = new Map(actionTemplates.map(a => [a.id, a.key]))
+  const actionIdMap = new Map(actionTemplates.map((a: { id: string; key: string }) => [a.id, a.key]))
 
   for (const equip of equipmentTemplates) {
     // Unique key check

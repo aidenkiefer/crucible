@@ -17,7 +17,21 @@ export default function EditEquipmentTemplatePage() {
   const [error, setError] = useState('')
   const [actionTemplates, setActionTemplates] = useState<any[]>([])
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    key: string
+    name: string
+    description: string
+    type: string
+    slot: string
+    subtype: string
+    tags: string[]
+    baseStatMods: Record<string, unknown>
+    scaling: Record<string, unknown>
+    rarityRules: Record<string, unknown>
+    ui: Record<string, unknown>
+    status: string
+    actionTemplateIds: string[]
+  }>({
     key: '',
     name: '',
     description: '',

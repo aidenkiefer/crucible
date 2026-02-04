@@ -13,7 +13,20 @@ export default function NewEquipmentTemplatePage() {
   const [error, setError] = useState('')
   const [actionTemplates, setActionTemplates] = useState<any[]>([])
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    key: string
+    name: string
+    description: string
+    type: string
+    slot: string
+    subtype: string
+    tags: string[]
+    baseStatMods: Record<string, unknown>
+    scaling: Record<string, unknown>
+    rarityRules: Record<string, unknown>
+    ui: Record<string, unknown>
+    actionTemplateIds: string[]
+  }>({
     key: '',
     name: '',
     description: '',
@@ -163,7 +176,7 @@ export default function NewEquipmentTemplatePage() {
             <label className="block text-sm font-bold uppercase text-stone-300 mb-2">Tags (comma-separated)</label>
             <input
               type="text"
-              value={(formData.tags as string[]).join(', ')}
+              value={formData.tags.join(', ')}
               onChange={(e) => setFormData({ ...formData, tags: e.target.value.split(',').map(s => s.trim()) })}
               placeholder="starter, melee, slash"
               className="w-full px-4 py-2 bg-stone-900 border-2 border-stone-600 text-stone-100 focus:border-amber-600 focus:outline-none"

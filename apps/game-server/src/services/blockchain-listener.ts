@@ -42,7 +42,9 @@ export class BlockchainListener {
     const events = await this.contract.queryFilter(filter, -10000) // Last ~10k blocks
 
     for (const event of events) {
-      const [tokenId, owner, gladiatorClass] = event.args!
+      const e = event as ethers.EventLog
+      if (!e.args || e.args.length < 3) continue
+      const [tokenId, owner, gladiatorClass] = e.args
       await onMint(tokenId, owner, Number(gladiatorClass))
     }
 
@@ -53,10 +55,14 @@ export class BlockchainListener {
     const gladiator = await this.contract.getGladiator(tokenId)
     return {
       class: Number(gladiator.class),
+      constitution: Number(gladiator.constitution),
       strength: Number(gladiator.strength),
-      agility: Number(gladiator.agility),
-      endurance: Number(gladiator.endurance),
-      technique: Number(gladiator.technique),
+      dexterity: Number(gladiator.dexterity),
+      speed: Number(gladiator.speed),
+      defense: Number(gladiator.defense),
+      magicResist: Number(gladiator.magicResist),
+      arcana: Number(gladiator.arcana),
+      faith: Number(gladiator.faith),
       mintedAt: Number(gladiator.mintedAt),
     }
   }

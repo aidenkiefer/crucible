@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@gladiator/database/src/client'
+import { prisma, type Prisma } from '@gladiator/database'
 
 export async function GET() {
   const session = await getServerSession(authOptions)
@@ -87,10 +87,10 @@ export async function POST(req: Request) {
           castTimeMs: actionTemplate.castTimeMs,
           staminaCost: actionTemplate.staminaCost,
           manaCost: actionTemplate.manaCost,
-          hitboxConfig: actionTemplate.hitboxConfig,
-          projectileConfig: actionTemplate.projectileConfig,
-          damageConfig: actionTemplate.damageConfig,
-          effectConfig: actionTemplate.effectConfig,
+          hitboxConfig: actionTemplate.hitboxConfig as Prisma.InputJsonValue,
+          projectileConfig: actionTemplate.projectileConfig as Prisma.InputJsonValue,
+          damageConfig: actionTemplate.damageConfig as Prisma.InputJsonValue,
+          effectConfig: actionTemplate.effectConfig as Prisma.InputJsonValue,
           bundleId: newBundle.id,
         },
       })
@@ -110,10 +110,10 @@ export async function POST(req: Request) {
           slot: equipTemplate.slot,
           subtype: equipTemplate.subtype,
           tags: equipTemplate.tags,
-          baseStatMods: equipTemplate.baseStatMods,
-          scaling: equipTemplate.scaling,
-          rarityRules: equipTemplate.rarityRules,
-          ui: equipTemplate.ui,
+          baseStatMods: equipTemplate.baseStatMods as Prisma.InputJsonValue,
+          scaling: equipTemplate.scaling as Prisma.InputJsonValue,
+          rarityRules: equipTemplate.rarityRules as Prisma.InputJsonValue,
+          ui: equipTemplate.ui as Prisma.InputJsonValue,
           bundleId: newBundle.id,
           actions: {
             create: equipTemplate.actions.map((ea) => ({

@@ -2,10 +2,10 @@ import { NextAuthOptions } from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
 import TwitterProvider from 'next-auth/providers/twitter'
 import { PrismaAdapter } from '@auth/prisma-adapter'
-import { prisma } from '@gladiator/database/src/client'
+import { prisma } from '@gladiator/database'
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  adapter: PrismaAdapter(prisma) as NextAuthOptions['adapter'],
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,

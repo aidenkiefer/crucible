@@ -30,7 +30,7 @@ export async function startGladiatorSync() {
     // Fetch full gladiator data from contract
     const data = await listener.getGladiatorData(tokenId)
 
-    // Create in database
+    // Create in database (8 stats from contract)
     await prisma.gladiator.create({
       data: {
         tokenId: Number(tokenId),
@@ -38,10 +38,14 @@ export async function startGladiatorSync() {
         class: getClassName(gladiatorClass),
         level: 1,
         xp: 0,
+        constitution: data.constitution,
         strength: data.strength,
-        agility: data.agility,
-        endurance: data.endurance,
-        technique: data.technique,
+        dexterity: data.dexterity,
+        speed: data.speed,
+        defense: data.defense,
+        magicResist: data.magicResist,
+        arcana: data.arcana,
+        faith: data.faith,
         skillPointsAvailable: 0,
         unlockedSkills: [],
       },
