@@ -68,7 +68,7 @@ npx turbo-ignore @gladiator/web
 
 - **NEXTAUTH_URL** must exactly match the URL you’re visiting (e.g. `https://your-project.vercel.app`). If you use a custom domain, set `NEXTAUTH_URL` to that. For Preview deployments, set it to the preview URL.
 - In **Google Cloud Console** → your OAuth client → **Authorized redirect URIs**, add `https://<your-vercel-url>/api/auth/callback/google` (and the same for any custom or preview URL you use).
-- The app uses `trustHost: true` so NextAuth trusts the request host; redeploy if you only just set a new URL.
+- Redeploy after changing `NEXTAUTH_URL` so the new value is used at runtime.
 
 ### WalletConnect / Reown console errors (403, “Project ID Not Configured”)
 

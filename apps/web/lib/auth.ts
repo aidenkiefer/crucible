@@ -6,7 +6,6 @@ import { prisma } from '@gladiator/database'
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as NextAuthOptions['adapter'],
-  trustHost: true, // Required for Vercel and other proxies so callback URL is trusted
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
