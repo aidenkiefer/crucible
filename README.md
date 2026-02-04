@@ -179,6 +179,7 @@ pnpm dev
 | [docs/SPRINT-2-SUMMARY.md](docs/SPRINT-2-SUMMARY.md) | Sprint 2 summary (real-time combat, complete) |
 | [docs/SPRINT-2.5-SUMMARY.md](docs/SPRINT-2.5-SUMMARY.md) | Sprint 2.5 summary (Admin UI — bundles, templates, validate/publish/export, bundle loader, complete) |
 | [docs/guides/development-setup.md](docs/guides/development-setup.md) | Development environment setup |
+| [docs/guides/vercel-deployment.md](docs/guides/vercel-deployment.md) | Vercel deployment — Root Directory, env vars, checklist |
 | [docs/features/equipment.md](docs/features/equipment.md) | Equipment, loot, abilities — template/instance design, slots, authoring |
 | [docs/features/admin-ui.md](docs/features/admin-ui.md) | Admin UI plan — game data authoring, CRUD, validation, publish/export |
 | [docs/data-glossary.md](docs/data-glossary.md) | Database & game data glossary — schema, enums, templates, actions |

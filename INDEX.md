@@ -233,7 +233,8 @@ crucible/
     │
     ├── guides/
     │   ├── development-setup.md # Prerequisites, clone, install, env, database setup, run dev servers, troubleshooting (incl. Supabase DB)
-    │   └── testing-admin-ui.md  # How to test Admin UI locally: seed, isAdmin, Storage, dev servers, what to test
+    │   ├── testing-admin-ui.md  # How to test Admin UI locally: seed, isAdmin, Storage, dev servers, what to test
+    │   └── vercel-deployment.md # Vercel: Root Directory apps/web, env vars (NEXT_PUBLIC_ vs server-only), checklist, optional turbo-ignore
     │
     └── plans/
         ├── 00-MASTER-PLAN.md    # Master plan: goal, success criteria, tech stack, 7 sprints (0–7), design decisions, data model, risks, out of scope, post-demo roadmap
@@ -264,6 +265,7 @@ crucible/
 | **Sprint plans (what to build)** | [docs/plans/00-MASTER-PLAN.md](docs/plans/00-MASTER-PLAN.md), [docs/plans/01-sprint-0-setup.md](docs/plans/01-sprint-0-setup.md) … [09-sprint-2.5-admin-ui.md](docs/plans/09-sprint-2.5-admin-ui.md), [08-sprint-7-deployment.md](docs/plans/08-sprint-7-deployment.md) |
 | **What’s been built (Sprints 1, 2, 2.5)** | [docs/SPRINT-1-SUMMARY.md](docs/SPRINT-1-SUMMARY.md), [docs/SPRINT-2-SUMMARY.md](docs/SPRINT-2-SUMMARY.md), [docs/SPRINT-2.5-SUMMARY.md](docs/SPRINT-2.5-SUMMARY.md) |
 | **Getting started (dev env)** | [docs/guides/development-setup.md](docs/guides/development-setup.md), [README.md](README.md) § Development |
+| **Deploy web app (Vercel)** | [docs/guides/vercel-deployment.md](docs/guides/vercel-deployment.md) |
 | **Contract deployment** | [contracts/DEPLOYMENT.md](contracts/DEPLOYMENT.md) |
 | **Mainnet (post-demo)** | [docs/mainnet-migration.md](docs/mainnet-migration.md) |
 | **Future ideas & backlog** | [docs/features/planned-features.md](docs/features/planned-features.md) |
@@ -307,6 +309,7 @@ crucible/
 
 - **development-setup.md** — Prerequisites (Node, pnpm, Git, Supabase, MetaMask), clone, install, env configuration, database setup (Prisma push), optional seed for demo bundle (pnpm seed:admin), running frontend and game server, verification URLs, troubleshooting (database connection/Supabase P1001, port conflicts), Admin UI access (isAdmin, Supabase Storage gamedata bucket).
 - **testing-admin-ui.md** — Step-by-step: seed demo data, grant isAdmin, create gamedata bucket, run dev servers, sign in, test dashboard/bundles/templates, publish flow, troubleshooting.
+- **vercel-deployment.md** — Deploy Next.js (apps/web) to Vercel: Root Directory `apps/web`, env vars (public vs server-only, no secrets in NEXT_PUBLIC_), Production/Preview checklist, optional Ignored Build Step (turbo-ignore); game server runs elsewhere.
 
 ### docs/plans/
 
