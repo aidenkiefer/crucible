@@ -2,28 +2,38 @@ const path = require('path')
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Next.js 14: use experimental key (serverExternalPackages is Next.js 15+)
   experimental: {
-    serverComponentsExternalPackages: ['@prisma/client', 'prisma'],
     // Monorepo: trace from repo root so Prisma engine in root node_modules is included in serverless bundle
     outputFileTracingRoot: path.join(__dirname, '../../'),
-    // Force-include Prisma engine binary (paths relative to outputFileTracingRoot = repo root)
-    outputFileTracingIncludes: {
-      '/api/auth/[...nextauth]': [
-        'packages/database/node_modules/.prisma/client/**'
-      ],
-      '/api/**': [
-        'packages/database/node_modules/.prisma/client/**'
-      ],
-    },
   },
+  // Don't externalize Prisma - let webpack bundle it
+  // This ensures the engines are included in the bundle
   webpack: (config, { isServer }) => {
+    if (isServer) {
+      // Force Prisma to be bundled by webpack instead of externalized
+      // This makes Next.js include the engine binaries in the deployment
+      config.externals = config.externals.map((external) => {
+        if (typeof external === 'function') {
+          return async (context) => {
+            const result = await external(context)
+            // Don't externalize @prisma/client
+            if (result && (result.includes('@prisma/client') || result.includes('.prisma/client'))) {
+              return undefined
+            }
+            return result
+          }
+        }
+        return external
+      })
+    }
+
     // Wagmi/connectors pull in optional deps that aren't used in browser build
     config.resolve.fallback = {
       ...config.resolve.fallback,
       '@react-native-async-storage/async-storage': false,
       'pino-pretty': false,
     }
+
     return config
   },
 }

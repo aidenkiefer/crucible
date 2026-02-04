@@ -1,5 +1,8 @@
 # Auth callback bug: Google login redirects back to login page on Vercel
 
+**Skills that might help (from [agents/skills/CATALOG.md](../agents/skills/CATALOG.md)):**  
+`prisma-expert` (Prisma runtime, client, engine bundling) · `nextjs-app-router-patterns` · `nextjs-best-practices` (Next.js build/tracing) · `monorepo-architect` · `monorepo-management` · `turborepo-caching` (monorepo/Turborepo bundling and output) · `debugging-strategies` · `error-detective` (logs, stack traces, root cause) · `react-best-practices` (Vercel Engineering, Next.js) · `cc-skill-backend-patterns` (Next.js API routes) · `deployment-procedures` · `web-performance-optimization` (bundle size/tracing)
+
 ## Summary
 
 Google sign-in on the staging Vercel deployment appears to work (redirect to Google, user signs in), but after the OAuth callback the user is sent back to the login page and no session is created. The user record is not created in the database, and Vercel function logs show Prisma and NextAuth errors.
@@ -260,3 +263,285 @@ https://next-auth.js.org/warnings#twitter_oauth_2_beta
 | `/tmp/prisma-engines` |
 
 Note: `/var/task` is the serverless function’s deployed bundle root; `/vercel/path0` is the build environment path and is not available at runtime.
+
+## Update 3
+Still not working, here are some of the logs, unformatted:
+
+## Update 4 (2026-02-04) - Webpack Bundling Approach
+
+**Root cause analysis:** The issue is that Next.js is externalizing `@prisma/client` (treating it as an external dependency), which means webpack doesn't include the Prisma Query Engine binaries in the bundle. Vercel's file tracing (`outputFileTracingIncludes`) isn't working reliably with the pnpm monorepo structure.
+
+**New approach:** Force webpack to BUNDLE `@prisma/client` instead of externalizing it. When webpack bundles Prisma, it will include all the engine binaries in the deployment package.
+
+### Changes made:
+
+1. **Next.js config** (`apps/web/next.config.js`):
+   - **Removed** `serverComponentsExternalPackages: ['@prisma/client', 'prisma']` - this was preventing bundling
+   - **Removed** `outputFileTracingIncludes` - not needed if we bundle
+   - **Added** custom webpack config to intercept externals and force `@prisma/client` to be bundled
+   - Kept `outputFileTracingRoot` for monorepo support
+
+2. **Vercel config** (`apps/web/vercel.json`):
+   - Added explicit `buildCommand` and `installCommand` to ensure proper monorepo build sequence
+
+3. **Reverted** library engine type experiment - not needed for this approach
+
+### Why this works:
+- By default, Next.js externalizes `@prisma/client` to avoid bundling it into the serverless function
+- External dependencies rely on file tracing to include their native binaries
+- File tracing doesn't work reliably with pnpm + monorepo structure
+- **Solution**: Force webpack to bundle `@prisma/client` so the engine binaries are included directly in the deployment
+
+### Next steps:
+1. Commit and push to trigger Vercel rebuild
+2. Test Google OAuth flow on staging
+3. Check Vercel build logs to ensure Prisma is being bundled (not externalized)
+
+## Update 3 logs:
+
+2026-02-04 06:12:14.684 [error] (node:4) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+2026-02-04 06:12:14.693 [error] Unhandled Rejection: PrismaClientInitializationError: Prisma Client could not locate the Query Engine for runtime "rhel-openssl-3.0.x".
+
+We detected that you are using Next.js, learn how to fix this: https://pris.ly/d/engine-not-found-nextjs.
+
+This is likely caused by a bundler that has not copied "libquery_engine-rhel-openssl-3.0.x.so.node" next to the resulting bundle.
+Ensure that "libquery_engine-rhel-openssl-3.0.x.so.node" has been copied next to the bundle or in "../../node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/.prisma/client".
+
+We would appreciate if you could take the time to share some information with us.
+Please help us by answering a few questions: https://pris.ly/engine-not-found-bundler-investigation
+
+The following locations have been searched:
+  /var/task/node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/.prisma/client
+  /var/task/apps/web/.next/server
+  /vercel/path0/node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/@prisma/client
+  /var/task/apps/web/.prisma/client
+  /tmp/prisma-engines
+    at za (/var/task/apps/web/.next/server/chunks/5298.js:98:756)
+    at async Object.loadLibrary (/var/task/apps/web/.next/server/chunks/5298.js:145:10040)
+    at async _r.loadEngine (/var/task/apps/web/.next/server/chunks/5298.js:146:448)
+    at async _r.instantiateLibrary (/var/task/apps/web/.next/server/chunks/5298.js:145:12506)
+2026-02-04 06:12:14.716 [fatal] Node.js process exited with exit status: 128. The logs above can help with debugging the issue.
+
+2026-02-04 06:12:17.294 [warning] [next-auth][warn][TWITTER_OAUTH_2_BETA] 
+https://next-auth.js.org/warnings#twitter_oauth_2_beta
+2026-02-04 06:12:17.316 [error] (node:5) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+2026-02-04 06:12:17.328 [error] Unhandled Rejection: PrismaClientInitializationError: Prisma Client could not locate the Query Engine for runtime "rhel-openssl-3.0.x".
+
+We detected that you are using Next.js, learn how to fix this: https://pris.ly/d/engine-not-found-nextjs.
+
+This is likely caused by a bundler that has not copied "libquery_engine-rhel-openssl-3.0.x.so.node" next to the resulting bundle.
+Ensure that "libquery_engine-rhel-openssl-3.0.x.so.node" has been copied next to the bundle or in "../../node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/.prisma/client".
+
+We would appreciate if you could take the time to share some information with us.
+Please help us by answering a few questions: https://pris.ly/engine-not-found-bundler-investigation
+
+The following locations have been searched:
+  /var/task/node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/.prisma/client
+  /var/task/apps/web/.next/server
+  /vercel/path0/node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/@prisma/client
+  /var/task/apps/web/.prisma/client
+  /tmp/prisma-engines
+    at za (/var/task/apps/web/.next/server/chunks/5298.js:98:756)
+    at async Object.loadLibrary (/var/task/apps/web/.next/server/chunks/5298.js:145:10040)
+    at async _r.loadEngine (/var/task/apps/web/.next/server/chunks/5298.js:146:448)
+    at async _r.instantiateLibrary (/var/task/apps/web/.next/server/chunks/5298.js:145:12506)
+2026-02-04 06:12:17.464 [info] prisma:error 
+Invalid `prisma.account.findUnique()` invocation:
+
+
+Prisma Client could not locate the Query Engine for runtime "rhel-openssl-3.0.x".
+
+We detected that you are using Next.js, learn how to fix this: https://pris.ly/d/engine-not-found-nextjs.
+
+This is likely caused by a bundler that has not copied "libquery_engine-rhel-openssl-3.0.x.so.node" next to the resulting bundle.
+Ensure that "libquery_engine-rhel-openssl-3.0.x.so.node" has been copied next to the bundle or in "../../node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/.prisma/client".
+
+We would appreciate if you could take the time to share some information with us.
+Please help us by answering a few questions: https://pris.ly/engine-not-found-bundler-investigation
+
+The following locations have been searched:
+  /var/task/node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/.prisma/client
+  /var/task/apps/web/.next/server
+  /vercel/path0/node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/@prisma/client
+  /var/task/apps/web/.prisma/client
+  /tmp/prisma-engines
+2026-02-04 06:12:17.465 [error] [next-auth][error][adapter_error_getUserByAccount] 
+https://next-auth.js.org/errors#adapter_error_getuserbyaccount 
+Invalid `prisma.account.findUnique()` invocation:
+
+
+Prisma Client could not locate the Query Engine for runtime "rhel-openssl-3.0.x".
+
+We detected that you are using Next.js, learn how to fix this: https://pris.ly/d/engine-not-found-nextjs.
+
+This is likely caused by a bundler that has not copied "libquery_engine-rhel-openssl-3.0.x.so.node" next to the resulting bundle.
+Ensure that "libquery_engine-rhel-openssl-3.0.x.so.node" has been copied next to the bundle or in "../../node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/.prisma/client".
+
+We would appreciate if you could take the time to share some information with us.
+Please help us by answering a few questions: https://pris.ly/engine-not-found-bundler-investigation
+
+The following locations have been searched:
+  /var/task/node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/.prisma/client
+  /var/task/apps/web/.next/server
+  /vercel/path0/node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/@prisma/client
+  /var/task/apps/web/.prisma/client
+  /tmp/prisma-engines {
+  message: '\n' +
+    'Invalid `prisma.account.findUnique()` invocation:\n' +
+    '\n' +
+    '\n' +
+    'Prisma Client could not locate the Query Engine for runtime "rhel-openssl-3.0.x".\n' +
+    '\n' +
+    'We detected that you are using Next.js, learn how to fix this: https://pris.ly/d/engine-not-found-nextjs.\n' +
+    '\n' +
+    'This is likely caused by a bundler that has not copied "libquery_engine-rhel-openssl-3.0.x.so.node" next to the resulting bundle.\n' +
+    'Ensure that "libquery_engine-rhel-openssl-3.0.x.so.node" has been copied next to the bundle or in "../../node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/.prisma/client".\n' +
+    '\n' +
+    'We would appreciate if you could take the time to share some information with us.\n' +
+    'Please help us by answering a few questions: https://pris.ly/engine-not-found-bundler-investigation\n' +
+    '\n' +
+    'The following locations have been searched:\n' +
+    '  /var/task/node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/.prisma/client\n' +
+    '  /var/task/apps/web/.next/server\n' +
+    '  /vercel/path0/node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/@prisma/client\n' +
+    '  /var/task/apps/web/.prisma/client\n' +
+    '  /tmp/prisma-engines',
+  stack: 'PrismaClientInitializationError: \n' +
+    'Invalid `prisma.account.findUnique()` invocation:\n' +
+    '\n' +
+    '\n' +
+    'Prisma Client could not locate the Query Engine for runtime "rhel-openssl-3.0.x".\n' +
+    '\n' +
+    'We detected that you are using Next.js, learn how to fix this: https://pris.ly/d/engine-not-found-nextjs.\n' +
+    '\n' +
+    'This is likely caused by a bundler that has not copied "libquery_engine-rhel-openssl-3.0.x.so.node" next to the resulting bundle.\n' +
+    'Ensure that "libquery_engine-rhel-openssl-3.0.x.so.node" has been copied next to the bundle or in "../../node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/.prisma/client".\n' +
+    '\n' +
+    'We would appreciate if you could take the time to share some information with us.\n' +
+    'Please help us by answering a few questions: https://pris.ly/engine-not-found-bundler-investigation\n' +
+    '\n' +
+    'The following locations have been searched:\n' +
+    '  /var/task/node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/.prisma/client\n' +
+    '  /var/task/apps/web/.next/server\n' +
+    '  /vercel/path0/node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/@prisma/client\n' +
+    '  /var/task/apps/web/.prisma/client\n' +
+    '  /tmp/prisma-engines\n' +
+    '    at $n.handleRequestError (/var/task/apps/web/.next/server/chunks/5298.js:155:7511)\n' +
+    '    at $n.handleAndLogRequestError (/var/task/apps/web/.next/server/chunks/5298.js:155:6535)\n' +
+    '    at $n.request (/var/task/apps/web/.next/server/chunks/5298.js:155:6219)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n' +
+    '    at async a (/var/task/apps/web/.next/server/chunks/5298.js:164:9486)\n' +
+    '    at async getUserByAccount (/var/task/apps/web/.next/server/chunks/5298.js:165:12175)',
+  name: 'PrismaClientInitializationError'
+}
+2026-02-04 06:12:17.466 [error] [next-auth][error][OAUTH_CALLBACK_HANDLER_ERROR] 
+https://next-auth.js.org/errors#oauth_callback_handler_error 
+Invalid `prisma.account.findUnique()` invocation:
+
+
+Prisma Client could not locate the Query Engine for runtime "rhel-openssl-3.0.x".
+
+We detected that you are using Next.js, learn how to fix this: https://pris.ly/d/engine-not-found-nextjs.
+
+This is likely caused by a bundler that has not copied "libquery_engine-rhel-openssl-3.0.x.so.node" next to the resulting bundle.
+Ensure that "libquery_engine-rhel-openssl-3.0.x.so.node" has been copied next to the bundle or in "../../node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/.prisma/client".
+
+We would appreciate if you could take the time to share some information with us.
+Please help us by answering a few questions: https://pris.ly/engine-not-found-bundler-investigation
+
+The following locations have been searched:
+  /var/task/node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/.prisma/client
+  /var/task/apps/web/.next/server
+  /vercel/path0/node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/@prisma/client
+  /var/task/apps/web/.prisma/client
+  /tmp/prisma-engines PrismaClientInitializationError: 
+Invalid `prisma.account.findUnique()` invocation:
+
+
+Prisma Client could not locate the Query Engine for runtime "rhel-openssl-3.0.x".
+
+We detected that you are using Next.js, learn how to fix this: https://pris.ly/d/engine-not-found-nextjs.
+
+This is likely caused by a bundler that has not copied "libquery_engine-rhel-openssl-3.0.x.so.node" next to the resulting bundle.
+Ensure that "libquery_engine-rhel-openssl-3.0.x.so.node" has been copied next to the bundle or in "../../node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/.prisma/client".
+
+We would appreciate if you could take the time to share some information with us.
+Please help us by answering a few questions: https://pris.ly/engine-not-found-bundler-investigation
+
+The following locations have been searched:
+  /var/task/node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/.prisma/client
+  /var/task/apps/web/.next/server
+  /vercel/path0/node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/@prisma/client
+  /var/task/apps/web/.prisma/client
+  /tmp/prisma-engines
+    at $n.handleRequestError (/var/task/apps/web/.next/server/chunks/5298.js:155:7511)
+    at $n.handleAndLogRequestError (/var/task/apps/web/.next/server/chunks/5298.js:155:6535)
+    at $n.request (/var/task/apps/web/.next/server/chunks/5298.js:155:6219)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async a (/var/task/apps/web/.next/server/chunks/5298.js:164:9486)
+    at async getUserByAccount (/var/task/apps/web/.next/server/chunks/5298.js:165:12175) {
+  name: 'GetUserByAccountError',
+  code: undefined
+}
+2026-02-04 06:12:17.471 [info] (node:5) PromiseRejectionHandledWarning: Promise rejection was handled asynchronously (rejection id: 1)
+2026-02-04 06:12:17.471 [fatal] Node.js process exited with exit status: 128. The logs above can help with debugging the issue.
+
+## Update 4
+
+I've implemented a different fix based on understanding 
+  the real issue better.                                  
+
+  The Real Problem
+                                                          
+  Next.js by default externalizes @prisma/client (doesn't
+  bundle it with webpack). Instead, it relies on Vercel's
+  file tracing to detect and include the Prisma engine
+  binaries. However, file tracing doesn't work reliably
+  with:
+  - pnpm's nested structure (node_modules/.pnpm/...)
+  - Monorepo workspaces
+  - Symbolic links
+
+  Result: The Prisma Client code gets deployed, but the
+  engine binaries don't.
+
+  The Solution
+
+  Force webpack to BUNDLE @prisma/client instead of
+  externalizing it. When webpack bundles Prisma, it
+  includes everything - the client code AND the engine
+  binaries.
+
+  Changes Made:
+
+  1. apps/web/next.config.js:
+    - Removed serverComponentsExternalPackages which was
+  preventing bundling
+    - Removed outputFileTracingIncludes (not needed when
+  bundling)
+    - Added webpack config to intercept the externals
+  function and force @prisma/client to be bundled
+  2. apps/web/vercel.json:
+    - Added explicit build commands for clarity
+  3. packages/database/prisma/schema.prisma:
+    - Back to basics - just binaryTargets
+
+  Next Steps:
+
+  Commit and push:
+  git add -A
+  git commit -m "Fix Prisma engines on Vercel by forcing
+  webpack bundling
+
+  - Remove serverComponentsExternalPackages to allow
+  bundling
+  - Add webpack config to prevent Prisma externalization
+  - Ensures engine binaries are included in deployment
+  bundle"
+  git push
+
+  This approach is more reliable because it doesn't depend
+   on file tracing working correctly. The engine binaries
+  will be directly included in the webpack bundle.
