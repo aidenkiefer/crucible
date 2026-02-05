@@ -5,6 +5,8 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { SessionProvider } from '@/components/providers/SessionProvider'
 import { WagmiProvider } from '@/components/providers/WagmiProvider'
+import { ActiveGladiatorProvider } from '@/contexts/ActiveGladiatorContext'
+import { PersistentHUD } from '@/components/rpg-ui/PersistentHUD'
 
 const inter = Inter({ subsets: ['latin'] })
 const vt323 = VT323({ weight: '400', subsets: ['latin'], variable: '--font-vt323' })
@@ -26,7 +28,10 @@ export default async function RootLayout({
       <body className={`${inter.className} ${vt323.variable}`}>
         <WagmiProvider>
           <SessionProvider session={session}>
-            {children}
+            <ActiveGladiatorProvider>
+              <PersistentHUD />
+              {children}
+            </ActiveGladiatorProvider>
           </SessionProvider>
         </WagmiProvider>
       </body>

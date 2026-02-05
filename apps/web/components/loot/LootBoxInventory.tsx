@@ -86,55 +86,50 @@ export function LootBoxInventory() {
   return (
     <div>
       {/* Unopened Loot Boxes */}
-      <div className="mb-8">
-        <h2 className="font-display text-2xl text-coliseum-bronze uppercase mb-4">
-          Unopened Loot Boxes ({unopenedBoxes.length})
-        </h2>
-
-        {unopenedBoxes.length === 0 ? (
+      {unopenedBoxes.length === 0 ? (
+        <div className="panel-inset p-8 text-center">
           <p className="text-coliseum-sand/70">
             No loot boxes available. Win CPU matches to earn more!
           </p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {unopenedBoxes.map((box) => (
-              <div
-                key={box.id}
-                className="panel p-6 text-center hover:border-coliseum-bronze transition-colors"
+        </div>
+      ) : (
+        <div className="grid grid-cols-3 md:grid-cols-4 gap-3 mb-6">
+          {unopenedBoxes.map((box) => (
+            <div
+              key={box.id}
+              className="panel-inset p-4 text-center hover:border-coliseum-bronze/60 transition-colors cursor-pointer"
+              onClick={() => openLootBox(box.id)}
+            >
+              <div className="text-5xl mb-2">📦</div>
+              <p className="text-[10px] uppercase tracking-wider text-coliseum-sand/80 mb-2 capitalize">
+                {box.tier}
+              </p>
+              <button
+                disabled={opening === box.id}
+                className="btn-raised w-full text-[10px] px-2 py-1 disabled:opacity-50"
               >
-                <div className="text-6xl mb-4">📦</div>
-                <h3 className="font-display text-xl uppercase mb-2 capitalize">
-                  {box.tier} Loot Box
-                </h3>
-                <button
-                  onClick={() => openLootBox(box.id)}
-                  disabled={opening === box.id}
-                  className="btn-primary w-full disabled:opacity-50"
-                >
-                  {opening === box.id ? 'Opening...' : 'Open'}
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+                {opening === box.id ? '...' : 'Open'}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Opened Loot Boxes */}
       {openedBoxes.length > 0 && (
-        <div>
-          <h2 className="font-display text-2xl text-coliseum-sand/70 uppercase mb-4">
+        <div className="mt-4">
+          <h3 className="text-coliseum-sand/60 uppercase text-xs tracking-wider font-bold mb-2">
             Previously Opened ({openedBoxes.length})
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          </h3>
+          <div className="grid grid-cols-4 md:grid-cols-6 gap-2">
             {openedBoxes.map((box) => (
               <div
                 key={box.id}
-                className="panel p-6 text-center opacity-50"
+                className="panel-inset p-2 text-center opacity-40"
               >
-                <div className="text-4xl mb-2">📭</div>
-                <p className="text-sm text-coliseum-sand/70 capitalize">{box.tier} Box</p>
+                <div className="text-2xl">📭</div>
                 {box.rewardedEquipment && (
-                  <p className="text-xs text-coliseum-bronze mt-2">
+                  <p className="text-[8px] text-coliseum-bronze mt-1 truncate">
                     {box.rewardedEquipment.name}
                   </p>
                 )}
@@ -146,29 +141,29 @@ export function LootBoxInventory() {
 
       {/* Reward Modal */}
       {rewardModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-          <div className="panel p-8 max-w-md w-full text-center">
-            <div className="text-6xl mb-4">✨</div>
-            <h2 className="font-display text-3xl text-coliseum-bronze uppercase mb-2">
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 backdrop-blur-sm">
+          <div className="panel-embossed p-8 max-w-md w-full text-center border-4 border-coliseum-bronze/60 shadow-2xl">
+            <div className="text-6xl mb-4 animate-pulse">✨</div>
+            <h2 className="font-display text-3xl text-coliseum-bronze uppercase mb-2 text-glow-bronze">
               Item Received!
             </h2>
             <h3 className="text-2xl text-coliseum-sand mb-4">
               {rewardModal.name}
             </h3>
-            <div className="text-sm text-coliseum-sand/70 mb-6">
+            <div className="text-sm text-coliseum-sand/70 mb-6 panel-inset p-4">
               <p className="mb-2">
-                Type: <span className="text-coliseum-sand">{rewardModal.type}</span>
+                Type: <span className="text-coliseum-sand font-bold">{rewardModal.type}</span>
               </p>
               <p className="mb-2">
-                Rarity: <span className="text-coliseum-sand">{rewardModal.rarity}</span>
+                Rarity: <span className="text-coliseum-sand font-bold">{rewardModal.rarity}</span>
               </p>
               {rewardModal.rolledMods?.description && (
-                <p className="text-xs italic mt-4">{rewardModal.rolledMods.description}</p>
+                <p className="text-xs italic mt-4 text-coliseum-sand/80">{rewardModal.rolledMods.description}</p>
               )}
             </div>
             <button
               onClick={() => setRewardModal(null)}
-              className="btn-primary"
+              className="btn-raised px-8 py-3"
             >
               Continue
             </button>

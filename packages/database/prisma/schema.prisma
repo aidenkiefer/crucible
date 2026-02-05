@@ -22,6 +22,7 @@ model User {
   image         String?
   accounts      Account[]
   sessions      Session[]
+  authUserId   String   @unique    // ← This links to auth.users.id
   isAdmin       Boolean @default(false)
   @@index([isAdmin])
 
@@ -66,8 +67,9 @@ model Gladiator {
   equippedArmor    Equipment? @relation("EquippedArmor", fields: [equippedArmorId], references: [id])
 
   // Progression
-  skillPointsAvailable Int      @default(0)
-  unlockedSkills       String[] // Array of skill IDs
+  skillPointsAvailable  Int      @default(0)
+  statPointsAvailable   Int      @default(0) // Points to allocate to base stats on level up (3 per level)
+  unlockedSkills        String[] // Array of skill IDs
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -96,6 +98,9 @@ model Equipment {
   type   String // Weapon, Armor
   rarity String // Common, Rare, Epic
   name   String
+
+  // Sprint 5: Starter gear from loot boxes cannot be crafted or salvaged
+  isStarterGear Boolean @default(false)
 
   // Stats (nullable, depends on type)
   attackBonus  Int?

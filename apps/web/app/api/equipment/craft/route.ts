@@ -45,6 +45,17 @@ export async function POST(req: Request) {
       )
     }
 
+    const starterGear = equipment.find((e) => e.isStarterGear)
+    if (starterGear) {
+      return NextResponse.json(
+        {
+          error:
+            'Starting gear (from loot boxes) cannot be used in crafting. Use only crafted or non-starter items.',
+        },
+        { status: 400 }
+      )
+    }
+
     // Check if any equipment is currently equipped
     const equippedCount = await prisma.gladiatorEquippedItem.count({
       where: {

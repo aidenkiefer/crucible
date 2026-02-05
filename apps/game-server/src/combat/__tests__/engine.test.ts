@@ -44,6 +44,7 @@ function createTestCombatant(id: string, overrides?: Partial<Combatant>): Combat
     isInvulnerable: false,
     invulnerabilityEndTime: 0,
     equippedWeapon: WeaponType.Sword,
+    weapon: WeaponType.Sword,
     currentAction: null,
     ...overrides,
   }

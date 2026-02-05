@@ -7,7 +7,8 @@ dotenv.config()
 const PORT = process.env.PORT || 4000
 
 async function main() {
-  const server = createServer()
+  // Create server (now async due to Redis setup)
+  const server = await createServer()
 
   server.listen(PORT, () => {
     console.log(`🎮 Game server running on port ${PORT}`)

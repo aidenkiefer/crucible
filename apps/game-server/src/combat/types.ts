@@ -86,6 +86,8 @@ export enum WeaponType {
   Dagger = 'Dagger',  // Sprint 4
 }
 
+import { AttackPattern } from '@gladiator/shared/src/combat'
+
 export interface WeaponConfig {
   type: WeaponType
   damage: number
@@ -93,13 +95,6 @@ export interface WeaponConfig {
   staminaCost: number
   cooldown: number // milliseconds
   attackPattern: AttackPattern
-}
-
-export enum AttackPattern {
-  MeleeArc = 'MeleeArc',      // Sword: 90° arc in front
-  MeleeThrust = 'MeleeThrust', // Spear: narrow cone, longer range
-  Projectile = 'Projectile',   // Bow: shoots projectile
-  QuickStrike = 'QuickStrike', // Dagger: fast, short range
 }
 
 // ============================================================================

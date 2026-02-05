@@ -32,7 +32,11 @@ export function calculateSalvageValue(rarity: EquipmentRarity): number {
  * Determine output rarity from crafting 3 items
  * Rules:
  * - If all 3 are same rarity: 90% upgrade to next tier, 10% stay same tier
- * - If mixed rarities: Use highest rarity as base, 50% upgrade chance
+ * - If mixed rarities (different input rarities):
+ *   - 10% stay at lowest tier
+ *   - 30% one tier above lowest (capped at max tier)
+ *   - 30% match highest tier
+ *   - 30% random tier between lowest and highest (inclusive)
  * - Can't upgrade beyond Legendary
  */
 export function determineCraftedRarity(rarities: EquipmentRarity[]): EquipmentRarity {
@@ -40,27 +44,34 @@ export function determineCraftedRarity(rarities: EquipmentRarity[]): EquipmentRa
     throw new Error('Crafting requires exactly 3 items')
   }
 
-  // Find highest rarity tier
   const tiers = rarities.map((r) => RARITY_TIERS.indexOf(r))
   const maxTier = Math.max(...tiers)
   const minTier = Math.min(...tiers)
-
-  // All same rarity?
   const allSame = maxTier === minTier
 
   if (allSame) {
-    // 90% chance to upgrade to next tier
     if (Math.random() < 0.9 && maxTier < RARITY_TIERS.length - 1) {
       return RARITY_TIERS[maxTier + 1]
     }
     return RARITY_TIERS[maxTier]
-  } else {
-    // Mixed rarities: 50% chance to upgrade from highest
-    if (Math.random() < 0.5 && maxTier < RARITY_TIERS.length - 1) {
-      return RARITY_TIERS[maxTier + 1]
-    }
+  }
+
+  // Mixed rarities: 10% lowest, 30% one upgrade, 30% highest, 30% mixed
+  const roll = Math.random()
+  if (roll < 0.1) {
+    return RARITY_TIERS[minTier]
+  }
+  if (roll < 0.4) {
+    const oneUp = Math.min(minTier + 1, RARITY_TIERS.length - 1)
+    return RARITY_TIERS[oneUp]
+  }
+  if (roll < 0.7) {
     return RARITY_TIERS[maxTier]
   }
+  // 30%: random tier between min and max (inclusive)
+  const range = maxTier - minTier + 1
+  const randomTier = minTier + Math.floor(Math.random() * range)
+  return RARITY_TIERS[randomTier]
 }
 
 /**

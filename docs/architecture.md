@@ -71,10 +71,12 @@ Gladiator Coliseum is built as a **three-tier architecture** with clear separati
 - NextAuth.js
 
 **Key Pages:**
-- `/` - Home (marketing landing when signed out; logged-in dashboard: Forge, Glory Battle, Enter Arena, Arena Status, War Council for admins)
+- `/` - Home (marketing landing when signed out; logged-in “gate” when signed in with quick access to **Camp**, Forge, Glory Battle, Enter Arena, Arena Status, and War Council for admins)
 - `/auth/signin` - Authentication
 - `/mint` - NFT minting
 - `/arena` - Arena entry; create CPU match (**Sprint 3.5**), navigate to `/match/[matchId]`
+- `/camp` - Camp hub; manage gladiators, inventory, and crafting; entry point to character management UI
+- `/camp/gladiators/[gladiatorId]` - Single gladiator view; progression (XP/levels/stat points), skill tree, and equipment slots
 - `/match/[matchId]` - Real-time combat (Canvas, sprites, WASD + mouse, client prediction, 4 weapons, projectiles, WeaponSelector, MatchHUD; **Sprints 3–4**)
 - `/admin` - Admin dashboard (game data authoring; **Sprint 2.5**)
   - `/admin/bundles` - List/create bundles, validate, publish, activate

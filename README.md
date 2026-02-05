@@ -43,7 +43,7 @@ The demo succeeds when a user can:
 
 ## Status & Roadmap
 
-**Sprint 0 (Setup), Sprint 1 (Auth & NFT Minting), Sprint 2 (Real-Time Combat), Sprint 2.5 (Admin UI), Sprint 3 (Frontend Combat UI), Sprint 3.5 (Remaining UI / Match Flow), and Sprint 4 (Weapons & Projectiles)** are complete. **Next: Sprint 5 (Progression & Loot)**.
+**Sprint 0 through Sprint 5** are complete. **Next: Sprint 6 (Multiplayer PvP)**.
 
 | Sprint | Focus | Status |
 |--------|--------|--------|
@@ -54,11 +54,11 @@ The demo succeeds when a user can:
 | **3** | Frontend — Real-time combat UI (Canvas 60 FPS, sprites, WASD + mouse, interpolation, MatchHUD, match page) | ✅ Complete |
 | **3.5** | Frontend — Shared physics, client prediction, mouse main/off-hand, match creation flow, verification | ✅ Complete |
 | **4** | Weapons & projectiles (Sword, Spear, Bow, Dagger; shared combat lib; server projectiles; WeaponSelector; client projectile rendering) | ✅ Complete |
-| **5** | Progression & loot (XP, leveling, skill trees, equipment, loot engine, crafting, inventory) | **Next** |
-| **6** | Multiplayer — Real-time PvP (matchmaking, friends, challenges, dual-player WebSocket) | Planned |
+| **5** | Progression & loot (XP/level/skill trees, loot boxes, equipment, crafting/salvage, match history, gold) | ✅ Complete |
+| **6** | Multiplayer — Real-time PvP (matchmaking, friends, challenges, dual-player WebSocket) | **Next** |
 | **7** | Polish, testing & deployment (bug fixes, tests, Vercel + Railway, mainnet guide) | Planned |
 
-**Currently built:** Monorepo (pnpm, Turborepo), Next.js 14 frontend (auth, wallet, mint, **admin UI** for game data; **arena entry** at `/arena` with match creation; **match page** with Canvas `ArenaCanvas`, `MatchHUD`, `WeaponSelector`, client prediction, 4 weapons, projectile rendering; home marketing/landing, Blood & Bronze UI), Express game server (Socket.io, **20Hz combat engine** with **multi-weapon** and **server projectiles**, CPU AI, match manager, **match:create/start** handlers, bundle loader, blockchain listener), **packages/shared** (**physics** for movement/collision, **combat** for stats/damage/weapons/projectiles), Gladiator NFT contract (Hardhat, 8 stats), Supabase + Prisma.
+**Currently built:** Monorepo (pnpm, Turborepo), Next.js 14 frontend (auth, wallet, mint, **admin UI**; **arena** at `/arena` with match creation; **camp** at `/camp` for managing gladiators, inventory, crafting, and spending stat/skill points; **match page** with Canvas, `MatchHUD`, `WeaponSelector`, client prediction, 4 weapons, projectiles; **match history** at `/matches`; **progression** (level, XP bar, skill trees, stat points); **loot boxes** (inventory, open, reward modal); **equipment** (inventory, equip, **crafting** 3→1, **salvage** for gold); marketing/landing, Blood & Bronze UI), Express game server (20Hz combat, multi-weapon, projectiles, CPU AI; **match persistence**, **rewards**, **XP/progression**, **loot drops**; bundle loader, blockchain listener), **packages/shared** (physics, combat, **loot** starter-gear, **skills** skill-trees, **crafting** 3→1), Gladiator NFT (Hardhat, 8 stats), Supabase + Prisma (**Match** completion/rewards, **LootBox**, **UserGold**).
 
 Full plan: [Master Implementation Plan](docs/plans/00-MASTER-PLAN.md).
 
@@ -109,8 +109,7 @@ See **[docs/features/equipment.md](docs/features/equipment.md)** for design and 
 Not in scope for this demo:
 
 - Marketplace UI for trading Gladiators/items  
-- Loot boxes or gacha mechanics  
-- Breeding or forging systems  
+- Breeding or forging systems (in-demo: loot boxes and 3→1 crafting are in scope)  
 - Token economics or crypto rewards  
 - Real-money guarantees or redemption  
 - Advanced ranking (Elo, seasons), tournament brackets, guilds  
@@ -123,17 +122,17 @@ Not in scope for this demo:
 ```
 crucible/
 ├── apps/
-│   ├── web/              # Next.js frontend (auth, wallet, mint, arena, match UI, admin UI)
-│   └── game-server/      # Express + Socket.io, 20Hz combat (multi-weapon, projectiles), event listener
+│   ├── web/              # Next.js frontend (auth, wallet, mint, arena, match UI, admin UI, progression, loot, equipment)
+│   └── game-server/      # Express + Socket.io, 20Hz combat, match persistence, rewards, progression, loot
 ├── packages/
-│   ├── shared/           # Shared types, constants, physics (Sprint 3.5), combat (Sprint 4)
+│   ├── shared/           # Shared types, constants, physics (3.5), combat (4), loot/skills/crafting (5)
 │   └── database/         # Prisma schema and client
 ├── contracts/            # Gladiator NFT (Hardhat)
 ├── docs/
 │   ├── plans/            # 00-MASTER-PLAN + sprint plans (01–09, sprint-3.5)
 │   ├── guides/           # Development setup, testing, deployment
 │   ├── features/         # Combat, equipment, planned-features
-│   ├── SPRINT-1-SUMMARY.md … SPRINT-4-SUMMARY.md
+│   ├── SPRINT-1-SUMMARY.md … SPRINT-5-SUMMARY.md
 │   └── SPRINT-2.5-SUMMARY.md, SPRINT-3.5-SUMMARY.md
 └── README.md
 ```
@@ -172,8 +171,8 @@ pnpm dev
 | [docs/plans/04-sprint-3-frontend-animations.md](docs/plans/04-sprint-3-frontend-animations.md) | Sprint 3 plan (frontend real-time combat UI) |
 | [docs/plans/sprint-3.5.md](docs/plans/sprint-3.5.md) | Sprint 3.5 plan (remaining items: client prediction, match creation) |
 | [docs/plans/05-sprint-4-weapons-projectiles.md](docs/plans/05-sprint-4-weapons-projectiles.md) | Sprint 4 plan (weapons & projectiles) |
-| [docs/plans/06-sprint-5-progression-loot.md](docs/plans/06-sprint-5-progression-loot.md) | Sprint 5 plan (progression & loot) — **next** |
-| [docs/plans/07-sprint-6-multiplayer.md](docs/plans/07-sprint-6-multiplayer.md) | Sprint 6 plan (multiplayer PvP) |
+| [docs/plans/06-sprint-5-progression-loot.md](docs/plans/06-sprint-5-progression-loot.md) | Sprint 5 plan (progression & loot) |
+| [docs/plans/07-sprint-6-multiplayer.md](docs/plans/07-sprint-6-multiplayer.md) | Sprint 6 plan (multiplayer PvP) — **next** |
 | [docs/plans/08-sprint-7-deployment.md](docs/plans/08-sprint-7-deployment.md) | Sprint 7 plan (deployment) |
 | [docs/SPRINT-1-SUMMARY.md](docs/SPRINT-1-SUMMARY.md) | Sprint 1 summary (complete) |
 | [docs/SPRINT-2-SUMMARY.md](docs/SPRINT-2-SUMMARY.md) | Sprint 2 summary (real-time combat, complete) |
@@ -181,6 +180,7 @@ pnpm dev
 | [docs/SPRINT-3-SUMMARY.md](docs/SPRINT-3-SUMMARY.md) | Sprint 3 summary (Canvas arena, sprites, input, WebSocket, MatchHUD, match page) |
 | [docs/SPRINT-3.5-SUMMARY.md](docs/SPRINT-3.5-SUMMARY.md) | Sprint 3.5 summary (shared physics, client prediction, match creation, verification) |
 | [docs/SPRINT-4-SUMMARY.md](docs/SPRINT-4-SUMMARY.md) | Sprint 4 summary (weapons, projectiles, WeaponSelector, shared combat) |
+| [docs/SPRINT-5-SUMMARY.md](docs/SPRINT-5-SUMMARY.md) | Sprint 5 summary (progression, loot boxes, equipment, crafting/salvage, match history, gold) |
 | [docs/guides/development-setup.md](docs/guides/development-setup.md) | Development environment setup |
 | [docs/guides/vercel-deployment.md](docs/guides/vercel-deployment.md) | Vercel deployment — Root Directory, env vars, checklist |
 | [docs/features/equipment.md](docs/features/equipment.md) | Equipment, loot, abilities — template/instance design, slots, authoring |

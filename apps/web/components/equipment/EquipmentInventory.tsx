@@ -108,6 +108,23 @@ export function EquipmentInventory({ gladiatorId }: Props) {
     }
   }
 
+  const getRarityBorder = (rarity: string) => {
+    switch (rarity) {
+      case 'Common':
+        return 'rarity-common'
+      case 'Uncommon':
+        return 'rarity-uncommon'
+      case 'Rare':
+        return 'rarity-rare'
+      case 'Epic':
+        return 'rarity-epic'
+      case 'Legendary':
+        return 'rarity-legendary'
+      default:
+        return ''
+    }
+  }
+
   if (loading) {
     return (
       <div className="text-center py-8">
@@ -119,7 +136,7 @@ export function EquipmentInventory({ gladiatorId }: Props) {
 
   if (equipment.length === 0) {
     return (
-      <div className="panel p-8 text-center">
+      <div className="panel-inset p-8 text-center">
         <p className="text-coliseum-sand/70">
           No equipment yet. Win matches to earn loot boxes!
         </p>
@@ -128,42 +145,46 @@ export function EquipmentInventory({ gladiatorId }: Props) {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
       {equipment.map((item) => {
-        const isEquipped = item.equippedBy && item.equippedBy.length > 0
-        const equippedSlot = isEquipped ? item.equippedBy[0].slot : null
+        const equippedBy = item.equippedBy ?? []
+        const isEquipped = equippedBy.length > 0
+        const equippedSlot = isEquipped ? equippedBy[0].slot : null
         const slot = item.type === 'WEAPON' ? 'MAIN_HAND' : 'CHEST'
 
         return (
           <div
             key={item.id}
-            className={`panel p-4 ${
-              isEquipped ? 'border-green-500 bg-green-900/10' : ''
-            }`}
+            className={`panel-inset p-3 ${getRarityBorder(item.rarity)} ${
+              isEquipped ? 'border-green-500/80 bg-green-900/20' : ''
+            } hover:border-coliseum-bronze/60 transition-colors cursor-pointer`}
           >
-            <div className="flex justify-between items-start mb-3">
-              <div>
-                <h3 className="font-display text-lg text-coliseum-sand uppercase">
-                  {item.name}
-                </h3>
-                <p className="text-xs text-coliseum-sand/70">{item.type}</p>
-              </div>
-              <span className={`font-bold ${getRarityColor(item.rarity)}`}>
-                {item.rarity}
-              </span>
+            {/* Item Icon Placeholder */}
+            <div className="w-full aspect-square panel-inset flex items-center justify-center text-4xl mb-2">
+              {item.type === 'WEAPON' ? '⚔️' : '🛡️'}
+            </div>
+
+            {/* Item Name and Rarity */}
+            <div className="text-center mb-2">
+              <h3 className={`font-bold text-sm uppercase ${getRarityColor(item.rarity)}`}>
+                {item.name}
+              </h3>
+              <p className="text-[10px] text-coliseum-sand/60 uppercase tracking-wider">
+                {item.type}
+              </p>
             </div>
 
             {/* Stats */}
             {item.rolledMods?.baseStatMods && (
-              <div className="mb-3">
-                <div className="flex flex-wrap gap-2">
+              <div className="mb-2">
+                <div className="flex flex-wrap gap-1 justify-center">
                   {Object.entries(item.rolledMods.baseStatMods).map(
                     ([stat, value]: [string, any]) => (
                       <span
                         key={stat}
-                        className="text-xs px-2 py-1 bg-gray-800 border border-coliseum-sand/20 rounded"
+                        className="text-[10px] px-1.5 py-0.5 bg-coliseum-black/50 border border-coliseum-bronze/20 text-coliseum-sand/80 uppercase"
                       >
-                        +{value} {stat}
+                        +{value} {stat.substring(0, 3)}
                       </span>
                     )
                   )}
@@ -171,24 +192,17 @@ export function EquipmentInventory({ gladiatorId }: Props) {
               </div>
             )}
 
-            {/* Description */}
-            {item.rolledMods?.description && (
-              <p className="text-xs text-coliseum-sand/80 italic mb-3">
-                {item.rolledMods.description}
-              </p>
-            )}
-
             {/* Equip/Unequip */}
             {gladiatorId && (
               <div>
                 {isEquipped && equippedSlot ? (
-                  <div className="space-y-2">
-                    <div className="text-xs text-green-400 uppercase">
-                      ✓ Equipped ({equippedSlot})
+                  <div className="space-y-1">
+                    <div className="text-[10px] text-green-400 uppercase text-center">
+                      ✓ Equipped
                     </div>
                     <button
                       onClick={() => unequipItem(equippedSlot)}
-                      className="btn-secondary w-full text-sm"
+                      className="btn-raised w-full text-[10px] px-2 py-1"
                     >
                       Unequip
                     </button>
@@ -197,9 +211,9 @@ export function EquipmentInventory({ gladiatorId }: Props) {
                   <button
                     onClick={() => equipItem(item.id, slot)}
                     disabled={equipping === item.id}
-                    className="btn-primary w-full text-sm disabled:opacity-50"
+                    className="btn-raised w-full text-[10px] px-2 py-1 disabled:opacity-50"
                   >
-                    {equipping === item.id ? 'Equipping...' : `Equip (${slot})`}
+                    {equipping === item.id ? 'Equipping...' : 'Equip'}
                   </button>
                 )}
               </div>

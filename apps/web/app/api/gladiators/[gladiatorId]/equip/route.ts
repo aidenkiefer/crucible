@@ -67,7 +67,7 @@ export async function POST(
     await prisma.gladiatorEquippedItem.deleteMany({
       where: {
         gladiatorId: params.gladiatorId,
-        slot,
+        slot: slot as any,
       },
     })
 
@@ -76,7 +76,7 @@ export async function POST(
       data: {
         gladiatorId: params.gladiatorId,
         equipmentId,
-        slot,
+        slot: slot as any,
       },
     })
 
@@ -128,7 +128,7 @@ export async function DELETE(
     await prisma.gladiatorEquippedItem.deleteMany({
       where: {
         gladiatorId: params.gladiatorId,
-        slot,
+        slot: slot as any,
       },
     })
 

@@ -33,10 +33,6 @@ export default function MatchHistoryPage() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<string | null>(null)
 
-  useEffect(() => {
-    fetchMatches()
-  }, [filter])
-
   const fetchMatches = async () => {
     try {
       setLoading(true)
@@ -50,6 +46,11 @@ export default function MatchHistoryPage() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    fetchMatches()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter])
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60)

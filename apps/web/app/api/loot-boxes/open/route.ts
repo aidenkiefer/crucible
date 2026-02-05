@@ -41,13 +41,14 @@ export async function POST(req: Request) {
     // Roll random item from loot box tier
     const rolledItem = rollLootBoxItem(lootBox.tier)
 
-    // Create Equipment instance
+    // Create Equipment instance (starter gear cannot be crafted or salvaged)
     const equipment = await prisma.equipment.create({
       data: {
         ownerId: session.user.id,
         type: rolledItem.type,
         rarity: 'Common', // Starter gear is always Common
         name: rolledItem.name,
+        isStarterGear: true,
         // Store starter gear configuration in rolledMods
         rolledMods: {
           key: rolledItem.key,

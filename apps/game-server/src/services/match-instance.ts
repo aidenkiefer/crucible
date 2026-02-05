@@ -119,12 +119,12 @@ export class MatchInstance {
     this.status = MatchStatus.InProgress
     this.matchStartTime = Date.now()
 
-    // Start tick loop at 20Hz (50ms interval)
+    // Start tick loop at 60Hz (16.67ms interval) - Sprint 6
     this.tickInterval = setInterval(() => {
       this.processTick()
     }, COMBAT_CONSTANTS.TICK_INTERVAL)
 
-    console.log(`Match ${this.config.matchId} started`)
+    console.log(`Match ${this.config.matchId} started at 60Hz`)
   }
 
   /**
@@ -201,6 +201,20 @@ export class MatchInstance {
    */
   public getMatchId(): string {
     return this.config.matchId
+  }
+
+  /**
+   * Check if a user is participating in this match
+   * Sprint 6: Used for disconnect handling
+   */
+  public hasUser(userId: string): boolean {
+    if (this.config.player1.userId === userId) {
+      return true
+    }
+    if (this.config.player2 && this.config.player2.userId === userId) {
+      return true
+    }
+    return false
   }
 
   // ============================================================================
@@ -294,6 +308,7 @@ export class MatchInstance {
       isInvulnerable: false,
       invulnerabilityEndTime: 0,
       equippedWeapon: WeaponType.Sword,
+      weapon: WeaponType.Sword,
       currentAction: null,
     }
   }
@@ -328,6 +343,7 @@ export class MatchInstance {
       isInvulnerable: false,
       invulnerabilityEndTime: 0,
       equippedWeapon: WeaponType.Sword,
+      weapon: WeaponType.Sword,
       currentAction: null,
     }
   }
@@ -429,7 +445,7 @@ export class MatchInstance {
           winnerId: winnerGladiatorId,
           durationSeconds: Math.floor(duration),
           completedAt: new Date(),
-          matchStats: this.matchStats,
+          matchStats: this.matchStats as any,
           rewardType,
           rewardAmount,
           lootBoxTier,

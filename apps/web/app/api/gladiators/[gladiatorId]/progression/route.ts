@@ -21,9 +21,12 @@ export async function GET(
       where: { id: params.gladiatorId },
       select: {
         id: true,
+        class: true,
         level: true,
         xp: true,
         skillPointsAvailable: true,
+        statPointsAvailable: true,
+        unlockedSkills: true,
         constitution: true,
         strength: true,
         dexterity: true,

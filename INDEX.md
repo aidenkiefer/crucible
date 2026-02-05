@@ -36,8 +36,9 @@ crucible/
 │   │       │   ├── abi.ts               # Gladiator NFT ABI for listener
 │   │       │   ├── blockchain-listener.ts # Mint/transfer events → DB sync
 │   │       │   ├── gladiator-sync.ts     # Start listener, ensure DB gladiators
-│   │       │   ├── match-instance.ts     # Per-match state, combat tick loop
+│   │       │   ├── match-instance.ts     # Per-match state, combat tick loop; Sprint 5: persistence, rewards, XP
 │   │       │   ├── match-manager.ts      # Create/join matches, CPU or PvP
+│   │       │   ├── progression.ts        # Sprint 5: XP, leveling, getXPForLevel, awardXP, skill points
 │   │       │   └── bundle-loader.ts      # Load active game data bundle from Supabase Storage (Sprint 2.5)
 │   │       └── sockets/
 │   │           ├── index.ts     # Socket.IO setup, auth, namespaces
@@ -53,7 +54,7 @@ crucible/
 │       ├── tsconfig.json
 │       ├── app/
 │       │   ├── layout.tsx       # Root layout, providers
-│       │   ├── page.tsx         # Home (marketing landing + logged-in dashboard: Forge, Glory Battle, Enter Arena, Arena Status, admin shortcuts)
+│       │   ├── page.tsx         # Home (marketing landing + logged-in dashboard: Camp, Forge, Glory Battle, Enter Arena, Arena Status, admin shortcuts)
 │       │   ├── globals.css      # Global styles (Blood & Bronze palette, shared components)
 │       │   ├── admin/           # Admin UI (Sprint 2.5): dashboard, bundles, equipment/action templates
 │       │   │   ├── layout.tsx   # Admin layout, AdminNav
@@ -64,18 +65,31 @@ crucible/
 │       │   │   ├── unauthorized/page.tsx
 │       │   │   └── components/AdminNav.tsx, JsonEditor.tsx
 │       │   ├── arena/page.tsx   # Sprint 3.5: match creation (Fight CPU), navigate to /match/[matchId]
+│       │   ├── camp/page.tsx    # Sprint 5 adj: Camp hub for gladiators, inventory, crafting
+│       │   ├── camp/gladiators/[id]/page.tsx # Camp: single gladiator (progression, skills, equipment)
 │       │   ├── auth/signin/page.tsx
 │       │   ├── mint/page.tsx    # Mint Gladiator NFT
+│       │   ├── matches/page.tsx # Sprint 5: match history, filters, rewards display
 │       │   ├── match/[matchId]/page.tsx  # Sprint 3+: real-time match (Canvas, HUD, prediction, weapons, projectiles)
 │       │   └── api/
 │       │       ├── auth/[...nextauth]/route.ts  # NextAuth API
 │       │       ├── user/link-wallet/route.ts    # Link wallet to user
-│       │       └── admin/   # Admin API (Sprint 2.5): bundles, action-templates, equipment-templates
+│       │       ├── admin/   # Admin API (Sprint 2.5): bundles, action-templates, equipment-templates
+│       │       ├── matches/history/route.ts     # Sprint 5: match history
+│       │       ├── loot-boxes/route.ts, open/route.ts  # Sprint 5: loot box inventory, open
+│       │       ├── gladiators/route.ts          # List current user's gladiators (Camp)
+│       │       ├── gladiators/[gladiatorId]/progression/route.ts, skills/unlock/route.ts, equip/route.ts, stats/route.ts  # Sprint 5 progression, skills, equip, stat allocation
+│       │       ├── equipment/route.ts, craft/route.ts, salvage/route.ts  # Sprint 5: inventory, craft 3→1, salvage
+│       │       └── gold/balance/route.ts        # Sprint 5: gold balance
 │       ├── components/
 │       │   ├── auth/SignInForm.tsx, SignInButton.tsx
 │       │   ├── arena/          # Sprint 3–4: interpolation, renderer, ArenaCanvas, MatchHUD, WeaponSelector
+│       │   ├── equipment/      # Sprint 5: CraftingWorkshop.tsx, EquipmentInventory.tsx
+│       │   ├── gladiators/     # Sprint 5: GladiatorProgression.tsx
+│       │   ├── loot/           # Sprint 5: LootBoxInventory.tsx
 │       │   ├── mint/MintGladiator.tsx
 │       │   ├── providers/SessionProvider.tsx, WagmiProvider.tsx
+│       │   ├── skills/         # Sprint 5: SkillTree.tsx
 │       │   ├── ui/AnimatedTorch.tsx
 │       │   └── wallet/ConnectWallet.tsx
 │       ├── hooks/
@@ -107,8 +121,8 @@ crucible/
     ├── database/
     │   ├── package.json        # Prisma client, build = prisma generate
     │   ├── prisma/
-    │   │   ├── schema.prisma   # Full schema: User, Gladiator, Equipment, Match, GameDataBundle, etc.
-    │   │   └── migrations/20260203134839_add_8_stats_to_gladiator/migration.sql
+    │   │   ├── schema.prisma   # User, Gladiator, Equipment, Match (persistence, rewards), LootBox, UserGold (Sprint 5), GameDataBundle, etc.
+    │   │   └── migrations/    # add_8_stats_to_gladiator; Sprint 5: Match/LootBox/UserGold as needed
     │   └── src/client.ts       # Prisma client singleton
     │
     └── shared/
@@ -118,6 +132,9 @@ crucible/
             ├── index.ts        # Re-exports constants, types, physics, combat
             ├── constants/index.ts   # COMBAT_TICK_INTERVAL, BASE_*, ACTION_CONFIG, XP_*, LOOT_*
             ├── types/index.ts  # GladiatorClass, User, Gladiator, Equipment, Match, etc.
+            ├── loot/           # Sprint 5: starter-gear.ts (loot box pool: armor sets, weapons)
+            ├── skills/         # Sprint 5: skill-trees.ts (4 classes, branches, SkillNode)
+            ├── crafting/       # Sprint 5: crafting-system.ts (3→1, rarity upgrade, determineCraftedRarity)
             ├── combat/         # Sprint 4: types, stats, damage, weapons, projectiles, index
             │   ├── types.ts    # CombatState, WeaponDefinition, ProjectileState, BaseAttributes, etc.
             │   ├── stats.ts    # Pure derived stats, stamina
@@ -154,6 +171,7 @@ crucible/
 | **Match UI (Sprints 3–4)** | apps/web/app/arena/page.tsx, app/match/[matchId]/page.tsx, components/arena/*, hooks/useSocket.ts, useRealTimeMatch.ts, useGameInput.ts, useClientPrediction.ts, useCreateMatch.ts, lib/sprites/* |
 | **Shared physics (client prediction)** | packages/shared/src/physics/* |
 | **Shared combat (weapons, damage, projectiles)** | packages/shared/src/combat/* |
+| **Progression & loot (Sprint 5)** | apps/game-server/src/services/progression.ts, apps/web/app/api/matches/history, api/loot-boxes, api/gladiators/[id]/progression|skills|equip, api/equipment, api/gold/balance, components/loot, gladiators, equipment, skills; packages/shared/src/loot, skills, crafting |
 | **Runtime game data (bundle loader)** | apps/game-server/src/services/bundle-loader.ts |
 | **Database schema** | [packages/database/prisma/schema.prisma](packages/database/prisma/schema.prisma) |
 | **Shared types & constants** | [packages/shared/src/types/index.ts](packages/shared/src/types/index.ts), [constants/index.ts](packages/shared/src/constants/index.ts) |
@@ -181,7 +199,8 @@ crucible/
 - **combat/types.ts** — Combatant (weapon), CombatState (projectiles map), CombatEvent, WeaponType, ProjectileState.
 - **ai/cpu-ai.ts** — CPU decision: pick target, choose action (attack/dodge/block), optional difficulty tuning.
 - **services/match-manager.ts** — Create match (CPU or PvP), assign match instance, track active matches.
-- **services/match-instance.ts** — Single match: combat state, tick loop, input application, game-over handling.
+- **services/match-instance.ts** — Single match: combat state, tick loop, input application, game-over; Sprint 5: match persistence, stats, loot drop, XP award.
+- **services/progression.ts** — Sprint 5: getXPForLevel, awardXP, level cap 20, skill points on level up.
 - **services/blockchain-listener.ts** — Subscribe to GladiatorNFT Mint/Transfer; on event, sync gladiator to DB.
 - **services/gladiator-sync.ts** — Start blockchain listener; ensure DB has gladiator records for minted tokens.
 - **services/bundle-loader.ts** — Load active game data bundle from Supabase Storage at startup; getEquipmentTemplate(key), getActionTemplate(key) (Sprint 2.5).
@@ -198,9 +217,15 @@ crucible/
 - **app/auth/signin/page.tsx** — Sign-in page.
 - **app/mint/page.tsx** — Mint Gladiator NFT page (class selection, wallet).
 - **app/arena/page.tsx** — Sprint 3.5: arena entry; create CPU match via useCreateMatch, navigate to /match/[matchId].
+- **app/matches/page.tsx** — Sprint 5: match history UI; filters, victory/defeat styling, rewards display.
 - **app/match/[matchId]/page.tsx** — Sprints 3–4: real-time match (ArenaCanvas, MatchHUD, WeaponSelector, useRealTimeMatch, useGameInput, useClientPrediction; Fight Again creates new match).
 - **app/api/auth/[...nextauth]/route.ts** — NextAuth API route (Google/Twitter, session).
 - **app/api/user/link-wallet/route.ts** — Link wallet address to authenticated user.
+- **app/api/matches/history/route.ts** — Sprint 5: match history with filters.
+- **app/api/loot-boxes/route.ts**, **loot-boxes/open/route.ts** — Sprint 5: loot box inventory, open box.
+- **app/api/gladiators/[gladiatorId]/progression/route.ts**, **skills/unlock/route.ts**, **equip/route.ts** — Sprint 5: XP/level, unlock skill, equip/unequip.
+- **app/api/equipment/route.ts**, **equipment/craft/route.ts**, **equipment/salvage/route.ts** — Sprint 5: equipment inventory, craft 3→1, salvage for gold.
+- **app/api/gold/balance/route.ts** — Sprint 5: gold balance.
 - **lib/auth.ts** — NextAuth config (providers, callbacks, session).
 - **lib/wagmi.ts** — Wagmi config (chains, transports).
 - **lib/contracts.ts** — Contract addresses and ABIs for frontend.
@@ -213,6 +238,10 @@ crucible/
 - **lib/arena.ts** — Arena status copy (open/closed), getArenaStatus(), NEXT_PUBLIC_ARENA_OPEN.
 - **lib/sprites/** — SpriteLoader, AnimationPlayer, types (SpriteManifest, Direction, etc.).
 - **components/arena/** — interpolation.ts, renderer.ts (drawProjectile in Sprint 4), ArenaCanvas.tsx, MatchHUD.tsx, WeaponSelector.tsx (Sprint 4).
+- **components/loot/LootBoxInventory.tsx** — Sprint 5: loot box list, open, reward modal.
+- **components/gladiators/GladiatorProgression.tsx** — Sprint 5: level, XP bar, stats.
+- **components/skills/SkillTree.tsx** — Sprint 5: skill branches, unlock UI.
+- **components/equipment/CraftingWorkshop.tsx**, **EquipmentInventory.tsx** — Sprint 5: craft 3→1, salvage, equipment list, equip.
 - **components/ui/AnimatedTorch.tsx** — Reusable torch with sizes, mirror, glow.
 - **components/auth/** — SignInForm, SignInButton.
 - **components/** — ConnectWallet, MintGladiator, SessionProvider, WagmiProvider.
@@ -227,8 +256,8 @@ crucible/
 
 ### packages/database
 
-- **prisma/schema.prisma** — Schema: User (NextAuth), Gladiator (8 stats, equipment relations), Equipment, Match, GameDataBundle, EquipmentTemplate, ActionTemplate, etc.; migrations.
-- **prisma/migrations/.../migration.sql** — Migration: add 8 stats to Gladiator.
+- **prisma/schema.prisma** — User, Gladiator (8 stats, level, xp, skillPointsAvailable, unlockedSkills), Equipment, Match (matchType, matchStats, rewardType, lootBoxTier, completedAt — Sprint 5), LootBox, UserGold (Sprint 5), GameDataBundle, EquipmentTemplate, ActionTemplate, etc.; migrations.
+- **prisma/migrations/** — add_8_stats_to_gladiator; Sprint 5 migrations as applied.
 - **src/client.ts** — Singleton Prisma client export.
 
 ### packages/shared
@@ -236,6 +265,9 @@ crucible/
 - **src/index.ts** — Re-exports from constants and types.
 - **src/constants/index.ts** — Combat (tick interval, health/stamina, ACTION_CONFIG), progression (XP_*), loot (LOOT_DROP_RATES).
 - **src/types/index.ts** — GladiatorClass, User, Gladiator, Equipment, Match, etc.
+- **src/loot/starter-gear.ts** — Sprint 5: starter gear definitions (4 armor sets, 7 weapons) for loot box pool.
+- **src/skills/skill-trees.ts** — Sprint 5: skill tree definitions (4 classes, branches, SkillNode, tier prerequisites).
+- **src/crafting/crafting-system.ts** — Sprint 5: 3→1 crafting, determineCraftedRarity, rarity tiers.
 - **src/combat/** — Sprint 4: types (weapon, projectile, stats), stats.ts, damage.ts, weapons.ts (WEAPONS), projectiles.ts, index.
 - **src/physics/** — Sprint 3.5: types, constants, vector, movement, collision, index; used by server and client prediction.
 
@@ -276,6 +308,7 @@ crucible/
     ├── SPRINT-3-SUMMARY.md      # Sprint 3 complete: Canvas arena, sprites, input, WebSocket, MatchHUD, match page
     ├── SPRINT-3.5-SUMMARY.md    # Sprint 3.5 complete: shared physics, client prediction, mouse attacks, match creation, verification
     ├── SPRINT-4-SUMMARY.md      # Sprint 4 complete: shared combat, 4 weapons, projectiles, WeaponSelector, client projectile rendering
+    ├── SPRINT-5-SUMMARY.md      # Sprint 5 complete: progression (XP/level/skills), loot boxes, equipment/crafting/salvage, match history, gold
     │
     ├── features/
     │   ├── admin-ui.md          # Admin UI plan: game data authoring, CRUD templates, validation, publish/export, immutable bundles
@@ -316,7 +349,7 @@ crucible/
 | **Combat design** | [docs/features/combat.md](docs/features/combat.md), [docs/SPRINT-2-SUMMARY.md](docs/SPRINT-2-SUMMARY.md) |
 | **Equipment & loot design** | [docs/features/equipment.md](docs/features/equipment.md), [docs/data-glossary.md](docs/data-glossary.md) §5–8 |
 | **Sprint plans (what to build)** | [docs/plans/00-MASTER-PLAN.md](docs/plans/00-MASTER-PLAN.md), [docs/plans/01-sprint-0-setup.md](docs/plans/01-sprint-0-setup.md) … [09-sprint-2.5-admin-ui.md](docs/plans/09-sprint-2.5-admin-ui.md), [08-sprint-7-deployment.md](docs/plans/08-sprint-7-deployment.md) |
-| **What’s been built (Sprints 1–4)** | [docs/SPRINT-1-SUMMARY.md](docs/SPRINT-1-SUMMARY.md), [docs/SPRINT-2-SUMMARY.md](docs/SPRINT-2-SUMMARY.md), [docs/SPRINT-2.5-SUMMARY.md](docs/SPRINT-2.5-SUMMARY.md), [docs/SPRINT-3-SUMMARY.md](docs/SPRINT-3-SUMMARY.md), [docs/SPRINT-3.5-SUMMARY.md](docs/SPRINT-3.5-SUMMARY.md), [docs/SPRINT-4-SUMMARY.md](docs/SPRINT-4-SUMMARY.md) |
+| **What’s been built (Sprints 1–5)** | [docs/SPRINT-1-SUMMARY.md](docs/SPRINT-1-SUMMARY.md), [docs/SPRINT-2-SUMMARY.md](docs/SPRINT-2-SUMMARY.md), [docs/SPRINT-2.5-SUMMARY.md](docs/SPRINT-2.5-SUMMARY.md), [docs/SPRINT-3-SUMMARY.md](docs/SPRINT-3-SUMMARY.md), [docs/SPRINT-3.5-SUMMARY.md](docs/SPRINT-3.5-SUMMARY.md), [docs/SPRINT-4-SUMMARY.md](docs/SPRINT-4-SUMMARY.md), [docs/SPRINT-5-SUMMARY.md](docs/SPRINT-5-SUMMARY.md) |
 | **Getting started (dev env)** | [docs/guides/development-setup.md](docs/guides/development-setup.md), [README.md](README.md) § Development |
 | **Deploy web app (Vercel)** | [docs/guides/vercel-deployment.md](docs/guides/vercel-deployment.md) |
 | **Contract deployment** | [contracts/DEPLOYMENT.md](contracts/DEPLOYMENT.md) |
@@ -353,6 +386,7 @@ crucible/
 - **SPRINT-3-SUMMARY.md** — Sprint 3 complete: sprite loading, Canvas renderer, interpolation, useGameInput (WASD, mouse, Space/Shift), useSocket, useRealTimeMatch, MatchHUD, match page; verification checklist.
 - **SPRINT-3.5-SUMMARY.md** — Sprint 3.5 complete: shared physics package, useClientPrediction, mouse main/off-hand attacks, useCreateMatch, arena page (match creation), Fight Again flow, Sprint 3 verification.
 - **SPRINT-4-SUMMARY.md** — Sprint 4 complete: shared combat library (stats, damage, weapons, projectiles), 4 weapon types (Sword, Spear, Bow, Dagger), server projectiles, WeaponSelector UI, client projectile rendering.
+- **SPRINT-5-SUMMARY.md** — Sprint 5 complete: progression (XP, level cap 20, skill trees, unlock skills), loot boxes (starter gear pool, open API), equipment (inventory, equip/unequip, craft 3→1, salvage for gold), match persistence (stats, rewards), match history UI, UserGold, shared loot/skills/crafting packages.
 
 ### docs/features/
 

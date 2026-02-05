@@ -8,6 +8,7 @@ interface Equipment {
   name: string
   type: string
   rarity: string
+  isStarterGear?: boolean
 }
 
 export function CraftingWorkshop() {
@@ -117,6 +118,9 @@ export function CraftingWorkshop() {
     }
   }
 
+  const craftableEquipment = equipment.filter((e) => !e.isStarterGear)
+  const salvageableEquipment = equipment.filter((e) => !e.isStarterGear)
+
   const totalSalvageValue = selectedForSalvage.reduce((sum, id) => {
     const item = equipment.find((e) => e.id === id)
     return sum + (item ? calculateSalvageValue(item.rarity as any) : 0)
@@ -176,7 +180,7 @@ export function CraftingWorkshop() {
               Select 3 Items to Craft ({selectedForCrafting.length}/3)
             </h3>
             <p className="text-sm text-coliseum-sand/70 mb-4">
-              Combine 3 items into 1 higher-quality item. Same rarity = 90% upgrade chance.
+              Combine 3 non-starter items into 1 higher-quality item. Starting gear (from loot boxes) cannot be used in crafting.
             </p>
             <button
               onClick={craftItems}
@@ -188,7 +192,7 @@ export function CraftingWorkshop() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {equipment.map((item) => (
+            {craftableEquipment.map((item) => (
               <div
                 key={item.id}
                 onClick={() => toggleCraftSelection(item.id)}
@@ -219,7 +223,7 @@ export function CraftingWorkshop() {
               Select Items to Salvage ({selectedForSalvage.length} selected)
             </h3>
             <p className="text-sm text-coliseum-sand/70 mb-4">
-              Break down items for Gold. Total value: 🪙 {totalSalvageValue}
+              Break down non-starter items for Gold. Starting gear (from loot boxes) cannot be salvaged. Total value: 🪙 {totalSalvageValue}
             </p>
             <button
               onClick={salvageItems}
@@ -231,7 +235,7 @@ export function CraftingWorkshop() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {equipment.map((item) => {
+            {salvageableEquipment.map((item) => {
               const salvageValue = calculateSalvageValue(item.rarity as any)
               return (
                 <div

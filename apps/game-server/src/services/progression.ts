@@ -68,27 +68,19 @@ export async function awardXP(gladiatorId: string, xpAmount: number): Promise<nu
       `✨ Awarded ${xpAmount} XP to Gladiator ${gladiatorId} (${currentXP}/${getXPForLevel(gladiator.level)} for level ${currentLevel + 1})`
     )
   } else {
-    // Level up! Increment all 8 stats and award skill points
+    // Level up! Award 1 skill point and 3 stat points (player allocates stats manually)
     await prisma.gladiator.update({
       where: { id: gladiatorId },
       data: {
         level: currentLevel,
         xp: currentXP,
         skillPointsAvailable: { increment: levelsGained },
-        // Auto-increment all 8 stats on level up
-        constitution: { increment: levelsGained },
-        strength: { increment: levelsGained },
-        dexterity: { increment: levelsGained },
-        speed: { increment: levelsGained },
-        defense: { increment: levelsGained },
-        magicResist: { increment: levelsGained },
-        arcana: { increment: levelsGained },
-        faith: { increment: levelsGained },
+        statPointsAvailable: { increment: levelsGained * 3 },
       },
     })
 
     console.log(
-      `🎉 Gladiator ${gladiatorId} leveled up ${levelsGained} time(s)! Now level ${currentLevel} (${currentXP}/${currentLevel < MAX_LEVEL ? getXPForLevel(currentLevel) : 'MAX'} XP)`
+      `🎉 Gladiator ${gladiatorId} leveled up ${levelsGained} time(s)! Now level ${currentLevel} (+${levelsGained} skill point(s), +${levelsGained * 3} stat points to allocate)`
     )
   }
 

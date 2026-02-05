@@ -7,6 +7,10 @@ import { Socket } from 'socket.io'
 import { matchManager, createPlayerConfig } from '../services/match-manager'
 import { MatchConfig } from '../services/match-instance'
 import { Action, ActionType } from '../combat/types'
+import { PHYSICS_CONSTANTS } from '@gladiator/shared/src/physics/constants'
+import { InputValidator } from '../services/input-validator'
+import { RateLimiter } from '../services/rate-limiter'
+import { DisconnectHandler } from '../services/disconnect-handler'
 
 // ============================================================================
 // Types
@@ -40,6 +44,19 @@ interface JoinMatchPayload {
 }
 
 // ============================================================================
+// Rate Limiting & Disconnect Handling
+// ============================================================================
+
+const rateLimiter = new RateLimiter()
+const disconnectHandler = new DisconnectHandler()
+
+// Cleanup every 60 seconds
+setInterval(() => {
+  rateLimiter.cleanup()
+  disconnectHandler.cleanup()
+}, 60000)
+
+// ============================================================================
 // WebSocket Handlers
 // ============================================================================
 
@@ -50,6 +67,9 @@ export function setupMatchHandlers(socket: Socket) {
   socket.on('match:create', (payload: CreateMatchPayload) => {
     try {
       console.log(`Creating match ${payload.matchId} for user ${payload.userId}`)
+
+      // Store userId in socket data for disconnect handling
+      socket.data.userId = payload.userId
 
       const playerConfig = createPlayerConfig(payload.userId, {
         id: payload.gladiatorId,
@@ -110,15 +130,40 @@ export function setupMatchHandlers(socket: Socket) {
 
   /**
    * Submit action during match
+   * Sprint 6: Added input validation and rate limiting
    */
   socket.on('match:action', (payload: SubmitActionPayload) => {
     try {
+      // 1. Rate limiting
+      if (!rateLimiter.checkLimit(socket.id)) {
+        socket.emit('match:error', { message: 'Rate limit exceeded' })
+        return
+      }
+
       const match = matchManager.getMatch(payload.matchId)
       if (!match) {
         socket.emit('match:error', { message: 'Match not found' })
         return
       }
 
+      // 2. Input validation
+      const state = match.getState()
+      const combatant =
+        state.combatant1.id === payload.gladiatorId ? state.combatant1 : state.combatant2
+
+      const validation = InputValidator.validateAction(
+        payload.action,
+        combatant,
+        state.elapsedTime
+      )
+
+      if (!validation.valid) {
+        console.warn(`Invalid action from ${payload.gladiatorId}: ${validation.reason}`)
+        // Don't submit invalid actions, but don't disconnect either (could be lag)
+        return
+      }
+
+      // 3. Submit action
       match.submitAction(payload.gladiatorId, payload.action)
 
       // Actions are processed in the next tick
@@ -173,10 +218,71 @@ export function setupMatchHandlers(socket: Socket) {
 
   /**
    * Handle disconnection
+   * Sprint 6: Save state snapshots for 30s reconnection window
    */
   socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id)
-    // Cleanup logic can be added here
+
+    const userId = socket.data.userId
+    if (!userId) {
+      return
+    }
+
+    // Find active matches for this user
+    const activeMatches = matchManager.getActiveMatchesForUser(userId)
+
+    for (const match of activeMatches) {
+      const matchId = match.getMatchId()
+      const state = match.getState()
+
+      // Save snapshot
+      disconnectHandler.onDisconnect(matchId, userId, state)
+
+      // Notify opponent
+      global.io?.to(matchId).emit('match:player-disconnected', {
+        userId,
+        reconnectWindowSeconds: 30,
+      })
+    }
+  })
+
+  /**
+   * Handle reconnection
+   * Sprint 6: Restore match state if within 30s window
+   */
+  socket.on('match:reconnect', (payload: { matchId: string; userId: string }) => {
+    try {
+      if (disconnectHandler.canReconnect(payload.matchId, payload.userId)) {
+        const snapshot = disconnectHandler.getSnapshot(payload.matchId, payload.userId)
+
+        if (snapshot) {
+          // Store userId for future disconnects
+          socket.data.userId = payload.userId
+
+          socket.join(payload.matchId)
+          socket.emit('match:reconnected', {
+            matchId: payload.matchId,
+            state: snapshot,
+          })
+
+          // Notify opponent
+          socket.to(payload.matchId).emit('match:player-reconnected', {
+            userId: payload.userId,
+          })
+
+          console.log(`Player ${payload.userId} reconnected to match ${payload.matchId}`)
+        }
+      } else {
+        socket.emit('match:error', {
+          message: 'Reconnect window expired or match not found',
+        })
+      }
+    } catch (error) {
+      console.error('Error reconnecting:', error)
+      socket.emit('match:error', {
+        message: error instanceof Error ? error.message : 'Failed to reconnect',
+      })
+    }
   })
 }
 
@@ -186,6 +292,8 @@ export function setupMatchHandlers(socket: Socket) {
 
 /**
  * Broadcast match state to all clients at 20Hz
+ * Sprint 6: Server now ticks at 60Hz internally, but broadcasts throttled to 20Hz
+ * to reduce network traffic while maintaining precise hit detection
  */
 function startStateBroadcast(matchId: string) {
   const broadcastInterval = setInterval(() => {
@@ -250,7 +358,7 @@ function startStateBroadcast(matchId: string) {
         })
       }
     }
-  }, 50) // 20Hz = 50ms interval
+  }, PHYSICS_CONSTANTS.BROADCAST_INTERVAL) // 20Hz = 50ms interval
 }
 
 // ============================================================================

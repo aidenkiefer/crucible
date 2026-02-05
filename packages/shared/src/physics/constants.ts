@@ -5,9 +5,13 @@
  */
 
 export const PHYSICS_CONSTANTS = {
-  // Tick Rate
-  TICK_RATE: 20, // Hz (server authoritative rate)
-  TICK_INTERVAL: 50, // milliseconds (1000 / 20)
+  // Tick Rate (Sprint 6: Upgraded to 60Hz simulation)
+  TICK_RATE: 60, // Hz (internal simulation rate)
+  TICK_INTERVAL: 16.67, // milliseconds (1000 / 60)
+
+  // Broadcast Rate (separate from simulation)
+  BROADCAST_RATE: 20, // Hz (client update rate)
+  BROADCAST_INTERVAL: 50, // milliseconds (1000 / 20)
 
   // Arena Dimensions
   ARENA_WIDTH: 800, // units

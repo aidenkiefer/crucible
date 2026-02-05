@@ -85,6 +85,16 @@ export class MatchManager {
   }
 
   /**
+   * Get active matches for a specific user
+   * Sprint 6: Used for disconnect handling
+   */
+  public getActiveMatchesForUser(userId: string): MatchInstance[] {
+    return Array.from(this.matches.values()).filter(match => {
+      return match.getStatus() === MatchStatus.InProgress && match.hasUser(userId)
+    })
+  }
+
+  /**
    * Clean up completed matches older than threshold
    */
   public cleanupCompletedMatches(maxAgeMs: number = 60000): void {

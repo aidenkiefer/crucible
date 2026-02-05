@@ -116,8 +116,8 @@ model UserGold {
   - Level 10→11: 1450 XP
 - Level cap: 20
 - Win: 100 XP, Loss: 25 XP
-- On level up: Auto-increment all 8 stats, award 1 skill point
-- UI shows level progress bar, XP to next level, current stats
+- On level up: Award 1 skill point and **3 stat points** to allocate (no auto-increment); players choose which of the 8 stats to increase via Camp → Gladiator → Progression
+- UI shows level progress bar, XP to next level, current stats, and +1 buttons per stat when stat points are available
 
 **Key Functions:**
 ```typescript
@@ -175,34 +175,23 @@ export async function awardXP(gladiatorId: string, xpAmount: number): Promise<nu
 - `apps/web/components/equipment/CraftingWorkshop.tsx` — Crafting UI
 
 **Implementation:**
-- Combine 3 items → 1 higher-quality item
+- Combine 3 **non-starter** items → 1 higher-quality item (starting gear from loot boxes **cannot** be used in crafting)
 - Output type determined by majority (or random if tie)
 - Output rarity upgrade chances:
-  - All same rarity: 90% upgrade
-  - Mixed rarities: 50% upgrade from highest
+  - **All same rarity:** 90% upgrade to next tier, 10% stay same
+  - **Mixed rarities:** 10% stay at lowest tier, 30% one tier above lowest, 30% match highest tier, 30% random tier between lowest and highest
 - Rarity tiers: Common (2 stats) → Uncommon (3) → Rare (4) → Epic (5) → Legendary (6)
 - Auto-generate stats based on rarity tier
 
-**Crafting Logic:**
-```typescript
-export function determineCraftedRarity(rarities: EquipmentRarity[]): EquipmentRarity {
-  const tiers = rarities.map((r) => RARITY_TIERS.indexOf(r))
-  const maxTier = Math.max(...tiers)
-  const allSame = new Set(tiers).size === 1
+> **Design note (for devs):** The crafting and rarity-upgrade system (percentages, mixed outcomes, starter vs crafted rules) should be thought through further. Consider: balancing passes, player-facing explanation of outcomes, and whether the current split (10% / 30% / 30% / 30% for mixed) meets product goals.
 
-  if (allSame) {
-    // 90% chance to upgrade
-    if (Math.random() < 0.9 && maxTier < RARITY_TIERS.length - 1) {
-      return RARITY_TIERS[maxTier + 1]
-    }
-  } else {
-    // 50% chance to upgrade
-    if (Math.random() < 0.5 && maxTier < RARITY_TIERS.length - 1) {
-      return RARITY_TIERS[maxTier + 1]
-    }
-  }
-  return RARITY_TIERS[maxTier]
-}
+**Crafting Logic (mixed rarities):**
+```typescript
+// Mixed: 10% lowest, 30% one upgrade, 30% highest, 30% random in range
+if (roll < 0.1) return RARITY_TIERS[minTier]
+if (roll < 0.4) return RARITY_TIERS[Math.min(minTier + 1, maxTier)]
+if (roll < 0.7) return RARITY_TIERS[maxTier]
+return RARITY_TIERS[minTier + floor(random() * (maxTier - minTier + 1))]
 ```
 
 ---
@@ -216,15 +205,15 @@ export function determineCraftedRarity(rarities: EquipmentRarity[]): EquipmentRa
 - `apps/web/components/equipment/CraftingWorkshop.tsx` — Salvage UI
 
 **Implementation:**
-- Break down equipment → receive Gold
+- Break down **non-starter** equipment → receive Gold (starting gear from loot boxes **cannot** be salvaged)
 - Salvage values:
   - Common: 10 Gold
   - Uncommon: 25 Gold
   - Rare: 50 Gold
   - Epic: 100 Gold
   - Legendary: 250 Gold
-- Cannot salvage equipped items
-- Multi-select UI for batch salvaging
+- Cannot salvage equipped items or starter gear
+- Multi-select UI for batch salvaging; starter gear is excluded from the salvage list
 
 ---
 
@@ -245,7 +234,23 @@ export function determineCraftedRarity(rarities: EquipmentRarity[]): EquipmentRa
 
 ---
 
-### 8. Equipment Integration
+### 8. Camp (Manage Gladiators, Inventory, Crafting)
+
+**Files Created:**
+- `apps/web/app/camp/page.tsx` — Camp hub (Gladiators | Inventory | Crafting tabs)
+- `apps/web/app/camp/gladiators/[id]/page.tsx` — Single gladiator: Progression & Stats, Skills, Equipment
+- `apps/web/app/api/gladiators/route.ts` — List current user’s gladiators
+- `apps/web/app/api/gladiators/[gladiatorId]/stats/route.ts` — Allocate 1 stat point (POST body: `{ stat }`)
+
+**Implementation:**
+- **Camp** is a main-menu option (Gate → Camp) and the destination of “Return to Camp” from the Arena
+- Camp tabs: **Gladiators** (list with level, skill/stat points; link to detail), **Inventory** (loot boxes + equipment), **Crafting** (CraftingWorkshop)
+- Gladiator detail: **Progression & Stats** (level, XP bar, 8 stats with +1 when stat points available), **Skills** (skill tree), **Equipment** (equip/unequip)
+- On level up, gladiators receive 3 **stat points** to spend in Camp (no automatic stat increase)
+
+---
+
+### 9. Equipment Integration
 
 **Files Created:**
 - `apps/web/app/api/equipment/route.ts` — Equipment inventory API
@@ -258,6 +263,7 @@ export function determineCraftedRarity(rarities: EquipmentRarity[]): EquipmentRa
 - Equip/unequip with validation (type, ownership, slot)
 - UI shows rarity colors, stats, equipped status
 - Cannot craft/salvage equipped items
+- **Starter gear:** Equipment from loot boxes has `isStarterGear: true`; it cannot be used in crafting or salvaging. Craft and salvage APIs reject starter gear; CraftingWorkshop only lists non-starter items for craft/salvage.
 
 **Rarity Colors:**
 - Common: Gray
@@ -287,7 +293,8 @@ export function determineCraftedRarity(rarities: EquipmentRarity[]): EquipmentRa
 
 **Updated Models:**
 - `Match` — Added persistence fields (matchType, matchStats, rewardType, rewardAmount, lootBoxTier, completedAt)
-- `Gladiator` — Already had progression fields (level, xp, skillPointsAvailable, unlockedSkills)
+- `Gladiator` — Progression fields (level, xp, skillPointsAvailable, **statPointsAvailable**, unlockedSkills)
+- `Equipment` — **isStarterGear** (Boolean, default false); starter gear from loot boxes cannot be crafted or salvaged
 
 ---
 
@@ -298,8 +305,10 @@ export function determineCraftedRarity(rarities: EquipmentRarity[]): EquipmentRa
 - `GET /api/loot-boxes` — Loot box inventory
 - `POST /api/loot-boxes/open` — Open loot box
 
-### Progression
-- `GET /api/gladiators/[id]/progression` — XP, level, stats
+### Progression & Camp
+- `GET /api/gladiators` — List current user’s gladiators
+- `GET /api/gladiators/[id]/progression` — XP, level, stats, statPointsAvailable
+- `POST /api/gladiators/[id]/stats` — Spend 1 stat point (body: `{ stat: "strength" }`)
 - `POST /api/gladiators/[id]/skills/unlock` — Unlock skill
 
 ### Crafting & Economy
@@ -316,11 +325,13 @@ export function determineCraftedRarity(rarities: EquipmentRarity[]): EquipmentRa
 
 ## UI Components Added
 
-1. **LootBoxInventory** — Display and open loot boxes
-2. **GladiatorProgression** — Level, XP bar, stats
-3. **SkillTree** — Skill branches with unlock UI
-4. **CraftingWorkshop** — Crafting and salvaging tabs
-5. **EquipmentInventory** — Equipment list with equip buttons
+1. **Camp** (`/camp`) — Hub: Gladiators list, Inventory (loot + equipment), Crafting
+2. **Camp Gladiator** (`/camp/gladiators/[id]`) — Progression & Stats (with stat point +1 buttons), Skills, Equipment
+3. **LootBoxInventory** — Display and open loot boxes
+4. **GladiatorProgression** — Level, XP bar, stats, stat point allocation (+1 per stat)
+5. **SkillTree** — Skill branches with unlock UI
+6. **CraftingWorkshop** — Crafting and salvaging tabs (non-starter items only)
+7. **EquipmentInventory** — Equipment list with equip buttons
 
 ---
 
@@ -336,8 +347,8 @@ level * 100 + (level - 1) * 50
 
 ### Crafting Rarity Upgrade
 ```typescript
-// All same: 90% upgrade chance
-// Mixed: 50% upgrade from highest
+// All same: 90% upgrade, 10% stay
+// Mixed: 10% lowest, 30% one upgrade, 30% highest, 30% random in range
 determineCraftedRarity(rarities)
 ```
 
@@ -367,13 +378,14 @@ interface SkillNode {
 ## Player Experience Flow
 
 1. **Win CPU Match** → 80% chance for Wooden Loot Box + 100 XP
-2. **Open Loot Box** → Receive starter gear (weapon or armor)
-3. **Gain Levels** → Auto-increment stats, earn skill points
-4. **Unlock Skills** → Spend skill points on skill tree branches
-5. **Craft Equipment** → Combine 3 items → 1 better item
-6. **Salvage Extras** → Convert unwanted gear → Gold
-7. **Equip Best Gear** → Slot-based equipping (MAIN_HAND, CHEST)
-8. **Repeat** → Progressive power increase
+2. **Open Loot Box** → Receive starter gear (weapon or armor; cannot be crafted/salvaged)
+3. **Gain Levels** → Earn 1 skill point and 3 stat points per level (allocate stats in Camp)
+4. **Camp** → Manage gladiators, inventory, crafting; spend stat and skill points
+5. **Unlock Skills** → Spend skill points on skill tree branches (Camp → Gladiator → Skills)
+6. **Craft Equipment** → Combine 3 non-starter items → 1 better item (Camp → Crafting)
+7. **Salvage Extras** → Convert non-starter gear → Gold
+8. **Equip Best Gear** → Slot-based equipping (MAIN_HAND, CHEST) from Camp
+9. **Repeat** → Progressive power increase
 
 ---
 

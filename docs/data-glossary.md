@@ -52,11 +52,19 @@ What kind of action a template represents.
 ### `User`
 Represents a player account.
 - `id`: UUID primary key
-- `email`: login identity
+- `email`: login identity (mirrors Supabase `auth.users.email`)
 - `walletAddress`: optional blockchain wallet address (unique when present)
-- `username`: public identity (unique)
-- `isAdmin`: Boolean; when true, user can access Admin UI routes (`/admin/*`) for game data authoring (Sprint 2.5)
+- `username`: optional public identity (unique; can be auto-generated)
+- `authUserId`: string linking to Supabase `auth.users.id` (the canonical auth row)
+- `isAdmin`: Boolean; when true, user can access Admin UI routes (`/admin/*`) for game data authoring
 - `createdAt`, `updatedAt`: audit timestamps
+
+**Gameplay / economy relations**
+- `gladiators`: owned Gladiators
+- `equipment`: owned Equipment instances
+- `matchesAsP1` / `matchesAsP2`: historical Match participation
+- `lootBoxes`: owned LootBox entries (Sprint 5 loot system)
+- `gold`: single `UserGold` row tracking the player’s gold balance
 
 **NextAuth tables**
 These exist to support authentication sessions:
@@ -89,8 +97,17 @@ A player-controlled unit with base stats, progression, and loadout state.
 **Progression**
 - `level`: starts at 1
 - `xp`: experience points
-- `skillPointsAvailable`: points to spend on unlocks
+- `skillPointsAvailable`: points to spend on skill tree unlocks
+- `statPointsAvailable`: points to spend on **base stats** (earned in chunks, e.g. 3 per level)
 - `unlockedSkills`: `String[]` of skill IDs (these IDs point to static definitions later)
+
+Progression rules (Sprint 5:
+- XP curve: `level * 100 + (level - 1) * 50` (e.g. 1→2: 100 XP, 2→3: 250 XP, 10→11: 1450 XP)
+- Level cap: 20
+- Match XP: win = 100 XP, loss = 25 XP (see progression service)
+- On level up:
+  - +1 skill point
+  - +3 stat points (player allocates to any of the 8 stats via Camp / progression UI)
 
 **Base Stats (8)**
 These are the “Elden Ring / DnD-ish” attributes:
@@ -187,14 +204,42 @@ Constraints:
 
 ## 5) Matches & PvP Flow
 
+This section covers how combat sessions, rewards, and progression hooks are persisted.
+
 ### `Match`
 Represents a resolved or in-progress combat session.
-Common semantics (implementation depends on code):
-- links to `gladiator1` and `gladiator2` (via relations)
-- stores outcome (winner, timestamps, etc.)
-- may store replay/log pointers later
 
-(See schema for exact fields; treat as “authoritative match record.”)
+**Identity & participants**
+- `id`: UUID
+- `player1Id`, `player2Id`: User IDs (player 2 is optional for CPU matches)
+- `player1GladiatorId`, `player2GladiatorId`: Gladiator IDs (player 2 can be null for CPU)
+
+**Type / lifecycle**
+- `isCpuMatch`: boolean flag (true for demo CPU fights)
+- `matchType`: `"cpu" | "ranked" | "casual"` (string for now)
+- `createdAt`: when match was created
+- `completedAt`: when match ended (nullable while in-progress)
+
+**Outcome & telemetry**
+- `winnerId`: Gladiator ID of the winner (null while unresolved)
+- `matchLog`: JSON array of action logs (for future replay/debugging)
+- `durationSeconds`: total match length
+- `matchStats`: JSON blob for high-level stats, e.g.:
+  ```ts
+  {
+    damageDealt: { player1: number; player2: number },
+    dodgesUsed: { player1: number; player2: number },
+    attacksLanded: { player1: number; player2: number },
+  }
+  ```
+
+**Rewards (Sprint 5)**
+- `rewardType`: string indicating reward kind, e.g. `"loot_box_key"`, `"gold"`, `"eth"`
+- `rewardAmount`: numeric reward amount (semantics depend on `rewardType`)
+- `lootBoxTier`: the loot box tier granted on win, e.g. `"wooden" | "bronze" | "silver" | "gold"`
+
+> Treat `Match` as the **authoritative record** for what happened and what was paid out.  
+> Match history APIs (`/api/matches/history`) project this into a user-facing view.
 
 ---
 
@@ -207,6 +252,42 @@ Typical semantics:
 - used to spawn a `Match`
 
 (See schema for exact fields.)
+
+---
+
+### Loot & Economy Models (Sprint 5)
+
+These models power loot boxes, starter gear, and the gold economy.
+
+#### `LootBox`
+Represents a loot box owned by a user.
+
+- `id`
+- `ownerId`, `owner`: User who owns the box
+- `tier`: string tier label, e.g. `"wooden" | "bronze" | "silver" | "gold"` (demo uses Wooden)
+- `opened`: boolean flag
+- `rewardedEquipmentId`, `rewardedEquipment`: optional Equipment instance granted when opened
+- `createdAt`, `openedAt`
+
+Behavior:
+- A closed LootBox can be opened via API (`POST /api/loot-boxes/open`), which:
+  - Rolls a loot definition from shared starter gear data
+  - Creates an Equipment instance with starter stats
+  - Marks the box as `opened` and links `rewardedEquipmentId`
+
+#### `UserGold`
+Tracks a player’s gold balance.
+
+- `userId`, `user`: one row per user
+- `balance`: integer gold amount
+- `createdAt`, `updatedAt`
+
+Behavior:
+- Gold is currently earned by **salvaging** equipment via `POST /api/equipment/salvage`.
+- Future: can be spent on loot boxes, crafting costs, or other sinks.
+
+> Gold is intentionally a simple integer counter here. ETH-backed purchase flows, inflation controls,
+> and economy tuning live above this layer.
 
 ---
 
@@ -553,23 +634,28 @@ At the start of a match, the server computes an “effective build”:
 
 ## 10) Demo Scope Note (Current)
 
-For the demo build:
+For the demo build **as of Sprint 5**:
 
 **Included:**
-- Weapon-based combat kits
-- Actions granted exclusively by weapons
-- Slot-based equipment equipping
-- Template-driven stats and behavior
+- Weapon-based combat kits (shared combat library, 4 weapon types)
+- Actions granted by weapons (via `ActionTemplate` / game-data bundles)
+- Slot-based equipment equipping (`GladiatorEquippedItem`, `EquipmentSlot`)
+- Template-driven stats and behavior (`EquipmentTemplate`, `ActionTemplate`)
+- Gladiator progression (XP curve, level cap, skill trees, stat points)
+- Loot boxes and starter gear (`LootBox`, starter gear tables)
+- 3→1 crafting and salvaging (rarity upgrades, salvage → `UserGold`)
+- Simple gold economy (`UserGold` model + balance API)
 
-**Explicitly deferred:**
-- Class-based ability kits
-- Skill trees
-- Crafting systems
-- Durability
-- Economy balancing
-- Affix combinatorics
+**Explicitly deferred (future sprints):**
+- Class-based active ability kits (beyond current passive stat skills)
+- Perk / affix systems beyond the basic `grantedPerkIds` / `rolledMods`
+- Item durability
+- Deep economy balancing (gold sinks/sources, inflation controls)
+- Rich affix combinatorics and endgame loot tiers
 
-This is intentional and documented to prevent premature system complexity.
+This list should be kept in sync with sprint summaries. When a feature moves out of
+“deferred” into “included”, update both the schema and this glossary so new devs
+understand what’s truly live in the demo.
 
 ---
 

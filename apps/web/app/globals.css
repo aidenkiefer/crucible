@@ -110,4 +110,150 @@
   .inner-shadow {
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
   }
+
+  /* RPG UI - Embossed/Engraved Panels */
+  .panel-embossed {
+    @apply bg-coliseum-stone border-2 border-coliseum-bronze/30;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.5),
+      0 4px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .panel-inset {
+    @apply bg-coliseum-black/50 border-2 border-coliseum-bronze/20;
+    box-shadow:
+      inset 0 2px 4px rgba(0, 0, 0, 0.6),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  /* RPG UI - Raised Buttons */
+  .btn-raised {
+    @apply px-6 py-3 bg-coliseum-stone text-coliseum-sand font-bold uppercase tracking-wider text-sm
+           border-2 border-coliseum-bronze/50 transition-all duration-150;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.15),
+      inset 0 -2px 0 rgba(0, 0, 0, 0.4),
+      0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  .btn-raised:hover {
+    @apply brightness-110 border-coliseum-bronze;
+  }
+
+  .btn-raised:active,
+  .btn-pressed {
+    box-shadow:
+      inset 0 2px 4px rgba(0, 0, 0, 0.5),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.05);
+    transform: translateY(1px);
+  }
+
+  /* RPG UI - Stat Bars */
+  .stat-bar {
+    @apply relative h-6 bg-coliseum-black/50 border border-coliseum-bronze/30 overflow-hidden;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+  }
+
+  .stat-bar-fill {
+    @apply absolute inset-y-0 left-0 transition-all duration-300;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.2),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+  }
+
+  .stat-bar-fill.hp {
+    @apply bg-gradient-to-r from-red-700 to-red-600;
+  }
+
+  .stat-bar-fill.xp {
+    @apply bg-gradient-to-r from-coliseum-bronze to-amber-600;
+  }
+
+  .stat-bar-fill.stamina {
+    @apply bg-gradient-to-r from-green-700 to-green-600;
+  }
+
+  .stat-bar-fill.mana {
+    @apply bg-gradient-to-r from-blue-700 to-blue-600;
+  }
+
+  /* RPG UI - Rarity Borders */
+  .rarity-common {
+    @apply border-2 border-gray-500;
+    box-shadow: 0 0 8px rgba(156, 163, 175, 0.3);
+  }
+
+  .rarity-uncommon {
+    @apply border-2 border-green-500;
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+  }
+
+  .rarity-rare {
+    @apply border-2 border-blue-500;
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+  }
+
+  .rarity-epic {
+    @apply border-2 border-purple-500;
+    box-shadow: 0 0 12px rgba(168, 85, 247, 0.6);
+  }
+
+  .rarity-legendary {
+    @apply border-2 border-amber-500;
+    box-shadow: 0 0 16px rgba(245, 158, 11, 0.7);
+  }
+
+  /* RPG UI - Equipment Slots */
+  .equipment-slot {
+    @apply w-16 h-16 panel-inset flex items-center justify-center text-3xl
+           hover:border-coliseum-bronze/40 transition-colors cursor-pointer;
+  }
+
+  .equipment-slot.equipped {
+    @apply border-coliseum-bronze/60;
+  }
+
+  /* RPG UI - Page Transitions */
+  .page-slide-enter {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+
+  .page-slide-enter-active {
+    opacity: 1;
+    transform: translateX(0);
+    transition: opacity 150ms ease-out, transform 150ms ease-out;
+  }
+
+  .page-slide-exit {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .page-slide-exit-active {
+    opacity: 0;
+    transform: translateX(-20px);
+    transition: opacity 150ms ease-in, transform 150ms ease-in;
+  }
+
+  /* RPG UI - Responsive Mobile Adjustments */
+  @media (max-width: 768px) {
+    .panel-embossed,
+    .panel-inset {
+      @apply text-sm;
+    }
+
+    .btn-raised {
+      @apply px-4 py-2 text-xs;
+    }
+
+    .equipment-slot {
+      @apply w-12 h-12 text-2xl;
+    }
+
+    .stat-bar {
+      @apply h-5;
+    }
+  }
 }

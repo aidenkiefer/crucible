@@ -50,12 +50,12 @@ export default function ArenaPage() {
   }
 
   return (
-    <main className="min-h-screen bg-coliseum-black">
-      <div className="h-1 bg-gradient-to-r from-transparent via-coliseum-bronze to-transparent" />
-
+    <main className="min-h-screen bg-coliseum-black pt-[90px]">
       <div className="max-w-2xl mx-auto px-6 py-16 text-center">
-        <div className="panel p-8 space-y-6">
-          <h1 className="font-display text-2xl sm:text-3xl text-coliseum-sand uppercase tracking-wide">
+        <div className="panel-embossed p-8 space-y-6">
+          <div className="text-6xl mb-4">⚔️</div>
+
+          <h1 className="font-display text-3xl text-coliseum-bronze uppercase tracking-wide text-glow-bronze">
             Enter the Arena
           </h1>
 
@@ -64,24 +64,26 @@ export default function ArenaPage() {
           </p>
 
           {!session && (
-            <p className="text-coliseum-red text-sm">
-              You must be signed in to enter the arena
-            </p>
+            <div className="panel-inset p-4">
+              <p className="text-red-400 text-sm uppercase tracking-wider">
+                You must be signed in to enter the arena
+              </p>
+            </div>
           )}
 
           {(createError || error) && (
-            <div className="bg-coliseum-red/10 border border-coliseum-red rounded p-3">
-              <p className="text-coliseum-red text-sm">
+            <div className="panel-inset p-4 border-2 border-red-500/50">
+              <p className="text-red-400 text-sm">
                 {createError || error}
               </p>
             </div>
           )}
 
-          <div className="pt-4 flex flex-col gap-4">
+          <div className="pt-4 flex flex-col gap-3">
             <button
               onClick={handleCreateCpuMatch}
               disabled={isCreating || !session}
-              className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-raised disabled:opacity-50 disabled:cursor-not-allowed px-8 py-4 text-lg"
             >
               {isCreating ? (
                 <>
@@ -93,8 +95,8 @@ export default function ArenaPage() {
               )}
             </button>
 
-            <Link href="/" className="btn-secondary inline-block">
-              Return to Camp
+            <Link href="/" className="btn-raised inline-block px-6 py-3">
+              ← Back to Menu
             </Link>
           </div>
         </div>

@@ -6,7 +6,7 @@ import { SignInForm } from '@/components/auth/SignInForm'
 import { SignInButton } from '@/components/auth/SignInButton'
 import { AnimatedTorch } from '@/components/ui/AnimatedTorch'
 
-function ActionCard({
+function MenuButton({
   href,
   icon,
   title,
@@ -23,38 +23,30 @@ function ActionCard({
     <Link
       href={href}
       className={`
-        group relative block p-6 border-2 transition-all duration-150
+        group relative block p-6 transition-all duration-150
         ${primary
-          ? 'bg-coliseum-bronze/10 border-coliseum-bronze hover:bg-coliseum-bronze/20 hover:shadow-lg hover:shadow-coliseum-bronze/20'
-          : 'bg-coliseum-stone border-coliseum-bronze/30 hover:border-coliseum-bronze/60'
+          ? 'btn-raised border-coliseum-bronze hover:brightness-110'
+          : 'btn-raised hover:brightness-110'
         }
       `}
     >
-      <div className={`
-        w-12 h-12 mb-4 border-2 flex items-center justify-center text-xl
-        ${primary
-          ? 'border-coliseum-bronze bg-coliseum-black/50'
-          : 'border-coliseum-bronze/30 bg-coliseum-black/30 group-hover:border-coliseum-bronze/50'
-        }
-      `}>
-        {icon}
+      <div className="flex items-center gap-4 mb-3">
+        <div className={`
+          w-14 h-14 panel-inset flex items-center justify-center text-3xl
+          ${primary ? 'border-coliseum-bronze/60' : ''}
+        `}>
+          {icon}
+        </div>
+        <h3 className={`
+          font-display text-xl uppercase tracking-wide
+          ${primary ? 'text-coliseum-bronze text-glow-bronze' : 'text-coliseum-sand'}
+        `}>
+          {title}
+        </h3>
       </div>
-      <h3 className={`
-        font-display text-xl uppercase tracking-wide mb-2
-        ${primary ? 'text-coliseum-bronze' : 'text-coliseum-sand'}
-      `}>
-        {title}
-      </h3>
-      <p className="text-coliseum-sand/60 text-sm leading-relaxed">
+      <p className="text-coliseum-sand/70 text-sm leading-relaxed pl-[72px]">
         {description}
       </p>
-      <div className={`
-        absolute bottom-0 left-0 right-0 h-0.5 transition-all duration-150
-        ${primary
-          ? 'bg-coliseum-bronze'
-          : 'bg-coliseum-bronze/0 group-hover:bg-coliseum-bronze/50'
-        }
-      `} />
     </Link>
   )
 }
@@ -181,87 +173,63 @@ export default async function Home() {
   const arenaStatus = getArenaStatus()
 
   return (
-    <main className="min-h-screen bg-coliseum-black">
-      {/* Top decorative bar */}
-      <div className="h-1 bg-gradient-to-r from-transparent via-coliseum-bronze to-transparent" />
-
-      <div className="max-w-4xl mx-auto px-6 py-16">
-        {/* Header with torches */}
-        <div className="flex items-start justify-center gap-6 sm:gap-10 mb-16">
-          <div className="hidden sm:block pt-4">
-            <AnimatedTorch />
-          </div>
-
-          <div className="text-center space-y-4">
-            {/* Title plaque */}
-            <div className="inline-block px-8 py-1 border-x-2 border-coliseum-bronze/30">
-              <h1 className="font-display text-5xl sm:text-6xl text-coliseum-sand uppercase tracking-wide">
-                Crucible
-              </h1>
-            </div>
-            <p className="text-coliseum-bronze uppercase tracking-[0.4em] text-xs">
+    <main className="min-h-screen bg-coliseum-black pt-[90px]">
+      <div className="max-w-2xl mx-auto px-6 py-12">
+        {/* Game Title */}
+        <div className="text-center mb-12">
+          <div className="inline-block panel-embossed px-12 py-6 mb-4">
+            <h1 className="font-display text-5xl text-coliseum-bronze uppercase tracking-wider text-glow-bronze">
+              Crucible
+            </h1>
+            <p className="text-coliseum-sand/60 uppercase tracking-[0.4em] text-xs mt-2">
               Gladiator Coliseum
             </p>
-
-            {/* Decorative divider */}
-            <div className="flex items-center justify-center gap-3 pt-4">
-              <div className="w-16 h-px bg-gradient-to-r from-transparent to-coliseum-bronze/50" />
-              <span className="text-coliseum-bronze text-lg">⚔</span>
-              <div className="w-16 h-px bg-gradient-to-l from-transparent to-coliseum-bronze/50" />
-            </div>
-
-            {/* Welcome message */}
-            <div className="pt-4">
-              <p className="text-coliseum-sand/80 uppercase tracking-widest text-sm">
-                Welcome back,{' '}
-                <span className="text-coliseum-sand font-bold">{userName}</span>
-              </p>
-            </div>
           </div>
-
-          <div className="hidden sm:block pt-4">
-            <AnimatedTorch mirror />
-          </div>
+          <p className="text-coliseum-sand/70 text-sm">
+            Welcome back, <span className="text-coliseum-sand font-bold">{userName}</span>
+          </p>
         </div>
 
-        {/* Action cards */}
-        <div className="mb-12">
-          <div className="flex items-center gap-4 mb-6">
-            <div className="h-px flex-1 bg-coliseum-bronze/30" />
-            <h2 className="text-coliseum-bronze/80 uppercase tracking-widest text-xs">
-              Choose Your Path
-            </h2>
-            <div className="h-px flex-1 bg-coliseum-bronze/30" />
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            <ActionCard
-              href="/mint"
-              icon="🔥"
-              title="The Forge"
-              description="Mint a new Gladiator to fight in your name. Each warrior is unique."
-              primary
-            />
-            <ActionCard
-              href="/arena"
-              icon="🪙"
-              title="Glory Battle"
-              description="Ranked battles — fight for glory and climb the ladder. Coming soon."
-            />
-            <ActionCard
-              href="/arena"
-              icon="⚔️"
-              title="Enter Arena"
-              description="Test your Gladiator against CPU opponents in brutal combat."
-            />
-          </div>
+        {/* Main Menu */}
+        <div className="space-y-4 mb-8">
+          <MenuButton
+            href="/camp"
+            icon="⛺"
+            title="Camp"
+            description="Manage your Gladiators, inventory, and crafting."
+            primary
+          />
+          <MenuButton
+            href="/arena"
+            icon="⚔️"
+            title="Arena"
+            description="Test your Gladiator against CPU opponents in combat."
+          />
+          <MenuButton
+            href="/quick-match"
+            icon="🎯"
+            title="Quick Match"
+            description="Find a random opponent and battle for glory."
+          />
+          <MenuButton
+            href="/friends"
+            icon="👥"
+            title="Friends"
+            description="Challenge friends and view pending matches."
+          />
+          <MenuButton
+            href="/mint"
+            icon="🔥"
+            title="The Forge"
+            description="Mint a new Gladiator to fight in your name."
+          />
         </div>
 
-        {/* Stats or info section placeholder */}
-        <div className="p-6 bg-coliseum-stone border-2 border-coliseum-bronze/20">
-          <div className="flex items-center justify-between">
+        {/* Status Panel */}
+        <div className="panel-embossed p-6 mb-6">
+          <div className="grid grid-cols-2 gap-6">
             <div>
-              <p className="text-coliseum-sand/60 uppercase tracking-wider text-xs mb-1">
+              <p className="text-coliseum-sand/60 uppercase tracking-wider text-xs mb-2">
                 Arena Status
               </p>
               <p className="text-coliseum-sand font-display text-lg uppercase">
@@ -269,7 +237,7 @@ export default async function Home() {
               </p>
             </div>
             <div className="text-right">
-              <p className="text-coliseum-sand/60 uppercase tracking-wider text-xs mb-1">
+              <p className="text-coliseum-sand/60 uppercase tracking-wider text-xs mb-2">
                 Your Standing
               </p>
               <p className="text-coliseum-bronze font-display text-lg uppercase">
@@ -279,32 +247,14 @@ export default async function Home() {
           </div>
         </div>
 
-        {/* War Council shortcut for admins */}
-        {isAdmin && (
-          <div className="mt-6 flex justify-center">
-            <Link href="/admin" className="btn-secondary">
-              War Council
-            </Link>
-          </div>
-        )}
-
-        {/* Sign out */}
-        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+        {/* Admin & Sign Out */}
+        <div className="flex flex-col items-center gap-3">
           {isAdmin && (
-            <Link href="/admin" className="btn-secondary">
-              Admin
+            <Link href="/admin" className="btn-raised px-6 py-2 text-sm">
+              War Council (Admin)
             </Link>
           )}
           <SignInButton />
-        </div>
-
-        {/* Footer decoration */}
-        <div className="mt-16 flex items-center gap-4">
-          <div className="h-px flex-1 bg-gradient-to-r from-transparent to-coliseum-bronze/20" />
-          <span className="text-coliseum-bronze/30 text-xs uppercase tracking-widest">
-            Blood & Glory
-          </span>
-          <div className="h-px flex-1 bg-gradient-to-l from-transparent to-coliseum-bronze/20" />
         </div>
       </div>
     </main>
