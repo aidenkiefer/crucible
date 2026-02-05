@@ -71,19 +71,20 @@ Gladiator Coliseum is built as a **three-tier architecture** with clear separati
 - NextAuth.js
 
 **Key Pages:**
-- `/` - Home (marketing landing when signed out; logged-in “gate” when signed in with quick access to **Camp**, Forge, Glory Battle, Enter Arena, Arena Status, and War Council for admins)
+- `/` - Home (marketing landing when signed out; logged-in “gate” when signed in with quick access to **Camp**, Forge, Glory Battle, Enter Arena, Arena Status, Quick Match, Friends, and War Council for admins)
 - `/auth/signin` - Authentication
 - `/mint` - NFT minting
 - `/arena` - Arena entry; create CPU match (**Sprint 3.5**), navigate to `/match/[matchId]`
 - `/camp` - Camp hub; manage gladiators, inventory, and crafting; entry point to character management UI
 - `/camp/gladiators/[gladiatorId]` - Single gladiator view; progression (XP/levels/stat points), skill tree, and equipment slots
+- `/quick-match` - Quick Match queue; joins/leaves matchmaking via Socket.io and waits for `match:found` events to navigate into PvP matches
+- `/friends` - Friends & Challenges hub; add/accept friends, create and accept PvP challenges (data fetch and gladiator selection are still WIP)
 - `/match/[matchId]` - Real-time combat (Canvas, sprites, WASD + mouse, client prediction, 4 weapons, projectiles, WeaponSelector, MatchHUD; **Sprints 3–4**)
 - `/admin` - Admin dashboard (game data authoring; **Sprint 2.5**)
   - `/admin/bundles` - List/create bundles, validate, publish, activate
   - `/admin/equipment-templates` - CRUD equipment templates
   - `/admin/action-templates` - CRUD action templates
   - Admin routes are protected by middleware; only users with `isAdmin` can access.
-- *(Planned: `/inventory`, `/quick-match`, `/friends` — Sprints 5–6)*
 
 **State Management:**
 - React Context for global state

@@ -43,7 +43,7 @@ The demo succeeds when a user can:
 
 ## Status & Roadmap
 
-**Sprint 0 through Sprint 5** are complete. **Next: Sprint 6 (Multiplayer PvP)**.
+**Sprint 0 through Sprint 5** are complete. **Sprint 6 (Multiplayer PvP) is partially implemented** (backend queue + friends/challenges) and in progress.
 
 | Sprint | Focus | Status |
 |--------|--------|--------|
@@ -55,10 +55,10 @@ The demo succeeds when a user can:
 | **3.5** | Frontend — Shared physics, client prediction, mouse main/off-hand, match creation flow, verification | ✅ Complete |
 | **4** | Weapons & projectiles (Sword, Spear, Bow, Dagger; shared combat lib; server projectiles; WeaponSelector; client projectile rendering) | ✅ Complete |
 | **5** | Progression & loot (XP/level/skill trees, loot boxes, equipment, crafting/salvage, match history, gold) | ✅ Complete |
-| **6** | Multiplayer — Real-time PvP (matchmaking, friends, challenges, dual-player WebSocket) | **Next** |
+| **6** | Multiplayer — Real-time PvP (matchmaking queue, friends, challenges, dual-player WebSocket) | 🔄 In Progress (backend queue + friends/challenges implemented; frontend flows WIP) |
 | **7** | Polish, testing & deployment (bug fixes, tests, Vercel + Railway, mainnet guide) | Planned |
 
-**Currently built:** Monorepo (pnpm, Turborepo), Next.js 14 frontend (auth, wallet, mint, **admin UI**; **arena** at `/arena` with match creation; **camp** at `/camp` for managing gladiators, inventory, crafting, and spending stat/skill points; **match page** with Canvas, `MatchHUD`, `WeaponSelector`, client prediction, 4 weapons, projectiles; **match history** at `/matches`; **progression** (level, XP bar, skill trees, stat points); **loot boxes** (inventory, open, reward modal); **equipment** (inventory, equip, **crafting** 3→1, **salvage** for gold); marketing/landing, Blood & Bronze UI), Express game server (20Hz combat, multi-weapon, projectiles, CPU AI; **match persistence**, **rewards**, **XP/progression**, **loot drops**; bundle loader, blockchain listener), **packages/shared** (physics, combat, **loot** starter-gear, **skills** skill-trees, **crafting** 3→1), Gladiator NFT (Hardhat, 8 stats), Supabase + Prisma (**Match** completion/rewards, **LootBox**, **UserGold**).
+**Currently built:** Monorepo (pnpm, Turborepo), Next.js 14 frontend (auth, wallet, mint, **admin UI**; **arena** at `/arena` with match creation; **camp** at `/camp` for managing gladiators, inventory, crafting, and spending stat/skill points; **match page** with Canvas, `MatchHUD`, `WeaponSelector`, client prediction, 4 weapons, projectiles; **match history** at `/matches`; **progression** (level, XP bar, skill trees, stat points); **loot boxes** (inventory, open, reward modal); **equipment** (inventory, equip, **crafting** 3→1, **salvage** for gold); **quick match** at `/quick-match` (joins matchmaking queue and receives `match:found`); **friends & challenges** at `/friends` (add/accept friends, create/accept challenges via APIs); marketing/landing, Blood & Bronze UI), Express game server (real-time combat engine (now 60Hz sim / 20Hz broadcast), multi-weapon, projectiles, CPU AI; **match persistence**, **rewards**, **XP/progression**, **loot drops**, **PvP match creation via matchmaking/challenges**; Redis-backed Socket.io adapter for scaling; bundle loader, blockchain listener), **packages/shared** (physics, combat, **loot** starter-gear, **skills** skill-trees, **crafting** 3→1), Gladiator NFT (Hardhat, 8 stats), Supabase + Prisma (**Match** completion/rewards, **LootBox**, **UserGold**, Friend/Challenge relations).
 
 Full plan: [Master Implementation Plan](docs/plans/00-MASTER-PLAN.md).
 

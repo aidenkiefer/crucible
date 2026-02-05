@@ -67,6 +67,8 @@ crucible/
 │       │   ├── arena/page.tsx   # Sprint 3.5: match creation (Fight CPU), navigate to /match/[matchId]
 │       │   ├── camp/page.tsx    # Sprint 5 adj: Camp hub for gladiators, inventory, crafting
 │       │   ├── camp/gladiators/[id]/page.tsx # Camp: single gladiator (progression, skills, equipment)
+│       │   ├── quick-match/page.tsx # Sprint 6: Quick Match UI — join/leave matchmaking queue, listen for match:found
+│       │   ├── friends/page.tsx # Sprint 6: Friends & Challenges UI — add/accept friends, create/accept challenges (data fetch WIP)
 │       │   ├── auth/signin/page.tsx
 │       │   ├── mint/page.tsx    # Mint Gladiator NFT
 │       │   ├── matches/page.tsx # Sprint 5: match history, filters, rewards display
@@ -171,7 +173,8 @@ crucible/
 | **Match UI (Sprints 3–4)** | apps/web/app/arena/page.tsx, app/match/[matchId]/page.tsx, components/arena/*, hooks/useSocket.ts, useRealTimeMatch.ts, useGameInput.ts, useClientPrediction.ts, useCreateMatch.ts, lib/sprites/* |
 | **Shared physics (client prediction)** | packages/shared/src/physics/* |
 | **Shared combat (weapons, damage, projectiles)** | packages/shared/src/combat/* |
-| **Progression & loot (Sprint 5)** | apps/game-server/src/services/progression.ts, apps/web/app/api/matches/history, api/loot-boxes, api/gladiators/[id]/progression|skills|equip, api/equipment, api/gold/balance, components/loot, gladiators, equipment, skills; packages/shared/src/loot, skills, crafting |
+| **Progression & loot (Sprint 5)** | apps/game-server/src/services/progression.ts, apps/web/app/api/matches/history, api/loot-boxes, api/gladiators/[id]/progression|skills|equip|stats, api/equipment, api/gold/balance, components/loot, gladiators, equipment, skills; packages/shared/src/loot, skills, crafting |
+| **Multiplayer (Sprint 6 — WIP)** | apps/game-server/src/services/matchmaking-service.ts, sockets/index.ts, sockets/matchmaking-handlers.ts; apps/web/app/quick-match/page.tsx, app/friends/page.tsx, app/api/friends/*, app/api/challenges/* |
 | **Runtime game data (bundle loader)** | apps/game-server/src/services/bundle-loader.ts |
 | **Database schema** | [packages/database/prisma/schema.prisma](packages/database/prisma/schema.prisma) |
 | **Shared types & constants** | [packages/shared/src/types/index.ts](packages/shared/src/types/index.ts), [constants/index.ts](packages/shared/src/constants/index.ts) |
