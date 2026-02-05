@@ -43,7 +43,7 @@ The demo succeeds when a user can:
 
 ## Status & Roadmap
 
-**Sprint 0 through Sprint 5** are complete. **Sprint 6 (Multiplayer PvP) is partially implemented** (backend queue + friends/challenges) and in progress.
+**Sprint 0 through Sprint 6** are complete. **Sprint 7 (Polish & deployment)** is next.
 
 | Sprint | Focus | Status |
 |--------|--------|--------|
@@ -55,10 +55,10 @@ The demo succeeds when a user can:
 | **3.5** | Frontend — Shared physics, client prediction, mouse main/off-hand, match creation flow, verification | ✅ Complete |
 | **4** | Weapons & projectiles (Sword, Spear, Bow, Dagger; shared combat lib; server projectiles; WeaponSelector; client projectile rendering) | ✅ Complete |
 | **5** | Progression & loot (XP/level/skill trees, loot boxes, equipment, crafting/salvage, match history, gold) | ✅ Complete |
-| **6** | Multiplayer — Real-time PvP (matchmaking queue, friends, challenges, dual-player WebSocket) | 🔄 In Progress (backend queue + friends/challenges implemented; frontend flows WIP) |
+| **6** | Multiplayer — Real-time PvP (matchmaking queue, friends, challenges, 60Hz sim/20Hz broadcast, Redis scaling, input validation, disconnect handling) | ✅ Complete (core PvP + matchmaking + friends/challenges; GET routes for friends/challenges deferred to Sprint 7) |
 | **7** | Polish, testing & deployment (bug fixes, tests, Vercel + Railway, mainnet guide) | Planned |
 
-**Currently built:** Monorepo (pnpm, Turborepo), Next.js 14 frontend (auth, wallet, mint, **admin UI**; **arena** at `/arena` with match creation; **camp** at `/camp` for managing gladiators, inventory, crafting, and spending stat/skill points; **match page** with Canvas, `MatchHUD`, `WeaponSelector`, client prediction, 4 weapons, projectiles; **match history** at `/matches`; **progression** (level, XP bar, skill trees, stat points); **loot boxes** (inventory, open, reward modal); **equipment** (inventory, equip, **crafting** 3→1, **salvage** for gold); **quick match** at `/quick-match` (joins matchmaking queue and receives `match:found`); **friends & challenges** at `/friends` (add/accept friends, create/accept challenges via APIs); marketing/landing, Blood & Bronze UI), Express game server (real-time combat engine (now 60Hz sim / 20Hz broadcast), multi-weapon, projectiles, CPU AI; **match persistence**, **rewards**, **XP/progression**, **loot drops**, **PvP match creation via matchmaking/challenges**; Redis-backed Socket.io adapter for scaling; bundle loader, blockchain listener), **packages/shared** (physics, combat, **loot** starter-gear, **skills** skill-trees, **crafting** 3→1), Gladiator NFT (Hardhat, 8 stats), Supabase + Prisma (**Match** completion/rewards, **LootBox**, **UserGold**, Friend/Challenge relations).
+**Currently built:** Monorepo (pnpm, Turborepo), Next.js 14 frontend (auth, wallet, mint, **admin UI**; **arena** at `/arena` with match creation; **camp** at `/camp` for managing gladiators, inventory, crafting, and spending stat/skill points; **match page** with Canvas, `MatchHUD`, `WeaponSelector`, client prediction, 4 weapons, projectiles; **match history** at `/matches`; **progression** (level, XP bar, skill trees, stat points); **loot boxes** (inventory, open, reward modal); **equipment** (inventory, equip, **crafting** 3→1, **salvage** for gold); **quick match** at `/quick-match` (joins matchmaking queue and receives `match:found`); **friends & challenges** at `/friends` (add/accept friends, create/accept challenges via APIs); marketing/landing, Blood & Bronze UI), Express game server (real-time combat engine (60Hz sim / 20Hz broadcast), multi-weapon, projectiles, CPU AI; **match persistence**, **rewards**, **XP/progression**, **loot drops**, **PvP match creation via matchmaking/challenges**; **input validation & rate limiting**, **disconnect/reconnect handling**; Redis-backed Socket.io adapter for scaling; bundle loader, blockchain listener), **packages/shared** (physics, combat, **loot** starter-gear, **skills** skill-trees, **crafting** 3→1), Gladiator NFT (Hardhat, 8 stats), Supabase + Prisma (**Match** completion/rewards, **LootBox**, **UserGold**, Friend/Challenge relations).
 
 Full plan: [Master Implementation Plan](docs/plans/00-MASTER-PLAN.md).
 
@@ -172,8 +172,9 @@ pnpm dev
 | [docs/plans/sprint-3.5.md](docs/plans/sprint-3.5.md) | Sprint 3.5 plan (remaining items: client prediction, match creation) |
 | [docs/plans/05-sprint-4-weapons-projectiles.md](docs/plans/05-sprint-4-weapons-projectiles.md) | Sprint 4 plan (weapons & projectiles) |
 | [docs/plans/06-sprint-5-progression-loot.md](docs/plans/06-sprint-5-progression-loot.md) | Sprint 5 plan (progression & loot) |
-| [docs/plans/07-sprint-6-multiplayer.md](docs/plans/07-sprint-6-multiplayer.md) | Sprint 6 plan (multiplayer PvP) — **next** |
-| [docs/plans/08-sprint-7-deployment.md](docs/plans/08-sprint-7-deployment.md) | Sprint 7 plan (deployment) |
+| [docs/plans/07-sprint-6-multiplayer.md](docs/plans/07-sprint-6-multiplayer.md) | Sprint 6 plan (multiplayer PvP, complete) |
+| [docs/plans/08-sprint-7-deployment.md](docs/plans/08-sprint-7-deployment.md) | Sprint 7 plan (deployment) — **next** |
+| [docs/plans/summaries/SPRINT-6-SUMMARY.md](docs/plans/summaries/SPRINT-6-SUMMARY.md) | Sprint 6 summary (PvP, matchmaking, friends/challenges, Redis, 60Hz sim, input validation, disconnect handling) |
 | [docs/SPRINT-1-SUMMARY.md](docs/SPRINT-1-SUMMARY.md) | Sprint 1 summary (complete) |
 | [docs/SPRINT-2-SUMMARY.md](docs/SPRINT-2-SUMMARY.md) | Sprint 2 summary (real-time combat, complete) |
 | [docs/SPRINT-2.5-SUMMARY.md](docs/SPRINT-2.5-SUMMARY.md) | Sprint 2.5 summary (Admin UI — bundles, templates, validate/publish/export, bundle loader, complete) |

@@ -36,13 +36,18 @@ crucible/
 │   │       │   ├── abi.ts               # Gladiator NFT ABI for listener
 │   │       │   ├── blockchain-listener.ts # Mint/transfer events → DB sync
 │   │       │   ├── gladiator-sync.ts     # Start listener, ensure DB gladiators
-│   │       │   ├── match-instance.ts     # Per-match state, combat tick loop; Sprint 5: persistence, rewards, XP
-│   │       │   ├── match-manager.ts      # Create/join matches, CPU or PvP
+│   │       │   ├── match-instance.ts     # Per-match state, 60Hz tick loop; Sprint 5: persistence, rewards, XP; Sprint 6: PvP, hasUser()
+│   │       │   ├── match-manager.ts      # Create/join matches, CPU or PvP; getActiveMatchesForUser() (Sprint 6)
+│   │       │   ├── matchmaking-service.ts # Sprint 6: FIFO queue, pair players, emit match:found
+│   │       │   ├── input-validator.ts     # Sprint 6: validate actions (stamina, cooldowns, move magnitude)
+│   │       │   ├── rate-limiter.ts        # Sprint 6: input flood prevention (120/sec sliding window)
+│   │       │   ├── disconnect-handler.ts  # Sprint 6: state snapshots, 30s reconnection window
 │   │       │   ├── progression.ts        # Sprint 5: XP, leveling, getXPForLevel, awardXP, skill points
 │   │       │   └── bundle-loader.ts      # Load active game data bundle from Supabase Storage (Sprint 2.5)
 │   │       └── sockets/
-│   │           ├── index.ts     # Socket.IO setup, auth, namespaces
-│   │           └── match-handlers.ts     # Join match, input, disconnect
+│   │           ├── index.ts     # Socket.IO setup, auth, namespaces; Sprint 6: matchmaking integration
+│   │           ├── match-handlers.ts     # Join match, input (validated/rate-limited), disconnect/reconnect (Sprint 6)
+│   │           └── matchmaking-handlers.ts # Sprint 6: matchmaking:join/leave, match:found
 │   │
 │   └── web/
 │       ├── .eslintrc.json
@@ -82,7 +87,9 @@ crucible/
 │       │       ├── gladiators/route.ts          # List current user's gladiators (Camp)
 │       │       ├── gladiators/[gladiatorId]/progression/route.ts, skills/unlock/route.ts, equip/route.ts, stats/route.ts  # Sprint 5 progression, skills, equip, stat allocation
 │       │       ├── equipment/route.ts, craft/route.ts, salvage/route.ts  # Sprint 5: inventory, craft 3→1, salvage
-│       │       └── gold/balance/route.ts        # Sprint 5: gold balance
+│       │       ├── gold/balance/route.ts        # Sprint 5: gold balance
+│       │       ├── friends/add/route.ts, friends/accept/route.ts  # Sprint 6: add friend, accept request
+│       │       └── challenges/create/route.ts, challenges/accept/route.ts  # Sprint 6: create challenge, accept → PvP match
 │       ├── components/
 │       │   ├── auth/SignInForm.tsx, SignInButton.tsx
 │       │   ├── arena/          # Sprint 3–4: interpolation, renderer, ArenaCanvas, MatchHUD, WeaponSelector
@@ -174,7 +181,7 @@ crucible/
 | **Shared physics (client prediction)** | packages/shared/src/physics/* |
 | **Shared combat (weapons, damage, projectiles)** | packages/shared/src/combat/* |
 | **Progression & loot (Sprint 5)** | apps/game-server/src/services/progression.ts, apps/web/app/api/matches/history, api/loot-boxes, api/gladiators/[id]/progression|skills|equip|stats, api/equipment, api/gold/balance, components/loot, gladiators, equipment, skills; packages/shared/src/loot, skills, crafting |
-| **Multiplayer (Sprint 6 — WIP)** | apps/game-server/src/services/matchmaking-service.ts, sockets/index.ts, sockets/matchmaking-handlers.ts; apps/web/app/quick-match/page.tsx, app/friends/page.tsx, app/api/friends/*, app/api/challenges/* |
+| **Multiplayer (Sprint 6)** | apps/game-server/src/services/matchmaking-service.ts, input-validator.ts, rate-limiter.ts, disconnect-handler.ts; sockets/matchmaking-handlers.ts, match-handlers.ts; apps/web/app/quick-match/page.tsx, app/friends/page.tsx, app/api/friends/add|accept, app/api/challenges/create|accept |
 | **Runtime game data (bundle loader)** | apps/game-server/src/services/bundle-loader.ts |
 | **Database schema** | [packages/database/prisma/schema.prisma](packages/database/prisma/schema.prisma) |
 | **Shared types & constants** | [packages/shared/src/types/index.ts](packages/shared/src/types/index.ts), [constants/index.ts](packages/shared/src/constants/index.ts) |
@@ -195,21 +202,27 @@ crucible/
 ### apps/game-server
 
 - **index.ts** — Entry: load env, create HTTP+WS server, start gladiator sync (blockchain listener).
-- **server.ts** — Express server, Socket.IO mount, CORS; no route logic (match logic in services/sockets).
+- **server.ts** — Express server, Socket.IO mount with Redis adapter (Sprint 6), CORS; no route logic (match logic in services/sockets).
 - **combat/engine.ts** — 20Hz tick; multi-weapon (Sword, Spear, Bow, Dagger); melee + projectile attacks; updateProjectiles(); CombatEvent.
 - **combat/physics.ts** — Uses shared physics package; position/velocity, hitboxes, dodge roll, collision.
 - **combat/damage-calculator.ts** — Thin wrapper over shared combat (damage, stats); HP/stamina, apply damage.
 - **combat/types.ts** — Combatant (weapon), CombatState (projectiles map), CombatEvent, WeaponType, ProjectileState.
 - **ai/cpu-ai.ts** — CPU decision: pick target, choose action (attack/dodge/block), optional difficulty tuning.
 - **services/match-manager.ts** — Create match (CPU or PvP), assign match instance, track active matches.
-- **services/match-instance.ts** — Single match: combat state, tick loop, input application, game-over; Sprint 5: match persistence, stats, loot drop, XP award.
+- **services/match-instance.ts** — Single match: combat state, 60Hz tick loop (Sprint 6), input application, game-over; Sprint 5: match persistence, stats, loot drop, XP award; Sprint 6: PvP (dual-player), hasUser() for disconnect handling.
+- **services/match-manager.ts** — Create match (CPU or PvP), assign match instance, track active matches; getActiveMatchesForUser() (Sprint 6).
+- **services/matchmaking-service.ts** — Sprint 6: FIFO queue, pair two players, create PvP match, emit match:found.
+- **services/input-validator.ts** — Sprint 6: validate match:action (stamina, cooldowns, move magnitude).
+- **services/rate-limiter.ts** — Sprint 6: sliding-window rate limit (120 inputs/sec) on match:action.
+- **services/disconnect-handler.ts** — Sprint 6: save state snapshot on disconnect, 30s reconnection window; match:player-disconnected, match:reconnect, match:player-reconnected.
 - **services/progression.ts** — Sprint 5: getXPForLevel, awardXP, level cap 20, skill points on level up.
 - **services/blockchain-listener.ts** — Subscribe to GladiatorNFT Mint/Transfer; on event, sync gladiator to DB.
 - **services/gladiator-sync.ts** — Start blockchain listener; ensure DB has gladiator records for minted tokens.
 - **services/bundle-loader.ts** — Load active game data bundle from Supabase Storage at startup; getEquipmentTemplate(key), getActionTemplate(key) (Sprint 2.5).
 - **services/abi.ts** — Gladiator NFT ABI used by listener.
-- **sockets/index.ts** — Socket.IO server setup, auth middleware, match namespace.
-- **sockets/match-handlers.ts** — Join match, receive client input, disconnect/cleanup.
+- **sockets/index.ts** — Socket.IO server setup, auth middleware, match namespace; Sprint 6: matchmaking integration.
+- **sockets/match-handlers.ts** — Join match, receive client input (validated, rate-limited), disconnect/reconnect handling (Sprint 6).
+- **sockets/matchmaking-handlers.ts** — Sprint 6: matchmaking:join, matchmaking:leave, match:found.
 
 ### apps/web
 
@@ -220,6 +233,8 @@ crucible/
 - **app/auth/signin/page.tsx** — Sign-in page.
 - **app/mint/page.tsx** — Mint Gladiator NFT page (class selection, wallet).
 - **app/arena/page.tsx** — Sprint 3.5: arena entry; create CPU match via useCreateMatch, navigate to /match/[matchId].
+- **app/quick-match/page.tsx** — Sprint 6: Quick Match UI; join/leave matchmaking queue, listen for match:found, navigate to /match/[matchId].
+- **app/friends/page.tsx** — Sprint 6: Friends & Challenges UI; add/accept friends, create/accept challenges (API routes; GET friends/challenges deferred).
 - **app/matches/page.tsx** — Sprint 5: match history UI; filters, victory/defeat styling, rewards display.
 - **app/match/[matchId]/page.tsx** — Sprints 3–4: real-time match (ArenaCanvas, MatchHUD, WeaponSelector, useRealTimeMatch, useGameInput, useClientPrediction; Fight Again creates new match).
 - **app/api/auth/[...nextauth]/route.ts** — NextAuth API route (Google/Twitter, session).
@@ -229,6 +244,8 @@ crucible/
 - **app/api/gladiators/[gladiatorId]/progression/route.ts**, **skills/unlock/route.ts**, **equip/route.ts** — Sprint 5: XP/level, unlock skill, equip/unequip.
 - **app/api/equipment/route.ts**, **equipment/craft/route.ts**, **equipment/salvage/route.ts** — Sprint 5: equipment inventory, craft 3→1, salvage for gold.
 - **app/api/gold/balance/route.ts** — Sprint 5: gold balance.
+- **app/api/friends/add/route.ts**, **friends/accept/route.ts** — Sprint 6: add friend by username, accept friend request.
+- **app/api/challenges/create/route.ts**, **challenges/accept/route.ts** — Sprint 6: create challenge, accept challenge (creates PvP match).
 - **lib/auth.ts** — NextAuth config (providers, callbacks, session).
 - **lib/wagmi.ts** — Wagmi config (chains, transports).
 - **lib/contracts.ts** — Contract addresses and ABIs for frontend.
@@ -303,39 +320,64 @@ crucible/
 └── docs/
     ├── architecture.md          # System architecture: frontend, game server, database, blockchain, data flow, security, deployment
     ├── data-glossary.md         # Database & game data: schema, enums, templates, instances, JSON shapes (§8), derived stats (§9), principles (§11)
-    ├── design-guidelines.md     # Design principles: visual direction, typography, color, motion, accessibility, tone — source of the Blood & Bronze UI pass
-    ├── mainnet-migration.md     # Mainnet migration (post-demo)
-    ├── SPRINT-1-SUMMARY.md      # Sprint 1 complete: auth, wallet, mint, event listener, admin
-    ├── SPRINT-2-SUMMARY.md      # Sprint 2 complete: 20Hz combat, WASD, sword, dodge, CPU AI, WebSocket
-    ├── SPRINT-2.5-SUMMARY.md    # Sprint 2.5 complete: Admin UI — bundles, templates, validate/publish/export, bundle loader
-    ├── SPRINT-3-SUMMARY.md      # Sprint 3 complete: Canvas arena, sprites, input, WebSocket, MatchHUD, match page
-    ├── SPRINT-3.5-SUMMARY.md    # Sprint 3.5 complete: shared physics, client prediction, mouse attacks, match creation, verification
-    ├── SPRINT-4-SUMMARY.md      # Sprint 4 complete: shared combat, 4 weapons, projectiles, WeaponSelector, client projectile rendering
-    ├── SPRINT-5-SUMMARY.md      # Sprint 5 complete: progression (XP/level/skills), loot boxes, equipment/crafting/salvage, match history, gold
     │
-    ├── features/
+    ├── asset-docs/              # Art/asset guidelines and specs
+    │   ├── equipment-v0.md       # Equipment asset guidelines (v0)
+    │   ├── gladiator-v0.md      # Gladiator asset guidelines (v0)
+    │   ├── guidelines-v0.md     # Asset guidelines v0
+    │   └── guidelines-v1.md     # Asset guidelines v1
+    │
+    ├── audits/
+    │   └── architecture-audit.md # Architecture review/audit notes
+    │
+    ├── bugs/
+    │   └── auth-callback-bug.md # Auth callback bug investigation / notes
+    │
+    ├── design/                  # UI/UX and visual design
+    │   ├── design-guidelines.md # Design principles: Blood & Bronze palette, typography, color, motion, accessibility, tone
+    │   └── ui-rpg-design.md     # RPG UI design notes
+    │
+    ├── features/                # Feature specs and plans
     │   ├── admin-ui.md          # Admin UI plan: game data authoring, CRUD templates, validation, publish/export, immutable bundles
     │   ├── combat.md            # Combat feature spec: real-time model, actions, weapons, hitboxes, projectiles
     │   ├── equipment.md         # Equipment/loot/abilities design: template vs instance, slots, authoring, demo scope
-    │   └── planned-features.md # Backlog: immediate/critical, abstract systems, post-launch, brainstorming (from concept + master plan)
+    │   ├── mainnet-migration.md # Mainnet migration (post-demo)
+    │   ├── perks-and-abilities.md # Perks and abilities design
+    │   └── planned-features.md  # Backlog: immediate/critical, abstract systems, post-launch, brainstorming
     │
-    ├── guides/
+    ├── guides/                  # How-to and setup
     │   ├── development-setup.md # Prerequisites, clone, install, env, database setup, run dev servers, troubleshooting (incl. Supabase DB)
     │   ├── testing-admin-ui.md  # How to test Admin UI locally: seed, isAdmin, Storage, dev servers, what to test
     │   └── vercel-deployment.md # Vercel: Root Directory apps/web, env vars (NEXT_PUBLIC_ vs server-only), checklist, optional turbo-ignore
     │
     └── plans/
-        ├── 00-MASTER-PLAN.md    # Master plan: goal, success criteria, tech stack, 7 sprints (0–7), design decisions, data model, risks, out of scope, post-demo roadmap
-        ├── 01-sprint-0-setup.md # Sprint 0: monorepo, Supabase, contracts scaffold, Next.js, game server, CI, docs
-        ├── 02-sprint-1-auth-nft.md   # Sprint 1: social auth, wallet, mint UI, event listener, admin
-        ├── 03-sprint-2-combat-cpu.md # Sprint 2: 20Hz combat engine, WASD, sword, dodge, CPU AI, WebSocket
-        ├── 09-sprint-2.5-admin-ui.md  # Sprint 2.5: Admin UI — game data authoring, bundles, templates, publish/export (complete)
-        ├── 04-sprint-3-frontend-animations.md # Sprint 3: Canvas 60 FPS, WASD + mouse, client prediction, interpolation
-        ├── sprint-3.5.md                      # Sprint 3.5: remaining items (client prediction, mouse attacks, match creation, verification)
-        ├── 05-sprint-4-weapons-projectiles.md # Sprint 4: Sword, Spear, Bow, Dagger; projectiles; weapon UI
-        ├── 06-sprint-5-progression-loot.md     # Sprint 5: XP, leveling, skill tree, equipment, loot, crafting, inventory
-        ├── 07-sprint-6-multiplayer.md          # Sprint 6: matchmaking, friends, challenges, real-time PvP, leaderboard
-        └── 08-sprint-7-deployment.md           # Sprint 7: polish, tests, Vercel + Railway, mainnet guide, demo video
+        ├── implementation/      # Date-stamped implementation plans
+        │   ├── 2026-02-04-sprint-3-implementation.md  # Sprint 3 implementation details
+        │   └── 2026-02-05-rpg-ui-implementation-plan.md # RPG UI implementation plan
+        │
+        ├── sprints/             # Sprint plan docs (what to build)
+        │   ├── 00-MASTER-PLAN.md    # Master plan: goal, success criteria, tech stack, sprints, design decisions, data model, risks
+        │   ├── 01-sprint-0-setup.md # Sprint 0: monorepo, Supabase, contracts scaffold, Next.js, game server, CI, docs
+        │   ├── 02-sprint-1-auth-nft.md   # Sprint 1: social auth, wallet, mint UI, event listener, admin
+        │   ├── 03-sprint-2-combat-cpu.md # Sprint 2: 20Hz combat engine, WASD, sword, dodge, CPU AI, WebSocket
+        │   ├── 04-sprint-3-frontend-animations.md # Sprint 3: Canvas 60 FPS, WASD + mouse, client prediction, interpolation
+        │   ├── 05-sprint-4-weapons-projectiles.md # Sprint 4: Sword, Spear, Bow, Dagger; projectiles; weapon UI
+        │   ├── 06-sprint-5-progression-loot.md    # Sprint 5: XP, leveling, skill tree, equipment, loot, crafting, inventory
+        │   ├── 07-sprint-6-multiplayer.md         # Sprint 6: matchmaking, friends, challenges, real-time PvP, leaderboard
+        │   ├── 08-sprint-7-deployment.md          # Sprint 7: polish, tests, Vercel + Railway, mainnet guide, demo video
+        │   ├── 09-sprint-2.5-admin-ui.md          # Sprint 2.5: Admin UI — game data authoring, bundles, templates, publish/export
+        │   ├── 10-sprint-8-post-demo.md           # Sprint 8: post-demo roadmap
+        │   └── sprint-3.5.md                      # Sprint 3.5: client prediction, mouse attacks, match creation, verification
+        │
+        └── summaries/           # What was built (sprint completion summaries)
+            ├── SPRINT-1-SUMMARY.md    # Sprint 1 complete: auth, wallet, mint, event listener, admin
+            ├── SPRINT-2-SUMMARY.md    # Sprint 2 complete: 20Hz combat, WASD, sword, dodge, CPU AI, WebSocket
+            ├── SPRINT-2.5-SUMMARY.md  # Sprint 2.5 complete: Admin UI — bundles, templates, validate/publish/export, bundle loader
+            ├── SPRINT-3-SUMMARY.md    # Sprint 3 complete: Canvas arena, sprites, input, WebSocket, MatchHUD, match page
+            ├── SPRINT-3.5-SUMMARY.md  # Sprint 3.5 complete: shared physics, client prediction, mouse attacks, match creation
+            ├── SPRINT-4-SUMMARY.md    # Sprint 4 complete: shared combat, 4 weapons, projectiles, WeaponSelector, client projectile rendering
+            ├── SPRINT-5-SUMMARY.md   # Sprint 5 complete: progression, loot boxes, equipment/crafting/salvage, match history, gold
+            └── SPRINT-6-SUMMARY.md   # Sprint 6 complete: PvP, matchmaking, friends/challenges, Redis, 60Hz sim, input validation, disconnect handling
 ```
 
 ---
@@ -345,20 +387,20 @@ crucible/
 | Purpose | Primary doc(s) |
 |--------|----------------|
 | **What is this project?** | [README.md](README.md), [concept.md](concept.md) |
-| **Current status & roadmap** | [README.md](README.md) § Status & Roadmap, [docs/plans/00-MASTER-PLAN.md](docs/plans/00-MASTER-PLAN.md) |
-| **System architecture** | [docs/architecture.md](docs/architecture.md) |
+| **Current status & roadmap** | [README.md](README.md) § Status & Roadmap, [docs/plans/sprints/00-MASTER-PLAN.md](docs/plans/sprints/00-MASTER-PLAN.md) |
+| **System architecture** | [docs/architecture.md](docs/architecture.md), [docs/audits/architecture-audit.md](docs/audits/architecture-audit.md) |
 | **Database & game data (schema, templates, JSON)** | [docs/data-glossary.md](docs/data-glossary.md), [docs/features/equipment.md](docs/features/equipment.md) |
 | **Admin UI (game data authoring, publish/export)** | [docs/features/admin-ui.md](docs/features/admin-ui.md) |
-| **Combat design** | [docs/features/combat.md](docs/features/combat.md), [docs/SPRINT-2-SUMMARY.md](docs/SPRINT-2-SUMMARY.md) |
+| **Combat design** | [docs/features/combat.md](docs/features/combat.md), [docs/plans/summaries/SPRINT-2-SUMMARY.md](docs/plans/summaries/SPRINT-2-SUMMARY.md) |
 | **Equipment & loot design** | [docs/features/equipment.md](docs/features/equipment.md), [docs/data-glossary.md](docs/data-glossary.md) §5–8 |
-| **Sprint plans (what to build)** | [docs/plans/00-MASTER-PLAN.md](docs/plans/00-MASTER-PLAN.md), [docs/plans/01-sprint-0-setup.md](docs/plans/01-sprint-0-setup.md) … [09-sprint-2.5-admin-ui.md](docs/plans/09-sprint-2.5-admin-ui.md), [08-sprint-7-deployment.md](docs/plans/08-sprint-7-deployment.md) |
-| **What’s been built (Sprints 1–5)** | [docs/SPRINT-1-SUMMARY.md](docs/SPRINT-1-SUMMARY.md), [docs/SPRINT-2-SUMMARY.md](docs/SPRINT-2-SUMMARY.md), [docs/SPRINT-2.5-SUMMARY.md](docs/SPRINT-2.5-SUMMARY.md), [docs/SPRINT-3-SUMMARY.md](docs/SPRINT-3-SUMMARY.md), [docs/SPRINT-3.5-SUMMARY.md](docs/SPRINT-3.5-SUMMARY.md), [docs/SPRINT-4-SUMMARY.md](docs/SPRINT-4-SUMMARY.md), [docs/SPRINT-5-SUMMARY.md](docs/SPRINT-5-SUMMARY.md) |
+| **Sprint plans (what to build)** | [docs/plans/sprints/00-MASTER-PLAN.md](docs/plans/sprints/00-MASTER-PLAN.md) … [docs/plans/sprints/10-sprint-8-post-demo.md](docs/plans/sprints/10-sprint-8-post-demo.md) |
+| **What’s been built (Sprints 1–6)** | [docs/plans/summaries/SPRINT-1-SUMMARY.md](docs/plans/summaries/SPRINT-1-SUMMARY.md) … [docs/plans/summaries/SPRINT-6-SUMMARY.md](docs/plans/summaries/SPRINT-6-SUMMARY.md) |
 | **Getting started (dev env)** | [docs/guides/development-setup.md](docs/guides/development-setup.md), [README.md](README.md) § Development |
 | **Deploy web app (Vercel)** | [docs/guides/vercel-deployment.md](docs/guides/vercel-deployment.md) |
 | **Contract deployment** | [contracts/DEPLOYMENT.md](contracts/DEPLOYMENT.md) |
-| **Mainnet (post-demo)** | [docs/mainnet-migration.md](docs/mainnet-migration.md) |
+| **Mainnet (post-demo)** | [docs/features/mainnet-migration.md](docs/features/mainnet-migration.md) |
 | **Future ideas & backlog** | [docs/features/planned-features.md](docs/features/planned-features.md) |
-| **Design (UI, visuals, tone)** | [docs/design-guidelines.md](docs/design-guidelines.md) |
+| **Design (UI, visuals, tone)** | [docs/design/design-guidelines.md](docs/design/design-guidelines.md), [docs/design/ui-rpg-design.md](docs/design/ui-rpg-design.md) |
 | **Agent / Claude instructions** | [CLAUDE.md](CLAUDE.md), [SKILLS_GUIDE.md](SKILLS_GUIDE.md) |
 
 ---
@@ -377,26 +419,36 @@ crucible/
 
 - **DEPLOYMENT.md** — How to deploy and verify the Gladiator NFT contract (testnet/mainnet), environment variables, scripts.
 
-### docs/
+### docs/ (root)
 
 - **architecture.md** — Three-tier architecture (frontend, backend, blockchain); component breakdown (frontend, game server with MatchManager, MatchInstance, CombatEngine, CpuAI, etc., database with schema overview and key models including GameDataBundle, EquipmentTemplate, ActionTemplate, derived combat stats), blockchain layer, data flow (minting, combat CPU, PvP), security, performance, scalability, deployment, technology rationale, future enhancements.
-- **data-glossary.md** — Canonical reference for schema and game data: enums (GameDataStatus, EquipmentType, EquipmentSlot, ActionCategory), User/Friend, Gladiator/GladiatorLoadout, Equipment/GladiatorEquippedItem, Match/Challenge, GameDataBundle, EquipmentTemplate, ActionTemplate, EquipmentTemplateAction; action & attack vocabulary; suggested JSON shapes (§8: baseStatMods, scaling, rolledMods, hitboxConfig, projectileConfig, damageConfig, effectConfig); derived combat stats (§9); demo scope note (§10); guiding principles (§11).
-- **design-guidelines.md** — Placeholder sections for visual direction, typography, color, spacing/layout, components, motion/animation, accessibility, tone/copy, references.
-- **mainnet-migration.md** — Guidance for migrating from testnet to mainnet (post-demo).
-- **SPRINT-1-SUMMARY.md** — What was delivered in Sprint 1: social auth (NextAuth, Google/Twitter), wallet connection (wagmi), Gladiator NFT contract enhancements, mint UI, blockchain event listener, admin dashboard; files created/modified, testing checklist, known limitations.
-- **SPRINT-2-SUMMARY.md** — What was delivered in Sprint 2: 20Hz real-time combat, WASD movement, sword attacks, dodge roll with i-frames, CPU AI (adaptive strategies), match management, WebSocket handlers, 8-stat Gladiator (5 used in combat); architecture, testing, technical decisions, next steps (Sprint 3).
-- **SPRINT-2.5-SUMMARY.md** — What was delivered in Sprint 2.5: Admin UI for game data management — User isAdmin, admin layout/nav, bundle management (CRUD, validate, publish, activate), action/equipment template CRUD, validation engine, export to Supabase Storage, runtime bundle loader on game server, seed data for demo bundle; architecture (authoring → publish → runtime), deployment considerations, testing checklist.
-- **SPRINT-3-SUMMARY.md** — Sprint 3 complete: sprite loading, Canvas renderer, interpolation, useGameInput (WASD, mouse, Space/Shift), useSocket, useRealTimeMatch, MatchHUD, match page; verification checklist.
-- **SPRINT-3.5-SUMMARY.md** — Sprint 3.5 complete: shared physics package, useClientPrediction, mouse main/off-hand attacks, useCreateMatch, arena page (match creation), Fight Again flow, Sprint 3 verification.
-- **SPRINT-4-SUMMARY.md** — Sprint 4 complete: shared combat library (stats, damage, weapons, projectiles), 4 weapon types (Sword, Spear, Bow, Dagger), server projectiles, WeaponSelector UI, client projectile rendering.
-- **SPRINT-5-SUMMARY.md** — Sprint 5 complete: progression (XP, level cap 20, skill trees, unlock skills), loot boxes (starter gear pool, open API), equipment (inventory, equip/unequip, craft 3→1, salvage for gold), match persistence (stats, rewards), match history UI, UserGold, shared loot/skills/crafting packages.
+- **data-glossary.md** — Canonical reference for schema and game data: enums (GameDataStatus, EquipmentType, EquipmentSlot, ActionCategory), User/Friend, Gladiator/GladiatorLoadout, Equipment/GladiatorEquippedItem, Match/Challenge, GameDataBundle, EquipmentTemplate, ActionTemplate, EquipmentTemplateAction; action & attack vocabulary; suggested JSON shapes (§8); derived combat stats (§9); demo scope note (§10); guiding principles (§11).
+
+### docs/asset-docs/
+
+- **equipment-v0.md**, **gladiator-v0.md**, **guidelines-v0.md**, **guidelines-v1.md** — Art and asset guidelines and specs (equipment, gladiator, general guidelines v0/v1).
+
+### docs/audits/
+
+- **architecture-audit.md** — Architecture review and audit notes.
+
+### docs/bugs/
+
+- **auth-callback-bug.md** — Auth callback bug investigation and notes (NextAuth redirect/session issues).
+
+### docs/design/
+
+- **design-guidelines.md** — Design principles: Blood & Bronze palette, visual direction, typography, color, spacing/layout, components, motion/animation, accessibility, tone/copy; source of the UI pass.
+- **ui-rpg-design.md** — RPG UI design notes.
 
 ### docs/features/
 
 - **admin-ui.md** — Admin UI plan (v0.1): internal UI for authoring and publishing game data (equipment templates, action templates, future spell templates); architecture (DB as authoring mirror, export to canonical bundle, runtime loads bundle at startup); auth and admin-only access; CRUD for GameDataBundle, EquipmentTemplate, ActionTemplate; record- and bundle-level validation; publishing and export; immutable bundle versions; non-goals (WYSIWYG, live hotpatching, economy tools).
 - **combat.md** — Combat feature specification: real-time model, actions, weapons (Sword, Spear, Bow, Dagger), hitboxes, projectiles, stamina/HP, pacing; reference for implementation.
 - **equipment.md** — Authoritative design for equipment, loot, abilities: template vs instance, slot-based equipping, weapon-based kits (demo), spells/loadouts, EquipmentTemplate responsibilities, action templates, static game data vs database, authoring workflow, demo scope, guiding principles.
-- **planned-features.md** — Categorized backlog: Immediate/Critical (complete Sprints 3–7, demo success criteria, game data bundle); Abstract Game Systems (combat pacing, permadeath vs retirement, economy, loot acquisition, tournaments, non-crypto onboarding, visuals, class abilities, equipment-on-chain, art pipeline, indexing, fairness); Way Down the Line (marketplace, gacha, breeding, token economics, ranking, guilds, mainnet, pixel art, new classes, PvE, mobile, skins); Other/Brainstorming (design constraints, IPFS, account abstraction, spectator, durability, affixes, class abilities).
+- **mainnet-migration.md** — Guidance for migrating from testnet to mainnet (post-demo).
+- **perks-and-abilities.md** — Perks and abilities design.
+- **planned-features.md** — Categorized backlog: Immediate/Critical (complete Sprints 3–7, demo success criteria, game data bundle); Abstract Game Systems; Way Down the Line; Other/Brainstorming.
 
 ### docs/guides/
 
@@ -404,19 +456,36 @@ crucible/
 - **testing-admin-ui.md** — Step-by-step: seed demo data, grant isAdmin, create gamedata bucket, run dev servers, sign in, test dashboard/bundles/templates, publish flow, troubleshooting.
 - **vercel-deployment.md** — Deploy Next.js (apps/web) to Vercel: Root Directory `apps/web`, env vars (public vs server-only, no secrets in NEXT_PUBLIC_), Production/Preview checklist, optional Ignored Build Step (turbo-ignore); game server runs elsewhere.
 
-### docs/plans/
+### docs/plans/implementation/
 
-- **00-MASTER-PLAN.md** — Master implementation plan: goal, success criteria, architecture summary (tech stack, diagram), sprint breakdown (0–7 with deliverables and team split), key design decisions (TypeScript, testnet, 20Hz combat, programmer art, social auth, Supabase, separate game server), data model overview, development workflow, risk management, out of scope, post-demo roadmap (Phase 2 & 3), documentation structure, next steps.
+- **2026-02-04-sprint-3-implementation.md** — Sprint 3 implementation details.
+- **2026-02-05-rpg-ui-implementation-plan.md** — RPG UI implementation plan (date-stamped).
+
+### docs/plans/sprints/
+
+- **00-MASTER-PLAN.md** — Master implementation plan: goal, success criteria, architecture summary (tech stack, diagram), sprint breakdown (0–7 with deliverables and team split), key design decisions, data model overview, development workflow, risk management, out of scope, post-demo roadmap, documentation structure, next steps.
 - **01-sprint-0-setup.md** — Sprint 0: monorepo init (pnpm, turbo, workspace), frontend scaffold (Next.js), game server scaffold, database package (Prisma, Supabase), contracts scaffold, CI, directory structure, env template.
 - **02-sprint-1-auth-nft.md** — Sprint 1: NextAuth (Google/Twitter), wallet connection and linking, Gladiator NFT contract deployment and minting UI, event listener, admin panel.
 - **03-sprint-2-combat-cpu.md** — Sprint 2: real-time combat engine (20Hz), WASD movement, sword and dodge roll, stamina/HP, CPU AI, match lifecycle, WebSocket handlers.
-- **09-sprint-2.5-admin-ui.md** — Sprint 2.5: Admin UI for game data authoring — bundles, equipment/action template CRUD, validation, publish, export to Supabase Storage, runtime bundle loader (complete).
 - **04-sprint-3-frontend-animations.md** — Sprint 3: Canvas arena (60 FPS), WASD + mouse input, client prediction, interpolation, match HUD, victory/defeat; game data reference.
-- **sprint-3.5.md** — Sprint 3.5 (remaining items): client prediction, main/off-hand mouse attacks, match creation flow, verification checklist.
 - **05-sprint-4-weapons-projectiles.md** — Sprint 4: weapon system (Sword, Spear, Bow, Dagger), attack patterns, server projectiles, client rendering, weapon switching; alignment with EquipmentTemplate/ActionTemplate and data-glossary §8.
 - **06-sprint-5-progression-loot.md** — Sprint 5: XP and leveling (8 stats), skill tree, Equipment instances (templateId, rolledMods), GladiatorEquippedItem (slot-based), loot flow, inventory/equipment UI; references equipment.md and data-glossary.
 - **07-sprint-6-multiplayer.md** — Sprint 6: matchmaking queue, friend system, challenges, dual-player WebSocket PvP, match history, leaderboard; effective build at match start (data-glossary §9).
 - **08-sprint-7-deployment.md** — Sprint 7: bug fixes, tests, performance, Vercel + Railway deployment, env and secrets, mainnet guide, demo video; game data bundle publish step.
+- **09-sprint-2.5-admin-ui.md** — Sprint 2.5: Admin UI for game data authoring — bundles, equipment/action template CRUD, validation, publish, export to Supabase Storage, runtime bundle loader (complete).
+- **10-sprint-8-post-demo.md** — Sprint 8: post-demo roadmap.
+- **sprint-3.5.md** — Sprint 3.5 (remaining items): client prediction, main/off-hand mouse attacks, match creation flow, verification checklist.
+
+### docs/plans/summaries/
+
+- **SPRINT-1-SUMMARY.md** — What was delivered in Sprint 1: social auth (NextAuth, Google/Twitter), wallet connection (wagmi), Gladiator NFT contract enhancements, mint UI, blockchain event listener, admin dashboard; files created/modified, testing checklist, known limitations.
+- **SPRINT-2-SUMMARY.md** — What was delivered in Sprint 2: 20Hz real-time combat, WASD movement, sword attacks, dodge roll with i-frames, CPU AI (adaptive strategies), match management, WebSocket handlers, 8-stat Gladiator (5 used in combat); architecture, testing, technical decisions, next steps (Sprint 3).
+- **SPRINT-2.5-SUMMARY.md** — What was delivered in Sprint 2.5: Admin UI for game data management — User isAdmin, admin layout/nav, bundle management (CRUD, validate, publish, activate), action/equipment template CRUD, validation engine, export to Supabase Storage, runtime bundle loader on game server, seed data for demo bundle; architecture (authoring → publish → runtime), deployment considerations, testing checklist.
+- **SPRINT-3-SUMMARY.md** — Sprint 3 complete: sprite loading, Canvas renderer, interpolation, useGameInput (WASD, mouse, Space/Shift), useSocket, useRealTimeMatch, MatchHUD, match page; verification checklist.
+- **SPRINT-3.5-SUMMARY.md** — Sprint 3.5 complete: shared physics package, useClientPrediction, mouse main/off-hand attacks, useCreateMatch, arena page (match creation), Fight Again flow, Sprint 3 verification.
+- **SPRINT-4-SUMMARY.md** — Sprint 4 complete: shared combat library (stats, damage, weapons, projectiles), 4 weapon types (Sword, Spear, Bow, Dagger), server projectiles, WeaponSelector UI, client projectile rendering.
+- **SPRINT-5-SUMMARY.md** — Sprint 5 complete: progression (XP, level cap 20, skill trees, unlock skills), loot boxes (starter gear pool, open API), equipment (inventory, equip/unequip, craft 3→1, salvage for gold), match persistence (stats, rewards), match history UI, UserGold, shared loot/skills/crafting packages.
+- **SPRINT-6-SUMMARY.md** — Sprint 6 complete: PvP multiplayer (matchmaking queue, friends, challenges), Redis Socket.io adapter, 60Hz sim/20Hz broadcast, input validation & rate limiting, disconnect/reconnect handling, Quick Match UI, Friends & Challenges UI, API routes (friends/add, accept; challenges/create, accept); GET routes for friends/challenges deferred to Sprint 7.
 
 ---
 

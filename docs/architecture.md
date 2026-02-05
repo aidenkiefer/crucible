@@ -108,7 +108,7 @@ Gladiator Coliseum is built as a **three-tier architecture** with clear separati
 **Key Technologies:**
 - Node.js + TypeScript
 - Express (HTTP endpoints)
-- Socket.io (WebSocket)
+- Socket.io (WebSocket, **Redis adapter** for horizontal scaling — Sprint 6)
 - Prisma (database client)
 
 **Key Services:**
@@ -121,16 +121,15 @@ Gladiator Coliseum is built as a **three-tier architecture** with clear separati
 
 #### MatchInstance
 - Runs a single match lifecycle
-- Executes combat engine at **20Hz (50ms tick)**; combatants have **equipped weapon** (default Sword)
-- Processes player actions via `submitAction()`; engine dispatches by weapon (melee vs projectile)
-- Generates CPU AI actions automatically
+- Executes combat engine at **60Hz simulation** (16.67ms tick), **20Hz broadcast** (50ms) to clients (Sprint 6); combatants have **equipped weapon** (default Sword)
+- Processes **both players’** actions each tick (PvP) or CPU AI for player 2 (CPU match); **hasUser(userId)** for disconnect handling (Sprint 6)
 - Combat state includes **projectiles** map (Sprint 4); broadcast in `match:state`
 - Emits combat events (damage, deaths, dodges, projectile spawn)
 - Handles match completion and cleanup
 
 #### CombatEngine
 - Server-authoritative **real-time** combat simulation (**Sprints 2–4**)
-- **20Hz (50ms) tick rate** — continuous movement and actions
+- **60Hz internal simulation**, **20Hz broadcast** to clients (Sprint 6) — continuous movement and actions
 - **Physics:** Uses **shared physics** package (`packages/shared/src/physics`); WASD velocity-based movement, arena bounds, body collision, dodge roll
 - **Multi-weapon (Sprint 4):** Sword (90° arc), Spear (30° thrust), Bow (projectile), Dagger (60° quick); each with range, damage, scaling (STR/DEX), stamina cost, cooldown
 - **Projectiles:** Server-side simulation for Bow; spawn, move, collide, damage; removed on hit/expiry/out-of-bounds
@@ -139,10 +138,23 @@ Gladiator Coliseum is built as a **three-tier architecture** with clear separati
 - **Damage:** Uses **shared combat** library (`packages/shared/src/combat`) for pure damage calculations
 - Determines match winner; emits combat events (damage, projectile spawn, etc.)
 
-#### MatchmakingService
-- Maintains queue of players seeking matches (PvP in Sprint 6)
-- Pairs players based on availability (FIFO)
-- Creates PvP match instances
+#### MatchmakingService (Sprint 6)
+- Maintains in-memory FIFO queue of players seeking PvP matches
+- Pairs two players and creates PvP match in DB; emits **match:found** with matchId to both
+- WebSocket events: **matchmaking:join**, **matchmaking:leave**; cleanup on disconnect
+
+#### InputValidator (Sprint 6)
+- Validates **match:action** payloads: stamina, cooldowns, move direction magnitude (anti-cheat)
+- Applied in match-handlers before processing input
+
+#### RateLimiter (Sprint 6)
+- Sliding-window rate limit (e.g. 120 inputs/sec) on **match:action** to prevent input flooding
+- Logs suspicious activity; cleanup of expired records
+
+#### DisconnectHandler (Sprint 6)
+- Saves state snapshot when a player disconnects; **30-second reconnection window**
+- Events: **match:player-disconnected**, **match:reconnect**, **match:player-reconnected**
+- Uses **socket.data.userId** and **MatchManager.getActiveMatchesForUser(userId)** for rejoin
 
 #### CpuAI
 - **3 adaptive strategies:** Aggressive (HP > 70%), Defensive (HP < 30%), Opportunistic (30–70%)
@@ -175,13 +187,13 @@ Gladiator Coliseum is built as a **three-tier architecture** with clear separati
 
 ### 3. Shared Libraries (`packages/shared`)
 
-**Physics (Sprint 3.5)** — `src/physics/`
+**Physics (Sprint 3.5, updated Sprint 6)** — `src/physics/`
 - Pure, deterministic movement and collision used by **both** game server (authoritative) and frontend (client prediction)
 - Types: Vec2, Velocity, BoundingBox, Circle, Rectangle
 - Vector math: normalize, magnitude, distance, lerp, clampMagnitude
 - Movement: integrate, clampToArena, calculateVelocity, calculateDodgeVelocity
 - Collision: circle-vs-circle, combatant hitbox, melee arc
-- Constants: TICK_RATE, ARENA dimensions, movement/dodge/stamina values
+- Constants: **TICK_RATE (60Hz)**, **BROADCAST_RATE (20Hz)**, **BROADCAST_INTERVAL (50ms)** (Sprint 6); ARENA dimensions, movement/dodge/stamina values
 - No Node-only dependencies; runs in browser and Node
 
 **Combat (Sprint 4)** — `src/combat/`

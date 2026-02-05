@@ -1,5 +1,9 @@
 # Auth callback bug: Google login redirects back to login page on Vercel
 
+## STATUS
+
+**SOLVED**
+
 **Skills that might help (from [agents/skills/CATALOG.md](../agents/skills/CATALOG.md)):**  
 `prisma-expert` (Prisma runtime, client, engine bundling) · `nextjs-app-router-patterns` · `nextjs-best-practices` (Next.js build/tracing) · `monorepo-architect` · `monorepo-management` · `turborepo-caching` (monorepo/Turborepo bundling and output) · `debugging-strategies` · `error-detective` (logs, stack traces, root cause) · `react-best-practices` (Vercel Engineering, Next.js) · `cc-skill-backend-patterns` (Next.js API routes) · `deployment-procedures` · `web-performance-optimization` (bundle size/tracing)
 
@@ -545,3 +549,8 @@ I've implemented a different fix based on understanding
   This approach is more reliable because it doesn't depend
    on file tracing working correctly. The engine binaries
   will be directly included in the webpack bundle.
+
+## Update 5
+
+This bug has been solved, the Prisma Engine issue was solved with the fixes above, 
+ and the auth issue was a separate issue because I had the Auth Redirect URL wrong lol

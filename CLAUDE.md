@@ -12,7 +12,7 @@ This file provides guidance to Claude when working with the **Crucible (Gladiato
 
 **Timeline:** 4–6 weeks · **Team:** 2–3 developers.
 
-**Current state:** Sprint 0 (Setup), Sprint 1 (Auth & NFT Minting), Sprint 2 (Real-Time Combat), and Sprint 2.5 (Admin UI) are complete. **Sprint 3 (Frontend Real-Time Combat UI) is next.** The codebase includes: monorepo (pnpm, Turborepo), Next.js 14 frontend (social auth, wallet connection, mint Gladiator NFT, **admin UI for game data** — bundles, equipment/action template CRUD, validation, publish, export to Supabase Storage), Express game server (Socket.io, **20Hz combat engine**, **CPU AI**, **match manager**, **WebSocket match handlers**, **bundle loader** for published game data, blockchain event listener), Gladiator NFT contract (Hardhat, **8 stats**, 5 used in combat), Supabase + Prisma.
+**Current state:** Sprints 0 through 6 are complete. **Sprint 7 (Polish & deployment) is next.** The codebase includes: monorepo (pnpm, Turborepo), Next.js 14 frontend (social auth, wallet, mint Gladiator NFT; **admin UI** for game data; **arena** at `/arena` with match creation; **camp** at `/camp` for gladiators, inventory, crafting, stat/skill points; **match page** with Canvas, 4 weapons, projectiles, client prediction; **match history** at `/matches`; **progression** (XP, level, skill trees, stat allocation); **loot boxes** and **equipment** (inventory, equip, craft 3→1, salvage for gold); **quick match** at `/quick-match`; **friends & challenges** at `/friends`; Blood & Bronze UI), Express game server (real-time combat engine **60Hz sim / 20Hz broadcast**, multi-weapon, projectiles, CPU AI; **match persistence**, **rewards**, **XP/progression**, **loot drops**; **matchmaking** and **PvP via challenges**; **input validation & rate limiting**, **disconnect/reconnect handling**; Redis-backed Socket.io adapter; bundle loader, blockchain listener), **packages/shared** (physics, combat, loot, skills, crafting), Gladiator NFT (Hardhat, 8 stats), Supabase + Prisma (Match, LootBox, UserGold, Friend, Challenge).
 
 ---
 
@@ -24,39 +24,20 @@ This file provides guidance to Claude when working with the **Crucible (Gladiato
 | **1** | Authentication & NFT minting | ✅ Complete |
 | **2** | Combat system — CPU battles (20Hz, WASD, sword, dodge, CPU AI) | ✅ Complete |
 | **2.5** | Admin UI — game data authoring (bundles, templates, validate, publish, export, bundle loader) | ✅ Complete |
-| **3** | Frontend — Real-time combat UI (Canvas, WASD + mouse, client prediction) | **Next** |
-| **4** | Weapons & projectiles | Planned |
-| **5** | Progression & loot | Planned |
-| **6** | Multiplayer — Real-time PvP | Planned |
+| **3** | Frontend — Real-time combat UI (Canvas, sprites, WASD + mouse, MatchHUD, match page) | ✅ Complete |
+| **3.5** | Shared physics, client prediction, mouse main/off-hand, match creation flow | ✅ Complete |
+| **4** | Weapons & projectiles (Sword, Spear, Bow, Dagger; shared combat; WeaponSelector) | ✅ Complete |
+| **5** | Progression & loot (XP/level/skill trees, loot boxes, equipment, crafting/salvage, match history, gold) | ✅ Complete |
+| **6** | Multiplayer — matchmaking queue, friends, challenges, PvP WebSocket, Redis scaling, 60Hz sim, input validation, disconnect handling | ✅ Complete |
 | **7** | Polish, testing & deployment | Planned |
 
-When implementing, align with the current or target sprint. Use **docs/plans/00-MASTER-PLAN.md** and the sprint plans (e.g. **docs/plans/04-sprint-3-frontend-animations.md** for current sprint) for scope and deliverables. Do not add features from later sprints or from the "Out of Scope" list unless the task explicitly requests them.
+When implementing, align with the current or target sprint. Use **docs/plans/sprints/00-MASTER-PLAN.md** and the sprint plans (e.g. **docs/plans/sprints/08-sprint-7-deployment.md** for Sprint 7) for scope and deliverables. Do not add features from later sprints or from the "Out of Scope" list unless the task explicitly requests them.
 
 ---
 
 ## Repository Structure
 
-```
-crucible/
-├── apps/
-│   ├── web/              # Next.js 14 (App Router): auth, wallet, mint, admin UI (bundles, templates, publish/export)
-│   └── game-server/       # Express, Socket.io, 20Hz combat engine, CPU AI, match manager, WebSocket match handlers, blockchain event listener
-├── packages/
-│   ├── shared/            # Shared types and constants
-│   └── database/          # Prisma schema and client (Supabase)
-├── contracts/             # Gladiator NFT (Hardhat, Solidity)
-├── docs/
-│   ├── plans/             # 00-MASTER-PLAN + sprint plans (01–09)
-│   ├── guides/            # Development setup, testing, deployment
-│   ├── features/          # Combat, loot, etc.
-│   ├── api/               # REST + WebSocket docs (as added)
-│   ├── SPRINT-1-SUMMARY.md
-│   ├── SPRINT-2-SUMMARY.md
-│   └── SPRINT-2.5-SUMMARY.md
-├── concept.md
-├── README.md
-└── CLAUDE.md
-```
+Read @INDEX.md to understand the file structure and documentation system. 
 
 Implement only in directories and files that exist; do not assume other top-level apps or services exist unless the task creates them.
 
@@ -67,37 +48,39 @@ Implement only in directories and files that exist; do not assume other top-leve
 | Layer | Stack |
 |-------|--------|
 | **Frontend** | Next.js 14 (App Router), TypeScript, React 18, TailwindCSS, wagmi + viem, NextAuth.js, Socket.io-client, Canvas API (2D) |
-| **Backend** | Supabase (Postgres + Auth + Realtime), Node.js + TypeScript (game server), Socket.io, Express, Prisma |
+| **Backend** | Supabase (Postgres + Auth + Realtime), Node.js + TypeScript (game server), Socket.io, Express, Prisma, Redis (Socket.io adapter for scaling) |
 | **Blockchain** | Solidity, Hardhat, OpenZeppelin, ethers.js, Polygon Mumbai testnet |
-| **Infrastructure** | Vercel (frontend), Railway/Render (game server), Supabase Cloud, IPFS/Pinata (optional) |
+| **Infrastructure** | Vercel (frontend), Railway/Render (game server), Supabase Cloud, IPFS/Pinata (metadata, optional) |
 
-**Key design decisions (from Master Plan):** Full TypeScript stack; **real-time 20Hz (50ms) server tick** for combat (WASD movement, client prediction, server-authoritative); social auth (Google/Twitter) + wallet linking for minting; Supabase for data; separate game server (not Next.js API routes); testnet only for demo; programmer art first.
+**Key design decisions (from Master Plan):** Full TypeScript stack; **real-time 20Hz (50ms) broadcast** for combat state (server may simulate at higher rate internally); WASD movement, client prediction, server-authoritative; social auth (Google/Twitter) + wallet linking for minting; Supabase for data; separate game server (not Next.js API routes); testnet only for demo; programmer art first. **packages/shared** holds physics, combat, loot, skills, and crafting used by both server and (where applicable) client.
 
 ---
 
 ## Architecture (Summary)
 
-**Game server:** Node.js + Express + Socket.io. **MatchInstance** runs combat at **20Hz (50ms)**; **MatchManager** creates/starts/stops matches; **CombatEngine** handles WASD movement, sword attacks (90° arc, 80-unit range), dodge roll (200ms i-frames), stamina/HP with stat scaling (CON, STR, DEX, SPD, DEF); **CpuAI** uses 3 adaptive strategies (Aggressive/Defensive/Opportunistic). **BundleLoader** loads the active published game data bundle from Supabase Storage at startup (equipment/action templates); combat can read templates via getEquipmentTemplate(key), getActionTemplate(key). WebSocket events: `match:create`, `match:start`, `match:action`, `match:state` (20Hz), `match:events`, `match:completed`. Blockchain event listener syncs GladiatorMinted → DB.
+**Game server:** Node.js + Express + Socket.io (Redis adapter for horizontal scaling). **MatchInstance** runs combat (**60Hz sim, 20Hz broadcast**); **MatchManager** creates/starts/stops matches (CPU and PvP), getActiveMatchesForUser() for reconnect. **CombatEngine** uses **shared physics** and **shared combat** packages: WASD movement, **4 weapons** (Sword, Spear, Bow, Dagger) with melee arcs and projectiles, dodge roll, stamina/HP, stat scaling (CON, STR, DEX, SPD, DEF). **CpuAI** uses 3 adaptive strategies. **MatchmakingService** (FIFO queue) pairs players, emits **match:found**. **InputValidator** and **RateLimiter** validate and rate-limit **match:action**. **DisconnectHandler** saves state snapshot, 30s reconnection window (match:player-disconnected, match:reconnect, match:player-reconnected). **ProgressionService** awards XP and levels; **LootService** generates post-match loot. **BundleLoader** loads the active published game data bundle from Supabase Storage at startup; combat reads templates via getEquipmentTemplate(key), getActionTemplate(key). WebSocket events: `match:create`, `match:start`, `match:action`, `match:state` (20Hz), `match:events`, `match:completed`, `match:found` (matchmaking), `matchmaking:join`, `matchmaking:leave`. Blockchain event listener syncs GladiatorMinted → DB.
 
-**Frontend:** Next.js 14. Receives combat state via WebSocket (match:state at 20Hz). Sprint 3 adds Canvas 60 FPS, WASD + mouse aim, client prediction, interpolation. Auth via NextAuth; wallet via wagmi/viem.
+**Frontend:** Next.js 14. Key routes: `/` (landing + logged-in dashboard: Camp, Forge, Glory Battle, Enter Arena, Quick Match, Friends, admin); `/arena` (create CPU match → `/match/[matchId]`); `/camp` and `/camp/gladiators/[id]` (gladiators, inventory, progression, skills, stat points, equipment); `/quick-match` (matchmaking queue); `/friends` (friends and challenges); `/match/[matchId]` (real-time combat: Canvas, MatchHUD, WeaponSelector, 4 weapons, projectiles, client prediction). Auth via NextAuth; wallet via wagmi/viem.
 
-**Blockchain:** Gladiator NFT (ERC-721) on Polygon Mumbai. **8 stats** at mint (constitution, strength, dexterity, speed, defense, magicResist, arcana, faith); 5 used in combat (CON, STR, DEX, SPD, DEF). On-chain: ownership, identity, minting, transfers. Off-chain: combat, progression, matchmaking, metadata. Event listener on game server indexes mints into Postgres.
+**Blockchain:** Gladiator NFT (ERC-721) on Polygon Mumbai. **8 stats** at mint; 5 used in combat. On-chain: ownership, identity, minting, transfers. Off-chain: combat, progression, matchmaking, loot, metadata. Event listener indexes mints into Postgres.
 
-**Combat (implemented):** Real-time 20Hz. Actions: **WASD movement**, **Sword attack** (stamina 15, cooldown 800ms), **Dodge roll** (200ms i-frames, stamina 20, cooldown 1000ms). Server validates cooldowns, stamina, hit resolution, damage. Client sends actions via `match:action`; server is source of truth.
+**Combat (implemented):** Real-time, server-authoritative. **WASD movement**; **4 weapons** (Sword, Spear, Bow, Dagger) with melee and projectile attacks; **Dodge roll** (i-frames, stamina, cooldown). Server validates cooldowns, stamina, hit resolution, damage. Client sends input via `match:action`; server is source of truth.
 
 ---
 
 ## Core Game Concepts
 
-**Gladiators:** Unique NFTs. Immutable at mint: ID, class (Duelist, Brute, Assassin), **8 base stats** (constitution, strength, dexterity, speed, defense, magicResist, arcana, faith). Mutable off-chain: level, XP, skillPointsAvailable, unlockedSkills (skill IDs), equipped gear (slot-based), loadout (prepared spells, equipped abilities). Synced to DB via game-server event listener when minted. Equipping is **slot-based** (GladiatorEquippedItem): MAIN_HAND, OFF_HAND, HELMET, CHEST, GAUNTLETS, GREAVES. Legacy equippedWeaponId/equippedArmorId kept for transition.
+**Gladiators:** Unique NFTs. Immutable at mint: ID, class (Duelist, Brute, Assassin), **8 base stats**. Mutable off-chain: **level**, **XP**, **skillPointsAvailable** (spent on skill tree unlocks), **stat points on level up** (e.g. 3 points per level to allocate), **unlockedSkills**, equipped gear (slot-based), loadout. Synced to DB via game-server event listener when minted. Equipping is **slot-based** (GladiatorEquippedItem): MAIN_HAND, OFF_HAND, HELMET, CHEST, GAUNTLETS, GREAVES.
 
-**Equipment:** **Template vs instance.** EquipmentTemplate (authoring layer) defines archetypes; authored in DB, **published to JSON/TS** for runtime. Equipment (instance) is player-owned; references template; has rolledMods (JSON), grantedPerkIds; type/rarity/name and stat bonuses (legacy). Runtime combat reads **published static data**, not DB. Types: WEAPON, ARMOR, CATALYST, TRINKET, AUGMENT. Additional weapons (Spear, Bow, Dagger) in Sprint 4.
+**Equipment:** **Template vs instance.** EquipmentTemplate (authoring) defines archetypes; published to JSON/TS for runtime. Equipment (instance) is player-owned; references template; has rolledMods (JSON), rarity; can be **crafted** (3→1 with rarity rules) and **salvaged** for gold. Starter gear cannot be crafted or salvaged. Runtime combat reads **published static data**, not DB. Types: WEAPON, ARMOR, CATALYST, TRINKET, AUGMENT. **4 weapons implemented:** Sword, Spear, Bow, Dagger.
 
-**Actions:** ActionTemplate defines attacks/casts/mobility/utility; category, cooldown, stamina/mana, hitbox/projectile/damage/effect config (JSON). Equipment grants actions via EquipmentTemplateAction join. Demo: weapon-based kits; class abilities later.
+**Actions:** ActionTemplate defines attacks/casts/mobility/utility; category, cooldown, stamina/mana, hitbox/projectile/damage/effect config (JSON). Equipment grants actions via EquipmentTemplateAction. Demo: weapon-based kits; class abilities later.
 
-**Derived combat stats:** At match start the server computes an effective build (Gladiator base + template baseStatMods + instance rolledMods + perks); that aggregate is immutable for the match and the sole input to combat. Do not query templates or instances mid-match. JSON shapes and conventions: **docs/data-glossary.md** §8–11.
+**Progression & economy:** Matches award **XP** (and **loot**); level cap 20. **LootBox** drops from matches; open for equipment. **UserGold** tracks gold (salvage, future sinks). **Match** records completion, rewards, and stats.
 
-**Combat actions (implemented):** WASD movement, Sword attack, Dodge roll (Sprint 2). Abilities and other weapons in later sprints.
+**Derived combat stats:** At match start the server computes an effective build (Gladiator base + template baseStatMods + instance rolledMods + perks); that aggregate is immutable for the match. Do not query templates or instances mid-match. **docs/data-glossary.md** §8–11.
+
+**Combat actions (implemented):** WASD movement; **4 weapons** (Sword, Spear, Bow, Dagger) with melee and projectile attacks; Dodge roll. Matchmaking and friends/challenges support PvP match creation.
 
 ---
 
@@ -106,12 +89,9 @@ Implement only in directories and files that exist; do not assume other top-leve
 Do not implement unless the task explicitly requests:
 
 - Marketplace UI for trading Gladiators/items
-- Loot boxes or gacha mechanics
-- Breeding or forging systems
 - Token economics or crypto rewards
 - Real-money guarantees or redemption
 - Advanced ranking (Elo, seasons), tournament brackets, guilds
-- Chat or social features beyond friend challenges
 
 See **README.md** and **docs/plans/00-MASTER-PLAN.md** for full list.
 
@@ -134,22 +114,18 @@ Focus on clean boundaries, simple flows, and replaceable components.
 
 | Document | Use when |
 |----------|----------|
-| **README.md** | Onboarding, quick start, success criteria, roadmap, tech stack, out of scope, doc index. |
-| **concept.md** | Vision, combat model, multiplayer architecture, blockchain, rendering, wallets, security, design constraints, open questions (do not implement those yet). |
-| **docs/plans/00-MASTER-PLAN.md** | Master plan, sprint breakdown, design decisions, data model, risks, post-demo roadmap. |
-| **docs/architecture.md** | System architecture. |
-| **docs/plans/01-sprint-0-setup.md** | Sprint 0 setup (reference). |
-| **docs/plans/02-sprint-1-auth-nft.md** | Sprint 1 auth & NFT (reference). |
-| **docs/plans/03-sprint-2-combat-cpu.md** | Sprint 2 plan (real-time combat CPU, complete). |
-| **docs/plans/09-sprint-2.5-admin-ui.md** | Sprint 2.5 plan (Admin UI — game data authoring, complete). |
-| **docs/plans/04-sprint-3-frontend-animations.md** | Sprint 3 plan (frontend real-time combat UI) — **current sprint plan**. |
-| **docs/SPRINT-1-SUMMARY.md** | What was built in Sprint 1 (auth, wallet, mint, listener, admin). |
-| **docs/SPRINT-2-SUMMARY.md** | What was built in Sprint 2 (combat). |
-| **docs/SPRINT-2.5-SUMMARY.md** | What was built in Sprint 2.5 (Admin UI — bundles, templates, validate/publish/export, bundle loader). |
+| **INDEX.md** | File and doc layout; locate config, entry points, modules, and all markdown docs (non-docs index + documentation index). |
+| **README.md** | Onboarding, quick start, success criteria, roadmap, tech stack, out of scope, doc table. |
+| **concept.md** | Vision, combat model, multiplayer architecture, blockchain, design constraints, open questions (do not implement those yet). |
+| **docs/plans/sprints/00-MASTER-PLAN.md** | Master plan, sprint breakdown, design decisions, data model, risks, post-demo roadmap. |
+| **docs/architecture.md** | System architecture (frontend, game server, shared libs, DB, data flow). |
+| **docs/plans/sprints/01-sprint-0-setup.md** … **10-sprint-8-post-demo.md**, **sprint-3.5.md** | Sprint plans (what to build). **Current focus:** **docs/plans/sprints/08-sprint-7-deployment.md** (Sprint 7). |
+| **docs/plans/summaries/SPRINT-1-SUMMARY.md** … **SPRINT-6-SUMMARY.md** | What was built in Sprints 1–6 (and 2.5, 3, 3.5, 4, 5 via summaries). |
 | **docs/guides/development-setup.md** | Environment, dependencies, running the stack. |
-| **docs/features/equipment.md** | Equipment, loot, abilities — template/instance design, slots, authoring, demo scope. |
-| **docs/features/admin-ui.md** | Admin UI plan — game data authoring, CRUD, validation, publish/export. |
-| **docs/data-glossary.md** | Database & game data glossary — schema, enums, templates, actions, JSON conventions. |
+| **docs/guides/vercel-deployment.md** | Vercel deployment (root dir, env, checklist). |
+| **docs/features/equipment.md** | Equipment, loot, abilities — template/instance, slots, authoring, demo scope. |
+| **docs/features/admin-ui.md** | Admin UI — game data authoring, CRUD, validation, publish/export. |
+| **docs/data-glossary.md** | Database & game data glossary — schema, enums, templates, actions, JSON conventions (§8–11). |
 
 Prefer reading the specific files or docs relevant to the task rather than scanning the whole repo.
 
@@ -160,7 +136,8 @@ Prefer reading the specific files or docs relevant to the task rather than scann
 - **Scope:** Implement only what is in the demo scope and the current (or requested) sprint. Do not add features listed under "Out of Scope" in README or concept.md unless the task explicitly requests them.
 - **Contracts:** Use OpenZeppelin templates; keep contracts minimal and auditable.
 - **Server authority:** All match outcomes are server-authoritative; do not trust client-reported results.
-- **Game data (docs/data-glossary.md §11):** No hardcoded equipment slots on Gladiator; no behavior hidden in conditional code paths; no runtime dependency on database templates; templates define behavior, instances define ownership; admin tooling drives content velocity.
+- **Game data (docs/data-glossary.md §11):** No hardcoded equipment slots on Gladiator; no behavior hidden in conditional code paths; no runtime dependency on database templates; templates define behavior, instances define ownership; admin tooling drives content velocity. Starter gear cannot be crafted or salvaged.
+- **Progression:** Level-up grants stat points (e.g. 3) for the player to allocate; skill trees are unlocked with skill points. Match completion persists stats, rewards, and optional loot.
 - **Verification:** Prefer reading the specific files or docs that are relevant rather than scanning the whole repo.
 
 ---
@@ -203,6 +180,6 @@ Testing and QA are handled by the human. Running builds and tests burns tokens a
 
 ## Summary
 
-- **What this is:** Crucible — Gladiator Coliseum: 1v1 arena combat demo with NFT Gladiators, server-authoritative real-time combat (20Hz), and web multiplayer. Sprint 0, 1, 2, and 2.5 complete (monorepo, Next.js auth/wallet/mint/admin UI for game data, Express game server with 20Hz combat engine, CPU AI, match manager, WebSocket match handlers, bundle loader, event listener, Gladiator NFT contract with 8 stats, Supabase + Prisma). Sprint 3 (Frontend Real-Time Combat UI) is next.
-- **Where to look:** README.md for overview and roadmap; concept.md for vision and constraints; docs/plans/00-MASTER-PLAN.md for full plan; docs/plans/04-sprint-3-frontend-animations.md for current sprint; docs/SPRINT-1-SUMMARY.md, docs/SPRINT-2-SUMMARY.md, and docs/SPRINT-2.5-SUMMARY.md for what’s built; docs/architecture.md for architecture.
-- **What to respect:** Demo scope and out-of-scope list, design constraints (no overbuild, modular, blockchain = ownership), server-authoritative outcomes, and the sprint roadmap (do not implement later-sprint or out-of-scope features unless requested).
+- **What this is:** Crucible — Gladiator Coliseum: 1v1 arena combat demo with NFT Gladiators, server-authoritative real-time combat (60Hz sim / 20Hz broadcast), and web multiplayer. **Sprints 0–6 complete:** monorepo; Next.js (auth, wallet, mint, admin UI, arena, camp, match page with 4 weapons/projectiles, match history, progression, loot boxes, equipment/crafting/salvage, quick match, friends/challenges); Express game server (60Hz sim / 20Hz broadcast, 4 weapons, projectiles, CPU AI, match persistence, rewards, XP/progression, loot drops, matchmaking, PvP via challenges, input validation & rate limiting, disconnect/reconnect handling, Redis Socket.io adapter, bundle loader, event listener); packages/shared (physics, combat, loot, skills, crafting); Gladiator NFT (8 stats); Supabase + Prisma. **Sprint 7** (polish & deployment) is next.
+- **Where to look:** INDEX.md for file and doc layout; README.md for overview and roadmap; concept.md for vision and constraints; docs/plans/sprints/00-MASTER-PLAN.md for full plan; docs/plans/sprints/08-sprint-7-deployment.md for current sprint; docs/plans/summaries/ (SPRINT-1 through SPRINT-6) for what’s built; docs/architecture.md for architecture; docs/data-glossary.md for schema and game data.
+- **What to respect:** Demo scope and out-of-scope list, design constraints (no overbuild, modular, blockchain = ownership), server-authoritative outcomes, starter gear non-craftable/non-salvageable, and the sprint roadmap (do not implement later-sprint or out-of-scope features unless requested).
