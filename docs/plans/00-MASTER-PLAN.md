@@ -198,58 +198,95 @@ See **docs/SPRINT-2.5-SUMMARY.md** and **docs/features/admin-ui.md**.
 - Dev 2: Projectile system (server + client)
 - Dev 3: Weapon UI + switching
 
-### Sprint 5: Progression & Loot Systems (Week 6-7)
-**Goal:** Gladiators level up, unlock skills, and earn loot
+### Sprint 5: Progression & Loot Systems + Match Persistence (Week 6-7)
+**Goal:** Gladiators level up, unlock skills, and earn loot; matches persist for progression
 
 **Deliverables:**
-- XP system and leveling
+- **Match persistence:** Store match results (winner, duration, events)
+- **Match history:** UI for viewing past matches
+- XP system and leveling (awarded after match persistence)
 - Skill tree (3 skills per Gladiator class)
-- Equipment system (weapons, armor)
+- Equipment system (weapons, armor) with slot-based equipping
 - Loot generation engine (Common/Rare/Epic)
 - Crafting system (combine items)
 - Inventory UI
 - Equipment screen
 
+**Architecture Changes:**
+- Transition from ephemeral to persistent matches
+- Match results written to DB after completion
+- Foundation for disconnect handling (Sprint 6)
+
 **Team Split:**
-- Dev 1: Progression system + skill tree logic
+- Dev 1: Match persistence + progression system + skill tree logic
 - Dev 2: Loot engine + crafting
-- Dev 3: Inventory + equipment UI
+- Dev 3: Inventory + equipment UI + match history
 
-### Sprint 6: Multiplayer - Real-Time PvP (Week 7-8)
-**Goal:** Real-time PvP combat with matchmaking
+### Sprint 6: Multiplayer PvP + Production Scaling (Week 7-8)
+**Goal:** Real-time PvP combat with matchmaking; production-ready scaling infrastructure
 
 **Deliverables:**
-- Matchmaking queue system
-- Friend system (add/remove friends)
-- Challenge creation and acceptance
-- Dual-player WebSocket synchronization
-- PvP match handling (2 human inputs per tick)
-- Spectator mode (optional)
-- Match history
-- Leaderboard (simple win/loss ranking)
+- **Scaling Infrastructure (Architecture Audit):**
+  - Redis pub/sub for cross-server coordination
+  - Sticky sessions via socket.io-redis adapter
+  - 60Hz internal simulation, 20Hz broadcast (improved hit detection)
+  - Client interpolation for projectiles and opponents
+  - Input validation and rate limiting (anti-cheat)
+  - Match logging for disputes (optional: headless validator)
+- **PvP Features:**
+  - Matchmaking queue system
+  - Friend system (add/remove friends)
+  - Challenge creation and acceptance
+  - Dual-player WebSocket synchronization
+  - PvP match handling (2 human inputs per tick)
+  - Match history (uses Sprint 5 persistence)
+  - Leaderboard (simple win/loss ranking)
+- **Reliability:**
+  - Disconnect handling (30s reconnection window)
+  - State snapshots for reconnection
+  - Graceful server failover
+
+**Architecture Changes:**
+- Horizontal scaling support
+- Improved tick rate (60Hz internal)
+- Persistence snapshots for disconnects
+- Input validation layer
 
 **Team Split:**
-- Dev 1: Matchmaking + queue system
-- Dev 2: Friend system + challenges
-- Dev 3: Match history + leaderboard
+- Dev 1: Scaling infrastructure (Redis, sticky sessions, tick rate upgrade)
+- Dev 2: PvP matchmaking + friend system + challenges
+- Dev 3: Match history + leaderboard + disconnect handling
 
-### Sprint 7: Polish, Testing & Deployment (Week 8-9)
-**Goal:** Production-ready demo deployed and documented
+### Sprint 7: Polish, Security & Production Deployment (Week 8-9)
+**Goal:** Production-ready demo deployed with security and monitoring
 
 **Deliverables:**
-- Bug fixes and edge case handling
-- Unit tests for critical game logic
-- Performance optimization (especially real-time combat)
-- Deployment to Vercel + Railway
-- User-facing documentation
-- Mainnet migration guide
-- Demo video/walkthrough
+- **Security & Reliability (Architecture Audit):**
+  - TLS for all WebSocket connections
+  - Bundle version checksums (prevent client/server mismatch)
+  - Comprehensive input validation (stamina, cooldowns, ranges)
+  - Rate limiting on client inputs (anti-cheat)
+  - Determinism testing (floating-point edge cases)
+  - Monitoring and alerting (Sentry, Datadog, or similar)
+- **Deployment:**
+  - Load balancer configuration (sticky sessions)
+  - Multi-instance game server deployment
+  - Redis cluster setup
+  - HTTPS/WSS certificates
+  - Environment-specific configs (staging + prod)
+- **Polish:**
+  - Bug fixes and edge case handling
+  - Unit tests for critical game logic
+  - Performance optimization (real-time combat, rendering)
+  - User-facing documentation
+  - Mainnet migration guide
+  - Demo video/walkthrough
 
 **Team Split:**
 - All devs: Bug fixing, testing, polish
-- Dev 1: Frontend deployment + docs
-- Dev 2: Contract audit + mainnet guide
-- Dev 3: Game server deployment + monitoring
+- Dev 1: Frontend deployment + TLS + monitoring + docs
+- Dev 2: Contract audit + mainnet guide + security testing
+- Dev 3: Game server deployment (multi-instance) + Redis + load balancer
 
 ---
 
@@ -276,15 +313,17 @@ See **docs/SPRINT-2.5-SUMMARY.md** and **docs/features/admin-ui.md**.
 
 **Post-Demo Path:** Migration guide will document mainnet deployment (Polygon or Base)
 
-### 3. Combat System: Real-Time with 20Hz Server Tick
-**Decision:** Real-time combat with continuous movement and 20Hz (50ms) server tick rate
+### 3. Combat System: Real-Time with Server-Authoritative Simulation
+**Decision:** Real-time combat with continuous movement, server-authoritative simulation (demo: 20Hz, production: 60Hz internal + 20Hz broadcast)
 
 **Rationale:**
 - ROTMG-inspired "bullet-hell roguelike" feel with free movement
 - More engaging and skill-based than turn-based
 - WASD movement + mouse aim creates action game feel
-- 20Hz balances responsiveness with server load
-- Client prediction provides lag-free local movement
+- **Demo (Sprint 1-5):** 20Hz simulation + broadcast (simpler, proves mechanics)
+- **Production (Sprint 6+):** 60Hz internal simulation for precise hit detection, 20Hz broadcast for network efficiency
+- Client prediction provides lag-free local movement (Sprint 3.5)
+- Client interpolation for smooth opponent rendering
 - Server authority prevents cheating
 
 **Key Features:**
@@ -292,7 +331,15 @@ See **docs/SPRINT-2.5-SUMMARY.md** and **docs/features/admin-ui.md**.
 - Weapon-based attacks with cooldowns
 - Dodge roll with deterministic i-frames (no RNG)
 - Server-authoritative positions, damage, hit detection
-- Client interpolation for smooth opponent movement
+- Client interpolation for smooth opponent/projectile movement
+- Input validation and rate limiting (anti-cheat)
+- Deterministic floating-point physics
+
+**Scaling Considerations (Architecture Audit):**
+- Increase tick rate to 60Hz for production (better hit detection)
+- Throttle broadcast to 20Hz (network efficiency)
+- Input buffering and validation server-side
+- Fixed timestep simulation for determinism
 
 **Alternative Considered:** Turn-based with 1000ms ticks (simpler but less engaging)
 
@@ -339,6 +386,76 @@ See **docs/SPRINT-2.5-SUMMARY.md** and **docs/features/admin-ui.md**.
 - Clearer separation of concerns
 
 **Deployment:** Railway or Render for game server, Vercel for frontend
+
+### 8. Match Persistence: Ephemeral Demo → Persistent Production
+**Decision:** Matches ephemeral in demo (Sprint 1-4), add persistence in Sprint 5 for progression/loot
+
+**Rationale:**
+- **Demo (Sprint 1-4):** Ephemeral matches
+  - Faster iteration (no DB schema for matches)
+  - Simpler server (no persistence layer during combat)
+  - Focus on proving combat mechanics are fun
+- **Sprint 5+:** Minimal persistence
+  - Match results stored after completion
+  - Enables XP/loot rewards
+  - Enables match history
+  - Foundation for disconnect handling (Sprint 6)
+
+**What Gets Persisted (Sprint 5+):**
+- Match results: winner, duration, basic stats
+- Events log: compressed for potential replay/debugging
+- XP/loot awards: tied to match completion
+
+**What Stays Ephemeral:**
+- Active match state (in-memory only during combat)
+- Real-time tick data (not written to DB every 50ms)
+
+**Future Considerations:**
+- Disconnect handling: snapshot state for reconnection (Sprint 6)
+- Dispute resolution: full event logs for high-stakes matches
+- Analytics: aggregated stats for balance tuning
+
+**Trade-offs:**
+- Ephemeral = fast iteration, but disconnects lose match
+- Persistence = match history + progression, but adds complexity
+
+### 9. Scalability Path: Single Server → Horizontal Scaling
+**Decision:** Demo runs on single game server, production adds horizontal scaling infrastructure
+
+**Demo (Sprint 1-5):**
+- Single Node.js game server instance
+- All matches in one process (memory)
+- Good for ~50-100 concurrent matches
+- Simple deployment, fast iteration
+
+**Production (Sprint 6+):**
+- **Sticky sessions** via load balancer (socket.io-redis adapter)
+- **Redis pub/sub** for cross-server event coordination
+- Multiple game server instances (horizontal scaling)
+- Each instance handles subset of matches
+- WebSocket connections sticky to specific server
+- Good for ~1,000+ concurrent players
+
+**Scaling Bottlenecks (Architecture Audit Findings):**
+- ⚠ Node.js single-threaded: Run one process per core
+- ⚠ 20Hz match loops: Can bottleneck CPU (upgrade to 60Hz internal in Sprint 6)
+- ⚠ WebSocket scaling: Needs sticky sessions + shared state layer
+
+**Sprint 6 Improvements:**
+- Add Redis for pub/sub and session management
+- Implement sticky sessions with socket.io-redis
+- Increase internal tick to 60Hz, throttle broadcast to 20Hz
+- Add monitoring for match load per server
+- Graceful failover for crashed servers
+
+**Deployment Architecture (Production):**
+```
+[Load Balancer + Sticky Sessions]
+          ↓
+    [Game Server 1] ← Redis → [Game Server 2]
+          ↓                          ↓
+    [Matches A-M]              [Matches N-Z]
+```
 
 ---
 
@@ -460,6 +577,31 @@ See **docs/SPRINT-2.5-SUMMARY.md** and **docs/features/admin-ui.md**.
 - Mitigation: Strict adherence to sprint plans
 - Reminder: No marketplace, no breeding, no token economics
 
+**5. Scalability and Performance (Architecture Audit)**
+- Risk: Node.js single-threaded bottleneck, 20Hz insufficient for precise hit detection, WebSocket scaling issues
+- Mitigation:
+  - Sprint 6: Upgrade to 60Hz internal simulation, 20Hz broadcast
+  - Sprint 6: Add Redis pub/sub + sticky sessions for horizontal scaling
+  - Sprint 7: Deploy multi-instance with load balancer
+- Monitoring: Track match load per server, alert on CPU/memory thresholds
+- Reference: See `docs/architecture-audit.md` for full analysis
+
+**6. Match State Volatility**
+- Risk: Server crashes lose active matches, disputes for high-stakes games
+- Mitigation:
+  - Sprint 5: Add match persistence (results + events)
+  - Sprint 6: Snapshot state for disconnect handling
+  - Future: Headless validator for dispute resolution (high-stakes matches)
+- Trade-off: Persistence adds complexity but required for progression/reliability
+
+**7. Determinism and Floating-Point Drift**
+- Risk: Physics calculations desync across platforms (floating-point precision)
+- Mitigation:
+  - Use fixed timestep simulation (50ms ticks)
+  - Sprint 7: Determinism testing suite
+  - Consider: Fixed-point math for critical calculations (future)
+- Server authority prevents gameplay impact, but replays may drift
+
 ---
 
 ## Out of Scope (Explicitly Excluded)
@@ -509,13 +651,21 @@ docs/
 │   ├── 05-sprint-4-weapons-projectiles.md
 │   ├── 06-sprint-5-progression-loot.md
 │   ├── 07-sprint-6-multiplayer.md
-│   └── 08-sprint-7-deployment.md
+│   ├── 08-sprint-7-deployment.md
+│   └── sprint-3.5.md
 ├── architecture.md
+├── architecture-audit.md    # Performance, scalability, reliability review
 ├── features/
-│   └── combat.md
+│   ├── combat.md
+│   ├── equipment.md
+│   └── admin-ui.md
+├── data-glossary.md          # Database & game data reference
 ├── mainnet-migration.md
 ├── SPRINT-1-SUMMARY.md
 ├── SPRINT-2-SUMMARY.md
+├── SPRINT-2.5-SUMMARY.md
+├── SPRINT-3.5-SUMMARY.md
+├── SPRINT-4-SUMMARY.md
 ├── api/                    # (as added)
 │   ├── rest-api.md
 │   └── websocket-protocol.md

@@ -1,13 +1,19 @@
-# Sprint 5: Progression & Loot Systems
+# Sprint 5: Progression & Loot Systems + Match Persistence
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Gladiators level up, unlock skills, and earn equipment with rarity tiers
+**Goal:** Gladiators level up, unlock skills, and earn equipment; transition from ephemeral to persistent matches
 
 **Duration:** Week 6-7
 **Prerequisites:** Sprint 4 complete (weapons & projectiles working)
 
-**Architecture:** XP-based leveling, skill tree with 3 branches per class, loot generation engine, crafting system
+**Architecture Changes (from Architecture Audit):**
+- Transition from ephemeral to persistent matches
+- Match results written to DB after completion
+- Foundation for disconnect handling (Sprint 6)
+- XP/loot awarded from persisted match results
+
+**Architecture:** XP-based leveling, skill tree with 3 branches per class, loot generation engine, crafting system, match persistence layer
 
 **Tech Stack:**
 - Prisma (progression data)
@@ -31,11 +37,154 @@
 3. Item added to user inventory (Equipment rows)
 4. **Equip** via **GladiatorEquippedItem** (slot-based): one row per (gladiatorId, slot). Slots: MAIN_HAND, OFF_HAND, HELMET, CHEST, GAUNTLETS, GREAVES. No hardcoded equippedWeaponId/equippedArmorId in new code.
 
-**References:** **docs/features/equipment.md**, **docs/data-glossary.md** (Equipment, EquipmentTemplate, GladiatorEquippedItem, §8.3 rolledMods).
+**References:** **docs/features/equipment.md**, **docs/data-glossary.md** (Equipment, EquipmentTemplate, GladiatorEquippedItem, §8.3 rolledMods), **docs/architecture-audit.md** (match persistence rationale).
+
+---
+
+## Task 0: Match Persistence (3 hours)
+
+**Goal:** Store match results and events to enable XP/loot awards and match history
+
+### Update Match Schema
+
+**File:** `packages/database/prisma/schema.prisma`
+
+Ensure Match model includes:
+```prisma
+model Match {
+  id                  String   @id @default(uuid())
+  player1Id           String
+  player1GladiatorId  String
+  player2Id           String?  // null for CPU
+  player2GladiatorId  String?
+  isCpuMatch          Boolean  @default(false)
+  winnerId            String?  // Set after completion
+  matchLog            Json     // Compressed event log
+  durationSeconds     Int
+  createdAt           DateTime @default(now())
+  completedAt         DateTime?
+
+  player1             User     @relation("Player1Matches", fields: [player1Id], references: [id])
+  player2             User?    @relation("Player2Matches", fields: [player2Id], references: [id])
+}
+```
+
+### Persist Match Results
+
+**File:** `apps/game-server/src/services/match-instance.ts` (update)
+
+```typescript
+import { prisma } from '@gladiator/database/src/client'
+
+export class MatchInstance {
+  // ... existing code ...
+
+  public async stop(): Promise<void> {
+    if (this.tickInterval) {
+      clearInterval(this.tickInterval)
+      this.tickInterval = null
+    }
+
+    if (this.status === MatchStatus.InProgress) {
+      this.status = MatchStatus.Completed
+
+      // **NEW: Persist match results to DB**
+      await this.persistMatchResult()
+    }
+
+    console.log(`Match ${this.config.matchId} stopped`)
+  }
+
+  private async persistMatchResult(): Promise<void> {
+    const winnerId = this.engine.getWinner()
+    const duration = (Date.now() - this.matchStartTime) / 1000
+
+    // Map combatant ID to gladiator ID
+    const winnerGladiatorId = this.mapCombatantToGladiator(winnerId || '')
+
+    try {
+      // Write match result to database
+      await prisma.match.update({
+        where: { id: this.config.matchId },
+        data: {
+          winnerId: winnerGladiatorId,
+          durationSeconds: Math.floor(duration),
+          completedAt: new Date(),
+          // Store compressed event log (for potential replay/debugging)
+          matchLog: this.compressEvents(this.allEvents),
+        },
+      })
+
+      console.log(`Match ${this.config.matchId} persisted: winner=${winnerGladiatorId}`)
+    } catch (error) {
+      console.error('Failed to persist match result:', error)
+      // Don't throw - match is over, just log the error
+    }
+  }
+
+  private compressEvents(events: CombatEvent[]): any {
+    // For demo: just store limited events
+    // Future: compress with pako or similar
+    return events.slice(-100) // Keep last 100 events
+  }
+}
+```
+
+### Match History API
+
+**File:** `apps/web/app/api/matches/history/route.ts`
+
+```typescript
+import { prisma } from '@gladiator/database/src/client'
+import { getServerSession } from 'next-auth'
+
+export async function GET(req: Request) {
+  const session = await getServerSession()
+  if (!session?.user?.id) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const matches = await prisma.match.findMany({
+    where: {
+      OR: [
+        { player1Id: session.user.id },
+        { player2Id: session.user.id },
+      ],
+      completedAt: { not: null },
+    },
+    orderBy: { completedAt: 'desc' },
+    take: 20,
+    include: {
+      player1: { select: { username: true } },
+      player2: { select: { username: true } },
+    },
+  })
+
+  return Response.json({ matches })
+}
+```
+
+### Match History UI
+
+**File:** `apps/web/app/matches/page.tsx`
+
+- Display list of past matches
+- Show winner, duration, date
+- Filter by CPU vs PvP
+- Click to view details (future: replay)
+
+### Verification
+
+- [ ] Match results persisted after completion
+- [ ] Winner ID correctly mapped
+- [ ] Match history API returns user's matches
+- [ ] Match history UI displays correctly
 
 ---
 
 ## Task 1: XP and Leveling (2 hours)
+
+**Goal:** Award XP after match completion (uses Task 0 persistence)
 
 ### Leveling Service
 
@@ -92,6 +241,55 @@ export class ProgressionService {
 
   static getXPForLevel(level: number): number {
     return level * 100
+  }
+}
+```
+
+### Award XP After Match Completion
+
+**File:** `apps/game-server/src/services/match-instance.ts` (update `persistMatchResult`)
+
+```typescript
+import { ProgressionService } from './progression-service'
+import { LootService } from './loot-service' // Task 3
+
+private async persistMatchResult(): Promise<void> {
+  const winnerId = this.engine.getWinner()
+  const duration = (Date.now() - this.matchStartTime) / 1000
+
+  const winnerGladiatorId = this.mapCombatantToGladiator(winnerId || '')
+  const loserGladiatorId = winnerId === this.config.player1.gladiatorId
+    ? this.config.player2?.gladiatorId || 'cpu'
+    : this.config.player1.gladiatorId
+
+  try {
+    // 1. Persist match result
+    await prisma.match.update({
+      where: { id: this.config.matchId },
+      data: {
+        winnerId: winnerGladiatorId,
+        durationSeconds: Math.floor(duration),
+        completedAt: new Date(),
+        matchLog: this.compressEvents(this.allEvents),
+      },
+    })
+
+    // 2. Award XP (winner gets 100, loser gets 25)
+    if (winnerGladiatorId && winnerGladiatorId !== 'cpu') {
+      await ProgressionService.awardXP(winnerGladiatorId, 100)
+    }
+    if (loserGladiatorId && loserGladiatorId !== 'cpu') {
+      await ProgressionService.awardXP(loserGladiatorId, 25)
+    }
+
+    // 3. Award loot (Task 3)
+    if (winnerGladiatorId && winnerGladiatorId !== 'cpu') {
+      await LootService.generateLoot(winnerGladiatorId)
+    }
+
+    console.log(`Match ${this.config.matchId} persisted: winner=${winnerGladiatorId}`)
+  } catch (error) {
+    console.error('Failed to persist match result:', error)
   }
 }
 ```

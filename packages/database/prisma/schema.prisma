@@ -33,6 +33,10 @@ model User {
   friendOf     Friend[]    @relation("FriendOf")
   challenges   Challenge[] @relation("Challenger")
   challengedBy Challenge[] @relation("Opponent")
+
+  // Sprint 5: Loot & Economy
+  lootBoxes LootBox[] @relation("UserLootBoxes")
+  gold      UserGold? @relation("UserGold")
 }
 
 model Gladiator {
@@ -41,7 +45,7 @@ model Gladiator {
   ownerId String
   owner   User   @relation(fields: [ownerId], references: [id])
 
-  class String // Duelist, Brute, Assassin
+  class String // Duelist, Brute, Assassin, Mage
   level Int    @default(1)
   xp    Int    @default(0)
 
@@ -103,6 +107,9 @@ model Equipment {
   equippedByWeapon Gladiator[]             @relation("EquippedWeapon")
   equippedByArmor  Gladiator[]             @relation("EquippedArmor")
   equippedBy       GladiatorEquippedItem[]
+
+  // Sprint 5: Loot Box rewards
+  lootBoxRewards LootBox[] @relation("LootBoxRewards")
 }
 
 model Match {
@@ -115,12 +122,22 @@ model Match {
   player2Gladiator   Gladiator? @relation("Gladiator2Matches", fields: [player2GladiatorId], references: [id])
 
   isCpuMatch Boolean @default(false)
+  matchType  String  @default("cpu") // cpu, ranked, casual
 
   winnerId        String? // Gladiator ID of winner
-  matchLog        Json // Array of action logs
-  durationSeconds Int
+  matchLog        Json    @default("[]") // Array of action logs
+  durationSeconds Int     @default(0)
 
-  createdAt DateTime @default(now())
+  // Match stats (Sprint 5)
+  matchStats Json @default("{}") // { damageDealt, dodgesUsed, attacksLanded }
+
+  // Rewards (Sprint 5)
+  rewardType   String? // loot_box_key, gold, eth
+  rewardAmount Int?    @default(0)
+  lootBoxTier  String? // wooden, bronze, silver, gold
+
+  createdAt   DateTime  @default(now())
+  completedAt DateTime? // Set when match ends
 
   player1Id String
   player1   User   @relation("Player1Matches", fields: [player1Id], references: [id])
@@ -129,6 +146,40 @@ model Match {
   player2   User?   @relation("Player2Matches", fields: [player2Id], references: [id])
 
   challenge Challenge?
+
+  @@index([completedAt])
+  @@index([player1Id, completedAt])
+  @@index([player2Id, completedAt])
+}
+
+// Sprint 5: Loot Box System
+model LootBox {
+  id      String @id @default(uuid())
+  ownerId String
+  owner   User   @relation("UserLootBoxes", fields: [ownerId], references: [id])
+
+  tier   String  @default("wooden") // wooden, bronze, silver, gold
+  opened Boolean @default(false)
+
+  // If opened, track what was rewarded
+  rewardedEquipmentId String?
+  rewardedEquipment   Equipment? @relation("LootBoxRewards", fields: [rewardedEquipmentId], references: [id])
+
+  createdAt DateTime @default(now())
+  openedAt  DateTime?
+
+  @@index([ownerId, opened])
+}
+
+// Sprint 5: Gold Economy
+model UserGold {
+  userId String @id
+  user   User   @relation("UserGold", fields: [userId], references: [id])
+
+  balance Int @default(0) // Gold balance (used for loot boxes, crafting)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Friend {

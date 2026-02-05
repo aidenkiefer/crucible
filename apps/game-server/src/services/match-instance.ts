@@ -13,8 +13,11 @@ import {
   COMBAT_CONSTANTS,
   CombatState,
   CombatEvent,
+  CombatEventType,
 } from '../combat/types'
 import { calculateDerivedStats } from '../combat/damage-calculator'
+import { prisma } from '@gladiator/database/src/client'
+import { awardMatchXP } from './progression'
 
 // ============================================================================
 // Types
@@ -58,6 +61,13 @@ export interface MatchResult {
 // Match Instance
 // ============================================================================
 
+// Sprint 5: Match stats tracking
+interface MatchStats {
+  damageDealt: { player1: number; player2: number }
+  dodgesUsed: { player1: number; player2: number }
+  attacksLanded: { player1: number; player2: number }
+}
+
 export class MatchInstance {
   private config: MatchConfig
   private engine: CombatEngine
@@ -68,6 +78,13 @@ export class MatchInstance {
   private matchStartTime: number
   private stateSnapshots: CombatState[]
   private allEvents: CombatEvent[]
+
+  // Sprint 5: Stats tracking
+  private matchStats: MatchStats = {
+    damageDealt: { player1: 0, player2: 0 },
+    dodgesUsed: { player1: 0, player2: 0 },
+    attacksLanded: { player1: 0, player2: 0 },
+  }
 
   constructor(config: MatchConfig) {
     this.config = config
@@ -113,7 +130,7 @@ export class MatchInstance {
   /**
    * Stop the match
    */
-  public stop(): void {
+  public async stop(): Promise<void> {
     if (this.tickInterval) {
       clearInterval(this.tickInterval)
       this.tickInterval = null
@@ -121,6 +138,9 @@ export class MatchInstance {
 
     if (this.status === MatchStatus.InProgress) {
       this.status = MatchStatus.Completed
+
+      // Sprint 5: Persist match results and award rewards
+      await this.persistMatchResult()
     }
 
     console.log(`Match ${this.config.matchId} stopped`)
@@ -237,6 +257,9 @@ export class MatchInstance {
     const events = this.engine.getEvents()
     this.allEvents.push(...events)
 
+    // Sprint 5: Track stats from events
+    this.trackStats(events)
+
     // Store state snapshot every 10 ticks (0.5 seconds)
     if (this.engine.getState().tickNumber % 10 === 0) {
       this.stateSnapshots.push({ ...this.engine.getState() })
@@ -244,7 +267,11 @@ export class MatchInstance {
 
     // Check if match is over
     if (this.engine.isMatchOver()) {
-      this.stop()
+      // Note: stop() is now async, but called without await here
+      // Match cleanup happens asynchronously after combat ends
+      this.stop().catch(err => {
+        console.error(`Failed to persist match ${this.config.matchId}:`, err)
+      })
     }
   }
 
@@ -319,5 +346,158 @@ export class MatchInstance {
       return this.config.player2.gladiatorId
     }
     return combatantId
+  }
+
+  // ============================================================================
+  // Sprint 5: Match Persistence & Stats Tracking
+  // ============================================================================
+
+  /**
+   * Track stats from combat events
+   */
+  private trackStats(events: CombatEvent[]): void {
+    for (const event of events) {
+      const isPlayer1 = event.combatantId === this.config.player1.gladiatorId
+
+      switch (event.type) {
+        case CombatEventType.DamageTaken:
+          // Damage dealt by the OTHER player
+          if (isPlayer1) {
+            this.matchStats.damageDealt.player2 += event.data?.damage || 0
+          } else if (event.combatantId !== 'cpu') {
+            this.matchStats.damageDealt.player1 += event.data?.damage || 0
+          }
+          break
+
+        case CombatEventType.DodgeActivated:
+          if (isPlayer1) {
+            this.matchStats.dodgesUsed.player1++
+          } else if (event.combatantId !== 'cpu') {
+            this.matchStats.dodgesUsed.player2++
+          }
+          break
+
+        case CombatEventType.ActionPerformed:
+          if (event.data?.actionType === ActionType.Attack) {
+            if (isPlayer1) {
+              this.matchStats.attacksLanded.player1++
+            } else if (event.combatantId !== 'cpu') {
+              this.matchStats.attacksLanded.player2++
+            }
+          }
+          break
+      }
+    }
+  }
+
+  /**
+   * Persist match result to database with rewards
+   */
+  private async persistMatchResult(): Promise<void> {
+    const winnerId = this.engine.getWinner()
+    const duration = (Date.now() - this.matchStartTime) / 1000
+
+    if (!winnerId) {
+      console.error(`Match ${this.config.matchId} ended without winner`)
+      return
+    }
+
+    const winnerGladiatorId = this.mapCombatantToGladiator(winnerId)
+    const loserGladiatorId = winnerId === this.config.player1.gladiatorId
+      ? (this.config.player2?.gladiatorId || 'cpu')
+      : this.config.player1.gladiatorId
+
+    try {
+      // Calculate reward (Sprint 5: 80% chance for Wooden Loot Box on CPU wins)
+      let rewardType: string | null = null
+      let rewardAmount = 0
+      let lootBoxTier: string | null = null
+
+      if (this.config.isCpuMatch && winnerGladiatorId !== 'cpu') {
+        // 80% chance for loot box
+        if (Math.random() < 0.80) {
+          rewardType = 'loot_box_key'
+          rewardAmount = 1
+          lootBoxTier = 'wooden'
+        }
+      }
+
+      // Update match in database
+      await prisma.match.update({
+        where: { id: this.config.matchId },
+        data: {
+          winnerId: winnerGladiatorId,
+          durationSeconds: Math.floor(duration),
+          completedAt: new Date(),
+          matchStats: this.matchStats,
+          rewardType,
+          rewardAmount,
+          lootBoxTier,
+          // Store compressed event log (last 100 events)
+          matchLog: this.compressEvents(this.allEvents),
+        },
+      })
+
+      // Award loot box if applicable
+      if (rewardType === 'loot_box_key' && lootBoxTier) {
+        await this.awardLootBox(winnerGladiatorId, lootBoxTier)
+      }
+
+      // Award XP (Sprint 5: Task 2)
+      // Winner gets 100 XP, loser gets 25 XP
+      if (winnerGladiatorId !== 'cpu') {
+        await awardMatchXP(winnerGladiatorId, true)
+      }
+      if (loserGladiatorId !== 'cpu') {
+        await awardMatchXP(loserGladiatorId, false)
+      }
+
+      console.log(`Match ${this.config.matchId} persisted: winner=${winnerGladiatorId}, reward=${rewardType}`)
+    } catch (error) {
+      console.error('Failed to persist match result:', error)
+      // Don't throw - match is over, just log the error
+    }
+  }
+
+  /**
+   * Compress events for storage (last 100 events only)
+   */
+  private compressEvents(events: CombatEvent[]): any {
+    // For demo: just store last 100 events
+    // Future: Use pako or similar for compression
+    return events.slice(-100)
+  }
+
+  /**
+   * Award loot box to winner (Task 1 will implement this properly)
+   */
+  private async awardLootBox(gladiatorId: string, tier: string): Promise<void> {
+    if (gladiatorId === 'cpu') return
+
+    try {
+      // Get user ID from gladiator
+      const gladiator = await prisma.gladiator.findUnique({
+        where: { id: gladiatorId },
+        select: { ownerId: true },
+      })
+
+      if (!gladiator) {
+        console.error(`Gladiator ${gladiatorId} not found for loot box reward`)
+        return
+      }
+
+      // Create loot box
+      await prisma.lootBox.create({
+        data: {
+          ownerId: gladiator.ownerId,
+          tier,
+          opened: false,
+        },
+      })
+
+      console.log(`✨ Awarded ${tier} loot box to user ${gladiator.ownerId}`)
+    } catch (error) {
+      console.error('Failed to award loot box:', error)
+    }
   }
 }
