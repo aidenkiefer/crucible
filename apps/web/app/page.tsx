@@ -14,7 +14,7 @@ function MenuButton({
   primary = false,
 }: {
   href: string
-  icon: string
+  icon: string | React.ReactNode
   title: string
   description: string
   primary?: boolean
@@ -35,7 +35,7 @@ function MenuButton({
           w-14 h-14 panel-inset flex items-center justify-center text-3xl
           ${primary ? 'border-coliseum-bronze/60' : ''}
         `}>
-          {icon}
+          {typeof icon === 'string' ? icon : icon}
         </div>
         <h3 className={`
           font-display text-xl uppercase tracking-wide
@@ -53,8 +53,21 @@ function MenuButton({
 
 function LandingPage() {
   return (
-    <main className="min-h-screen bg-coliseum-black">
-      <div className="h-1 bg-gradient-to-r from-transparent via-coliseum-bronze to-transparent" />
+    <main
+      className="min-h-screen bg-coliseum-black relative"
+      style={{
+        backgroundImage: 'url(/assets/backgrounds/menu/coliseum-main.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
+      {/* Dark overlay for readability */}
+      <div className="absolute inset-0 bg-coliseum-black/40" />
+
+      {/* Content wrapper */}
+      <div className="relative z-10">
+        <div className="h-1 bg-gradient-to-r from-transparent via-coliseum-bronze to-transparent" />
 
       <div className="max-w-3xl mx-auto px-6 py-12 sm:py-16">
         {/* Hero with torches */}
@@ -157,6 +170,7 @@ function LandingPage() {
           <div className="h-px flex-1 bg-gradient-to-l from-transparent to-coliseum-bronze/20" />
         </div>
       </div>
+      </div>
     </main>
   )
 }
@@ -173,8 +187,20 @@ export default async function Home() {
   const arenaStatus = getArenaStatus()
 
   return (
-    <main className="min-h-screen bg-coliseum-black pt-[90px]">
-      <div className="max-w-2xl mx-auto px-6 py-12">
+    <main
+      className="min-h-screen bg-coliseum-black pt-[90px] relative"
+      style={{
+        backgroundImage: 'url(/assets/backgrounds/menu/coliseum-main.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
+      {/* Dark overlay for readability */}
+      <div className="absolute inset-0 bg-coliseum-black/40" />
+
+      {/* Content wrapper */}
+      <div className="relative z-10 max-w-2xl mx-auto px-6 py-12">
         {/* Game Title */}
         <div className="text-center mb-12">
           <div className="inline-block panel-embossed px-12 py-6 mb-4">
@@ -218,6 +244,12 @@ export default async function Home() {
             description="Challenge friends and view pending matches."
           />
           <MenuButton
+            href="/shop"
+            icon={<img src="/assets/ui/icons/gold.png" alt="Shop" className="w-12 h-12" />}
+            title="The Armory"
+            description="Purchase treasure chests with your gold."
+          />
+          <MenuButton
             href="/mint"
             icon="🔥"
             title="The Forge"
@@ -256,6 +288,7 @@ export default async function Home() {
           )}
           <SignInButton />
         </div>
+      </div>
       </div>
     </main>
   )

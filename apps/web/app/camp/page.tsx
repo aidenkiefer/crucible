@@ -59,11 +59,33 @@ export default function CampPage() {
 
   if (status === 'loading' || loading) {
     return (
-      <main className="min-h-screen bg-coliseum-black">
-        <div className="h-1 bg-gradient-to-r from-transparent via-coliseum-bronze to-transparent" />
-        <div className="max-w-4xl mx-auto px-6 py-16 text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-coliseum-bronze mx-auto" />
-          <p className="text-coliseum-sand/70 mt-4">Loading camp...</p>
+      <main
+        className="min-h-screen bg-coliseum-black relative"
+        style={{
+          backgroundImage: 'url(/assets/backgrounds/camp/camp-scene.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}
+      >
+        {/* Dark overlay */}
+        <div className="absolute inset-0 bg-coliseum-black/50" />
+
+        {/* Campfire in center */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-0">
+          <img
+            src="/assets/backgrounds/camp/campfire.gif"
+            alt="Campfire"
+            className="w-32 h-32 md:w-48 md:h-48"
+          />
+        </div>
+
+        <div className="relative z-10">
+          <div className="h-1 bg-gradient-to-r from-transparent via-coliseum-bronze to-transparent" />
+          <div className="max-w-4xl mx-auto px-6 py-16 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-coliseum-bronze mx-auto" />
+            <p className="text-coliseum-sand/70 mt-4">Loading camp...</p>
+          </div>
         </div>
       </main>
     )
@@ -71,8 +93,28 @@ export default function CampPage() {
 
   if (!session) {
     return (
-      <main className="min-h-screen bg-coliseum-black pt-[90px]">
-        <div className="max-w-2xl mx-auto px-6 py-16 text-center">
+      <main
+        className="min-h-screen bg-coliseum-black pt-[90px] relative"
+        style={{
+          backgroundImage: 'url(/assets/backgrounds/camp/camp-scene.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}
+      >
+        {/* Dark overlay */}
+        <div className="absolute inset-0 bg-coliseum-black/50" />
+
+        {/* Campfire in center */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-0">
+          <img
+            src="/assets/backgrounds/camp/campfire.gif"
+            alt="Campfire"
+            className="w-32 h-32 md:w-48 md:h-48"
+          />
+        </div>
+
+        <div className="relative z-10 max-w-2xl mx-auto px-6 py-16 text-center">
           <div className="panel-embossed p-8">
             <h1 className="font-display text-2xl text-coliseum-sand uppercase mb-4">
               Camp
@@ -91,8 +133,28 @@ export default function CampPage() {
 
   if (!activeGladiator && gladiators.length === 0) {
     return (
-      <main className="min-h-screen bg-coliseum-black pt-[90px]">
-        <div className="max-w-2xl mx-auto px-6 py-16 text-center">
+      <main
+        className="min-h-screen bg-coliseum-black pt-[90px] relative"
+        style={{
+          backgroundImage: 'url(/assets/backgrounds/camp/camp-scene.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}
+      >
+        {/* Dark overlay */}
+        <div className="absolute inset-0 bg-coliseum-black/50" />
+
+        {/* Campfire in center */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-0">
+          <img
+            src="/assets/backgrounds/camp/campfire.gif"
+            alt="Campfire"
+            className="w-32 h-32 md:w-48 md:h-48"
+          />
+        </div>
+
+        <div className="relative z-10 max-w-2xl mx-auto px-6 py-16 text-center">
           <div className="panel-embossed p-8">
             <h1 className="font-display text-2xl text-coliseum-sand uppercase mb-4">
               No Gladiators
@@ -110,8 +172,29 @@ export default function CampPage() {
   }
 
   return (
-    <main className="min-h-screen bg-coliseum-black pt-[90px]">
-      <div className="max-w-7xl mx-auto px-6 py-8">
+    <main
+      className="min-h-screen bg-coliseum-black pt-[90px] relative"
+      style={{
+        backgroundImage: 'url(/assets/backgrounds/camp/camp-scene.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
+      {/* Dark overlay for content readability */}
+      <div className="absolute inset-0 bg-coliseum-black/50" />
+
+      {/* Campfire in center - positioned behind content */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-0">
+        <img
+          src="/assets/backgrounds/camp/campfire.gif"
+          alt="Campfire"
+          className="w-32 h-32 md:w-48 md:h-48"
+        />
+      </div>
+
+      {/* Content wrapper with higher z-index */}
+      <div className="relative z-10 max-w-7xl mx-auto px-6 py-8">
         {/* Side-by-Side Layout (stacks on mobile) */}
         <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-6">
           {/* Left: Character Sheet */}
@@ -196,6 +279,7 @@ export default function CampPage() {
             )}
           </div>
         </div>
+      </div>
       </div>
     </main>
   )

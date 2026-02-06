@@ -17,6 +17,8 @@ interface Gladiator {
   magicResist: number
   arcana: number
   faith: number
+  skillPointsAvailable?: number
+  statPointsAvailable?: number
 }
 
 interface CharacterSheetProps {
@@ -77,13 +79,61 @@ export function CharacterSheet({ gladiator }: CharacterSheetProps) {
           type="stamina"
           size="md"
         />
-        <StatBar
-          label="Experience"
-          value={gladiator.experience}
-          maxValue={xpForNextLevel}
-          type="xp"
-          size="md"
-        />
+
+        {/* Experience with icon */}
+        <div className="flex items-center gap-2">
+          <img
+            src="/assets/ui/icons/XP.png"
+            alt="XP"
+            className="w-5 h-5"
+          />
+          <div className="flex-1">
+            <StatBar
+              label="Experience"
+              value={gladiator.experience}
+              maxValue={xpForNextLevel}
+              type="xp"
+              size="md"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Skill & Stat Points */}
+      <div className="grid grid-cols-2 gap-3">
+        {/* Skill Points */}
+        <div className="panel-inset p-3 flex items-center gap-2">
+          <img
+            src="/assets/ui/icons/skill-point.png"
+            alt="Skill Points"
+            className="w-6 h-6"
+          />
+          <div className="flex-1">
+            <p className="text-coliseum-sand/70 text-xs uppercase tracking-wider">
+              Skill Points
+            </p>
+            <p className="text-coliseum-sand font-bold text-lg">
+              {gladiator.skillPointsAvailable || 0}
+            </p>
+          </div>
+        </div>
+
+        {/* Stat Points */}
+        <div className="panel-inset p-3 flex items-center gap-2">
+          <img
+            src="/assets/ui/icons/bronze.png"
+            alt="Stat Points"
+            className="w-6 h-6"
+          />
+          <div className="flex-1">
+            <p className="text-coliseum-sand/70 text-xs uppercase tracking-wider">
+              Stat Points
+            </p>
+            <p className="text-coliseum-sand font-bold text-lg">
+              {gladiator.statPointsAvailable || 0}
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Attributes Section */}
