@@ -280,7 +280,6 @@ export default function CampPage() {
           </div>
         </div>
       </div>
-      </div>
     </main>
   )
 }

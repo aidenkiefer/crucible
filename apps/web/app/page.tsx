@@ -289,7 +289,6 @@ export default async function Home() {
           <SignInButton />
         </div>
       </div>
-      </div>
     </main>
   )
 }
