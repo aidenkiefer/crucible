@@ -63,7 +63,7 @@ export default function CampPage() {
         className="min-h-screen bg-coliseum-black relative"
         style={{
           backgroundImage: 'url(/assets/backgrounds/camp/camp-background.png)',
-          backgroundSize: 'cover',
+          backgroundSize: 'contain',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
         }}
@@ -97,7 +97,7 @@ export default function CampPage() {
         className="min-h-screen bg-coliseum-black pt-[90px] relative"
         style={{
           backgroundImage: 'url(/assets/backgrounds/camp/camp-background.png)',
-          backgroundSize: 'cover',
+          backgroundSize: 'contain',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
         }}
@@ -137,7 +137,7 @@ export default function CampPage() {
         className="min-h-screen bg-coliseum-black pt-[90px] relative"
         style={{
           backgroundImage: 'url(/assets/backgrounds/camp/camp-background.png)',
-          backgroundSize: 'cover',
+          backgroundSize: 'contain',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
         }}
@@ -176,7 +176,7 @@ export default function CampPage() {
       className="min-h-screen bg-coliseum-black pt-[90px] relative"
       style={{
         backgroundImage: 'url(/assets/backgrounds/camp/camp-background.png)',
-        backgroundSize: 'cover',
+        backgroundSize: 'contain',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
       }}

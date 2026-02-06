@@ -200,21 +200,22 @@ export default function ShopPage() {
           ].map((row, rowIndex) => (
             <div
               key={rowIndex}
-              className="relative"
+              className="relative mx-auto"
               style={{
                 backgroundImage: 'url(/assets/ui/menu-box.png)',
                 backgroundSize: '100% 100%',
                 backgroundRepeat: 'no-repeat',
-                // Slightly taller panel for better vertical breathing room
-                minHeight: '400px', // 125% of previous 320px
-                padding: '40px 40px',
+                // Slightly taller panel with constrained width to avoid overstretching
+                minHeight: '430px',
+                maxWidth: '960px',
+                padding: '40px 48px',
               }}
             >
-              {/* Header strip with per‑chest names in the UI header area */}
-              <div className="absolute top-6 left-0 right-0 flex justify-between px-12">
+              {/* Header strip with per‑chest names aligned to header plaques */}
+              <div className="absolute top-5 left-0 right-0 flex justify-between px-20">
                 {row.map((chest) => (
                   <div key={chest.id} className="w-1/2 text-center">
-                    <h2 className="font-display text-lg md:text-xl text-coliseum-bronze uppercase tracking-wider text-glow-bronze">
+                    <h2 className="font-display text-sm md:text-base text-coliseum-bronze uppercase tracking-[0.25em] text-glow-bronze">
                       {chest.name}
                     </h2>
                   </div>
@@ -222,7 +223,7 @@ export default function ShopPage() {
               </div>
 
               {/* Two chests side‑by‑side inside the parchment area */}
-              <div className="mt-14 grid grid-cols-1 md:grid-cols-2 gap-8 h-full">
+              <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-10 h-full">
                 {row.map((chest) => {
                   const canAfford = goldBalance >= chest.price
                   const isPurchasing = purchasing === chest.id
@@ -230,13 +231,13 @@ export default function ShopPage() {
                   return (
                     <div
                       key={chest.id}
-                      className="flex flex-col items-center justify-center text-center px-4"
+                      className="flex flex-col items-center justify-between text-center px-6 py-4"
                     >
                       {/* Chest image roughly centered in the light parchment zone */}
                       <img
                         src={chest.image}
                         alt={chest.name}
-                        className="w-32 h-32 md:w-40 md:h-40 object-contain mb-3"
+                        className="w-32 h-32 md:w-40 md:h-40 object-contain mb-4"
                       />
 
                       <p className="text-coliseum-sand/70 text-sm mb-4">

@@ -66,7 +66,7 @@ function LandingPage() {
       className="min-h-screen bg-coliseum-black relative"
       style={{
         backgroundImage: 'url(/assets/backgrounds/menu/main-menu-background.png)',
-        backgroundSize: 'cover',
+        backgroundSize: 'contain',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
       }}
@@ -200,7 +200,7 @@ export default async function Home() {
       className="min-h-screen bg-coliseum-black pt-[90px] relative"
       style={{
         backgroundImage: 'url(/assets/backgrounds/menu/main-menu-background.png)',
-        backgroundSize: 'cover',
+        backgroundSize: 'contain',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
       }}
