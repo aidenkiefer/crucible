@@ -223,7 +223,7 @@ export default function ShopPage() {
               </div>
 
               {/* Two chests side‑by‑side inside the parchment area */}
-              <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
+              <div className="mt-14 grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
                 {row.map((chest) => {
                   const canAfford = goldBalance >= chest.price
                   const isPurchasing = purchasing === chest.id
@@ -234,7 +234,7 @@ export default function ShopPage() {
                       className="flex flex-col items-center justify-between text-center px-4 py-2"
                     >
                       {/* Chest image roughly centered in the light parchment zone */}
-                      <div className="mt-2 mb-2">
+                      <div className="mt-3 mb-3">
                         <img
                           src={chest.image}
                           alt={chest.name}
