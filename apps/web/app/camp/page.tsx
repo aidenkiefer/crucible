@@ -62,7 +62,7 @@ export default function CampPage() {
       <main
         className="min-h-screen bg-coliseum-black relative"
         style={{
-          backgroundImage: 'url(/assets/backgrounds/camp/camp-scene.png)',
+          backgroundImage: 'url(/assets/backgrounds/camp/camp-background.png)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
@@ -96,7 +96,7 @@ export default function CampPage() {
       <main
         className="min-h-screen bg-coliseum-black pt-[90px] relative"
         style={{
-          backgroundImage: 'url(/assets/backgrounds/camp/camp-scene.png)',
+          backgroundImage: 'url(/assets/backgrounds/camp/camp-background.png)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
@@ -136,7 +136,7 @@ export default function CampPage() {
       <main
         className="min-h-screen bg-coliseum-black pt-[90px] relative"
         style={{
-          backgroundImage: 'url(/assets/backgrounds/camp/camp-scene.png)',
+          backgroundImage: 'url(/assets/backgrounds/camp/camp-background.png)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
@@ -175,7 +175,7 @@ export default function CampPage() {
     <main
       className="min-h-screen bg-coliseum-black pt-[90px] relative"
       style={{
-        backgroundImage: 'url(/assets/backgrounds/camp/camp-scene.png)',
+        backgroundImage: 'url(/assets/backgrounds/camp/camp-background.png)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',

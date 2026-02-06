@@ -23,30 +23,39 @@ function MenuButton({
     <Link
       href={href}
       className={`
-        group relative block p-6 transition-all duration-150
+        group relative block transition-all duration-150
         ${primary
           ? 'btn-raised border-coliseum-bronze hover:brightness-110'
           : 'btn-raised hover:brightness-110'
         }
       `}
     >
-      <div className="flex items-center gap-4 mb-3">
-        <div className={`
-          w-14 h-14 panel-inset flex items-center justify-center text-3xl
-          ${primary ? 'border-coliseum-bronze/60' : ''}
-        `}>
+      <div
+        className={`
+          aspect-square min-w-[7rem] sm:min-w-[8rem]
+          flex flex-col items-center justify-center gap-2
+        `}
+      >
+        <div
+          className={`
+            w-12 h-12 panel-inset flex items-center justify-center text-2xl
+            ${primary ? 'border-coliseum-bronze/60' : ''}
+          `}
+        >
           {typeof icon === 'string' ? icon : icon}
         </div>
-        <h3 className={`
-          font-display text-xl uppercase tracking-wide
+        <h3
+          className={`
+          font-display text-sm uppercase tracking-wide text-center
           ${primary ? 'text-coliseum-bronze text-glow-bronze' : 'text-coliseum-sand'}
-        `}>
+        `}
+        >
           {title}
         </h3>
+        <p className="text-coliseum-sand/70 text-[11px] leading-snug text-center px-2">
+          {description}
+        </p>
       </div>
-      <p className="text-coliseum-sand/70 text-sm leading-relaxed pl-[72px]">
-        {description}
-      </p>
     </Link>
   )
 }
@@ -56,7 +65,7 @@ function LandingPage() {
     <main
       className="min-h-screen bg-coliseum-black relative"
       style={{
-        backgroundImage: 'url(/assets/backgrounds/menu/coliseum-main.png)',
+        backgroundImage: 'url(/assets/backgrounds/menu/main-menu-background.png)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
@@ -190,7 +199,7 @@ export default async function Home() {
     <main
       className="min-h-screen bg-coliseum-black pt-[90px] relative"
       style={{
-        backgroundImage: 'url(/assets/backgrounds/menu/coliseum-main.png)',
+        backgroundImage: 'url(/assets/backgrounds/menu/main-menu-background.png)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
@@ -217,7 +226,7 @@ export default async function Home() {
         </div>
 
         {/* Main Menu */}
-        <div className="space-y-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8 justify-items-center">
           <MenuButton
             href="/camp"
             icon="⛺"

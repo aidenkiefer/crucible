@@ -192,78 +192,90 @@ export default function ShopPage() {
           </div>
         )}
 
-        {/* Chest Grid - 2x2 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          {CHEST_ITEMS.map((chest) => {
-            const canAfford = goldBalance >= chest.price
-            const isPurchasing = purchasing === chest.id
-
-            return (
-              <div
-                key={chest.id}
-                className="relative"
-                style={{
-                  backgroundImage: 'url(/assets/ui/menu-box.png)',
-                  backgroundSize: '100% 100%',
-                  backgroundRepeat: 'no-repeat',
-                  minHeight: '280px',
-                  padding: '24px',
-                }}
-              >
-                {/* Header Area - Chest Name */}
-                <div className="absolute top-6 left-1/2 -translate-x-1/2 w-[80%] text-center">
-                  <h2 className="font-display text-xl text-coliseum-bronze uppercase tracking-wider text-glow-bronze">
-                    {chest.name}
-                  </h2>
-                </div>
-
-                {/* Content Area */}
-                <div className="flex flex-col items-center justify-center h-full pt-8">
-                  {/* Chest Image */}
-                  <img
-                    src={chest.image}
-                    alt={chest.name}
-                    className="w-32 h-32 object-contain mb-3"
-                  />
-
-                  {/* Description */}
-                  <p className="text-coliseum-sand/70 text-sm text-center mb-4 px-4">
-                    {chest.description}
-                  </p>
-
-                  {/* Price & Purchase Button */}
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="flex items-center gap-2">
-                      <img
-                        src="/assets/ui/icons/gold.png"
-                        alt="Gold"
-                        className="w-6 h-6"
-                      />
-                      <span className="text-coliseum-sand font-bold text-xl">
-                        {chest.price}
-                      </span>
-                    </div>
-
-                    <button
-                      onClick={() => handlePurchase(chest)}
-                      disabled={!canAfford || isPurchasing}
-                      className={`btn-raised px-8 py-2 text-sm transition-all ${
-                        !canAfford || isPurchasing
-                          ? 'opacity-50 cursor-not-allowed'
-                          : 'hover:brightness-110'
-                      }`}
-                    >
-                      {isPurchasing
-                        ? 'Purchasing...'
-                        : canAfford
-                          ? 'Purchase'
-                          : 'Insufficient Gold'}
-                    </button>
+        {/* Chest Grid: UI panels 2x1, chests 2x2 */}
+        <div className="flex flex-col gap-8 mb-8">
+          {[
+            CHEST_ITEMS.slice(0, 2),
+            CHEST_ITEMS.slice(2, 4),
+          ].map((row, rowIndex) => (
+            <div
+              key={rowIndex}
+              className="relative"
+              style={{
+                backgroundImage: 'url(/assets/ui/menu-box.png)',
+                backgroundSize: '100% 100%',
+                backgroundRepeat: 'no-repeat',
+                minHeight: '320px',
+                padding: '32px 40px',
+              }}
+            >
+              {/* Header strip with per‑chest names in the UI header area */}
+              <div className="absolute top-6 left-0 right-0 flex justify-between px-12">
+                {row.map((chest) => (
+                  <div key={chest.id} className="w-1/2 text-center">
+                    <h2 className="font-display text-lg md:text-xl text-coliseum-bronze uppercase tracking-wider text-glow-bronze">
+                      {chest.name}
+                    </h2>
                   </div>
-                </div>
+                ))}
               </div>
-            )
-          })}
+
+              {/* Two chests side‑by‑side inside the parchment area */}
+              <div className="mt-14 grid grid-cols-1 md:grid-cols-2 gap-8 h-full">
+                {row.map((chest) => {
+                  const canAfford = goldBalance >= chest.price
+                  const isPurchasing = purchasing === chest.id
+
+                  return (
+                    <div
+                      key={chest.id}
+                      className="flex flex-col items-center justify-center text-center px-4"
+                    >
+                      {/* Chest image roughly centered in the light parchment zone */}
+                      <img
+                        src={chest.image}
+                        alt={chest.name}
+                        className="w-32 h-32 md:w-40 md:h-40 object-contain mb-3"
+                      />
+
+                      <p className="text-coliseum-sand/70 text-sm mb-4">
+                        {chest.description}
+                      </p>
+
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="flex items-center gap-2">
+                          <img
+                            src="/assets/ui/icons/gold.png"
+                            alt="Gold"
+                            className="w-6 h-6"
+                          />
+                          <span className="text-coliseum-sand font-bold text-xl">
+                            {chest.price}
+                          </span>
+                        </div>
+
+                        <button
+                          onClick={() => handlePurchase(chest)}
+                          disabled={!canAfford || isPurchasing}
+                          className={`btn-raised px-8 py-2 text-sm transition-all ${
+                            !canAfford || isPurchasing
+                              ? 'opacity-50 cursor-not-allowed'
+                              : 'hover:brightness-110'
+                          }`}
+                        >
+                          {isPurchasing
+                            ? 'Purchasing...'
+                            : canAfford
+                              ? 'Purchase'
+                              : 'Insufficient Gold'}
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* Back to Menu */}
