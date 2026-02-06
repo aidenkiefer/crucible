@@ -22,7 +22,7 @@ model User {
   image         String?
   accounts      Account[]
   sessions      Session[]
-  authUserId   String   @unique    // ← This links to auth.users.id
+  authUserId   String?   @unique    // ← This links to auth.users.id
   isAdmin       Boolean @default(false)
   @@index([isAdmin])
 

@@ -10,7 +10,7 @@ export function useSocket() {
 
   useEffect(() => {
     if (!socket) {
-      socket = io(process.env.NEXT_PUBLIC_GAME_SERVER_URL || 'http://localhost:3001', {
+      socket = io(process.env.NEXT_PUBLIC_GAME_SERVER_URL || 'http://localhost:4000', {
         transports: ['websocket'],
       })
 

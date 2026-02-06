@@ -42,6 +42,21 @@ For **Admin UI (Sprint 2.5)** — publish/export and game server bundle loading:
 - Game server: `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` (for BundleLoader to download published bundles)
 - Create a **Supabase Storage** bucket named `gamedata` (Dashboard → Storage → New bucket).
 
+### 3b. Demo/MVP: Required services and environment variables
+
+To have **everything** connected and working for the demo (auth, combat, matchmaking, friends/challenges, mint, admin):
+
+| Service / area | Required? | What to set up | Env variable(s) |
+|----------------|-----------|----------------|-----------------|
+| **Redis** | **Yes** (game server always uses it for Socket.io) | **Local:** Run Redis on port 6379 (`redis-server` or `docker run -p 6379:6379 redis`). **Production:** Redis Cloud, Upstash, etc. | `REDIS_URL` (optional locally; defaults to `redis://localhost:6379`) |
+| **Supabase** | Yes | Project; Database + Storage bucket `gamedata` | `DATABASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`; game server also needs `SUPABASE_URL` (= same as `NEXT_PUBLIC_SUPABASE_URL`) |
+| **NextAuth** | Yes (for login) | Google OAuth app (and optionally Twitter) | `NEXTAUTH_URL`, `NEXTAUTH_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` |
+| **Game server URL** | Yes (for arena, match, quick match, friends) | Where the game server runs | **Web:** `NEXT_PUBLIC_GAME_SERVER_URL` (e.g. `http://localhost:4000` locally). **Game server:** `FRONTEND_URL` for CORS (e.g. `http://localhost:3000`) |
+| **Gladiator NFT / blockchain** | Yes (for mint + listener) | Deploy contract (e.g. Mumbai), get RPC URL | **Web:** `NEXT_PUBLIC_GLADIATOR_NFT_ADDRESS`. **Game server:** same + `POLYGON_MUMBAI_RPC_URL` (and `PRIVATE_KEY` only if you deploy) |
+| **WalletConnect** | Optional (for mint page wallet connect) | Project at [Reown Cloud](https://cloud.reown.com) | `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` |
+
+**Summary:** You **do** need Redis. For local demo, install and run Redis (e.g. `brew install redis && redis-server`, or Docker), then start the game server; no `REDIS_URL` needed if Redis is on `localhost:6379`. For production, set `REDIS_URL` to your hosted Redis URL. All other env vars are in `.env.example`; ensure **both** root `.env` and, if you run the game server from its own directory, that it can see `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `POLYGON_MUMBAI_RPC_URL`, and `NEXT_PUBLIC_GLADIATOR_NFT_ADDRESS` (game server loads from root `.env` via `dotenv.config()` when run from repo root).
+
 ### 4. Database Setup
 
 ```bash
