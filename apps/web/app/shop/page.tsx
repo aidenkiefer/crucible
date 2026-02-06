@@ -212,10 +212,10 @@ export default function ShopPage() {
               }}
             >
               {/* Header strip with per‑chest names aligned to header plaques */}
-              <div className="absolute top-7 left-0 right-0 flex justify-between px-20">
+              <div className="absolute top-6 left-0 right-0 flex justify-between px-20">
                 {row.map((chest) => (
                   <div key={chest.id} className="w-1/2 text-center">
-                    <h2 className="font-display text-sm md:text-base text-coliseum-bronze uppercase tracking-[0.25em] text-glow-bronze">
+                    <h2 className="font-display text-xs md:text-sm text-coliseum-bronze uppercase tracking-[0.25em] text-glow-bronze">
                       {chest.name}
                     </h2>
                   </div>
@@ -223,7 +223,7 @@ export default function ShopPage() {
               </div>
 
               {/* Two chests side‑by‑side inside the parchment area */}
-              <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-10 h-full">
+              <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
                 {row.map((chest) => {
                   const canAfford = goldBalance >= chest.price
                   const isPurchasing = purchasing === chest.id
@@ -231,29 +231,29 @@ export default function ShopPage() {
                   return (
                     <div
                       key={chest.id}
-                      className="flex flex-col items-center justify-between text-center px-6 py-4"
+                      className="flex flex-col items-center justify-between text-center px-4 py-2"
                     >
                       {/* Chest image roughly centered in the light parchment zone */}
-                      <div className="mt-4">
+                      <div className="mt-2 mb-2">
                         <img
                           src={chest.image}
                           alt={chest.name}
-                          className="w-32 h-32 md:w-40 md:h-40 object-contain"
+                          className="w-24 h-24 md:w-28 md:h-28 object-contain"
                         />
                       </div>
 
-                      <p className="text-coliseum-sand/70 text-sm mb-4">
+                      <p className="text-coliseum-sand/70 text-xs mb-3">
                         {chest.description}
                       </p>
 
                       <div className="flex flex-col items-center gap-3">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
                           <img
                             src="/assets/ui/icons/gold.png"
                             alt="Gold"
-                            className="w-6 h-6"
+                            className="w-4 h-4"
                           />
-                          <span className="text-coliseum-sand font-bold text-xl">
+                          <span className="text-coliseum-sand font-bold text-base">
                             {chest.price}
                           </span>
                         </div>
@@ -261,7 +261,7 @@ export default function ShopPage() {
                         <button
                           onClick={() => handlePurchase(chest)}
                           disabled={!canAfford || isPurchasing}
-                          className={`btn-raised px-8 py-2 text-sm -mt-2 transition-all ${
+                          className={`btn-raised px-6 py-1.5 text-xs -mt-1 transition-all ${
                             !canAfford || isPurchasing
                               ? 'opacity-50 cursor-not-allowed'
                               : 'hover:brightness-110'
