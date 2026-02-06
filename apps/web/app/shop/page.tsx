@@ -205,8 +205,9 @@ export default function ShopPage() {
                 backgroundImage: 'url(/assets/ui/menu-box.png)',
                 backgroundSize: '100% 100%',
                 backgroundRepeat: 'no-repeat',
-                minHeight: '320px',
-                padding: '32px 40px',
+                // Slightly taller panel for better vertical breathing room
+                minHeight: '400px', // 125% of previous 320px
+                padding: '40px 40px',
               }}
             >
               {/* Header strip with per‑chest names in the UI header area */}
