@@ -212,7 +212,7 @@ export default function ShopPage() {
               }}
             >
               {/* Header strip with per‑chest names aligned to header plaques */}
-              <div className="absolute top-5 left-0 right-0 flex justify-between px-20">
+              <div className="absolute top-7 left-0 right-0 flex justify-between px-20">
                 {row.map((chest) => (
                   <div key={chest.id} className="w-1/2 text-center">
                     <h2 className="font-display text-sm md:text-base text-coliseum-bronze uppercase tracking-[0.25em] text-glow-bronze">
@@ -234,11 +234,13 @@ export default function ShopPage() {
                       className="flex flex-col items-center justify-between text-center px-6 py-4"
                     >
                       {/* Chest image roughly centered in the light parchment zone */}
-                      <img
-                        src={chest.image}
-                        alt={chest.name}
-                        className="w-32 h-32 md:w-40 md:h-40 object-contain mb-4"
-                      />
+                      <div className="mt-4">
+                        <img
+                          src={chest.image}
+                          alt={chest.name}
+                          className="w-32 h-32 md:w-40 md:h-40 object-contain"
+                        />
+                      </div>
 
                       <p className="text-coliseum-sand/70 text-sm mb-4">
                         {chest.description}
@@ -259,7 +261,7 @@ export default function ShopPage() {
                         <button
                           onClick={() => handlePurchase(chest)}
                           disabled={!canAfford || isPurchasing}
-                          className={`btn-raised px-8 py-2 text-sm transition-all ${
+                          className={`btn-raised px-8 py-2 text-sm -mt-2 transition-all ${
                             !canAfford || isPurchasing
                               ? 'opacity-50 cursor-not-allowed'
                               : 'hover:brightness-110'
