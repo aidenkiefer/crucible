@@ -1,6 +1,7 @@
 import { prisma } from '@gladiator/database/src/client'
 import { getServerSession } from 'next-auth'
 import { NextResponse } from 'next/server'
+import { authOptions } from '@/lib/auth'
 
 /**
  * GET /api/gladiators
@@ -8,7 +9,7 @@ import { NextResponse } from 'next/server'
  */
 export async function GET() {
   try {
-    const session = await getServerSession()
+    const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }

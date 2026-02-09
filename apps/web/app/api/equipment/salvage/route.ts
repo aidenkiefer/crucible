@@ -1,6 +1,7 @@
 import { prisma } from '@gladiator/database/src/client'
 import { getServerSession } from 'next-auth'
 import { NextResponse } from 'next/server'
+import { authOptions } from '@/lib/auth'
 import { calculateSalvageValue } from '@gladiator/shared/src/crafting/crafting-system'
 
 /**
@@ -10,7 +11,7 @@ import { calculateSalvageValue } from '@gladiator/shared/src/crafting/crafting-s
  */
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession()
+    const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }

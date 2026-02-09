@@ -18,7 +18,7 @@ export function PersistentHUD() {
     { href: '/', label: 'Home', icon: '⚔️' },
     { href: '/camp', label: 'Camp', icon: '⛺' },
     { href: '/arena', label: 'Arena', icon: '🏛️' },
-    { href: '/forge', label: 'Forge', icon: '🔨' },
+    { href: '/mint', label: 'Forge', icon: '🔨' },
     { href: '/friends', label: 'Friends', icon: '👥' },
   ]
 

@@ -115,6 +115,19 @@ crucible/
 │       │   ├── wagmi.ts        # Wagmi config, chains
 │       │   ├── sprites/        # Sprint 3: types.ts, SpriteLoader.ts, AnimationPlayer.ts
 │       │   └── admin/         # Admin (Sprint 2.5): validator.ts, exporter.ts
+│       │
+│       └── public/
+│           └── assets/
+│               ├── backgrounds/   # Menu, camp, arena (main-menu-background.png, camp-background.png, campfire.gif)
+│               ├── chests/        # Shop chest images (wooden, bronze, stone, platinum)
+│               ├── items/         # Item icons for inventory UI (EquipmentInventory; template.ui.inventoryImage)
+│               │   ├── commons/     # Common-tier (balanced-armor, iron-sword, spear, steel-dagger, etc.)
+│               │   ├── uncommons/   # Uncommon-tier
+│               │   ├── rares/      # Rare-tier
+│               │   ├── epics/      # Epic-tier
+│               │   └── legendaries/ # Legendary-tier
+│               ├── sprites/     # Character sprites (duelist_base, female_base), animations, manifests
+│               └── ui/          # Buttons, icons, menu-box, pop-up, slots (inventory-slots.png)
 │
 ├── contracts/
 │   ├── hardhat.config.ts       # Network config, Solidity version
@@ -181,6 +194,7 @@ crucible/
 | **Shared physics (client prediction)** | packages/shared/src/physics/* |
 | **Shared combat (weapons, damage, projectiles)** | packages/shared/src/combat/* |
 | **Progression & loot (Sprint 5)** | apps/game-server/src/services/progression.ts, apps/web/app/api/matches/history, api/loot-boxes, api/gladiators/[id]/progression|skills|equip|stats, api/equipment, api/gold/balance, components/loot, gladiators, equipment, skills; packages/shared/src/loot, skills, crafting |
+| **Inventory item icons** | [apps/web/public/assets/items/](apps/web/public/assets/items/) (commons/, uncommons/, rares/, epics/, legendaries/); EquipmentInventory uses template.ui.inventoryImage |
 | **Multiplayer (Sprint 6)** | apps/game-server/src/services/matchmaking-service.ts, input-validator.ts, rate-limiter.ts, disconnect-handler.ts; sockets/matchmaking-handlers.ts, match-handlers.ts; apps/web/app/quick-match/page.tsx, app/friends/page.tsx, app/api/friends/add|accept, app/api/challenges/create|accept |
 | **Runtime game data (bundle loader)** | apps/game-server/src/services/bundle-loader.ts |
 | **Database schema** | [packages/database/prisma/schema.prisma](packages/database/prisma/schema.prisma) |
@@ -265,6 +279,7 @@ crucible/
 - **components/ui/AnimatedTorch.tsx** — Reusable torch with sizes, mirror, glow.
 - **components/auth/** — SignInForm, SignInButton.
 - **components/** — ConnectWallet, MintGladiator, SessionProvider, WagmiProvider.
+- **public/assets/** — Static assets: **backgrounds/** (menu, camp, arena), **chests/** (shop), **items/** (inventory UI icons by rarity: commons/, uncommons/, rares/, epics/, legendaries/ — use template.ui.inventoryImage e.g. `/assets/items/commons/balanced-armor.png`), **sprites/** (character art), **ui/** (buttons, icons, menu-box, slots).
 - **next.config.js**, **tailwind.config.js**, **vercel.json**, **postcss.config.js**, **tsconfig.json**, **.eslintrc.json** — Next/Tailwind/Vercel/TS/ESLint config.
 
 ### contracts
