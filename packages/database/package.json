@@ -16,6 +16,7 @@
     "db:migrate": "prisma migrate dev",
     "seed:admin": "tsx prisma/seed-admin.ts",
     "seed:test-gladiator": "tsx prisma/seed-test-gladiator.ts",
+    "backfill-ui": "tsx scripts/backfill-equipment-ui.ts",
     "clean": "rm -rf node_modules"
   },
   "dependencies": {

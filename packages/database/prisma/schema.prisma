@@ -340,6 +340,9 @@ model EquipmentTemplate {
   subtype String // e.g. "SWORD", "SPEAR", "BOW", "HELM", "CHEST", "STAFF", "SEAL"
   tags    String[] // e.g. ["starter", "melee", "slash"]
 
+  // Display rarity for asset folder placement (COMMON, UNCOMMON, RARE, EPIC, LEGENDARY)
+  rarity String?
+
   // Flexible stat modifiers (template baseline)
   // Example: { "def": 3, "speed": -1, "staminaRegenPct": -5 }
   baseStatMods Json @default("{}")

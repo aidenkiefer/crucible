@@ -6,6 +6,13 @@ import JsonEditor from '../../components/JsonEditor'
 
 const TYPE_OPTIONS = ['WEAPON', 'ARMOR', 'CATALYST', 'TRINKET', 'AUGMENT']
 const SLOT_OPTIONS = ['MAIN_HAND', 'OFF_HAND', 'HELMET', 'CHEST', 'GAUNTLETS', 'GREAVES']
+const RARITY_OPTIONS = [
+  { value: 'COMMON', label: 'Common' },
+  { value: 'UNCOMMON', label: 'Uncommon' },
+  { value: 'RARE', label: 'Rare' },
+  { value: 'EPIC', label: 'Epic' },
+  { value: 'LEGENDARY', label: 'Legendary' },
+] as const
 
 export default function NewEquipmentTemplatePage() {
   const router = useRouter()
@@ -20,6 +27,7 @@ export default function NewEquipmentTemplatePage() {
     type: string
     slot: string
     subtype: string
+    rarity: string
     tags: string[]
     baseStatMods: Record<string, unknown>
     scaling: Record<string, unknown>
@@ -33,6 +41,7 @@ export default function NewEquipmentTemplatePage() {
     type: 'WEAPON',
     slot: 'MAIN_HAND',
     subtype: '',
+    rarity: 'COMMON',
     tags: [],
     baseStatMods: {},
     scaling: {},
@@ -132,7 +141,7 @@ export default function NewEquipmentTemplatePage() {
         <div className="panel p-6 space-y-4 inner-shadow">
           <h2 className="font-display text-2xl uppercase tracking-wide text-coliseum-sand">Classification</h2>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-bold uppercase text-coliseum-sand/70 mb-2">Type *</label>
               <select
@@ -169,6 +178,20 @@ export default function NewEquipmentTemplatePage() {
                 className="input"
                 required
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold uppercase text-coliseum-sand/70 mb-2">Rarity</label>
+              <select
+                value={formData.rarity}
+                onChange={(e) => setFormData({ ...formData, rarity: e.target.value })}
+                className="input"
+              >
+                {RARITY_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+              <p className="text-xs text-coliseum-sand/50 mt-1">Determines asset folder under /assets/items/</p>
             </div>
           </div>
 
@@ -215,6 +238,87 @@ export default function NewEquipmentTemplatePage() {
           </div>
         </div>
 
+        {/* UI Metadata */}
+        <div className="panel p-6 space-y-4 inner-shadow">
+          <h2 className="font-display text-2xl uppercase tracking-wide text-coliseum-sand">UI Metadata</h2>
+          <p className="text-sm text-coliseum-sand/60">Display name and icon for inventory rendering</p>
+
+          <div>
+            <label className="block text-sm font-bold uppercase text-coliseum-sand/70 mb-2">
+              Display Name *
+            </label>
+            <input
+              type="text"
+              value={(formData.ui as any)?.displayName || ''}
+              onChange={(e) => setFormData({
+                ...formData,
+                ui: { ...(formData.ui as any), displayName: e.target.value }
+              })}
+              placeholder={formData.name || 'Iron Longsword'}
+              className="input"
+            />
+            <p className="text-xs text-coliseum-sand/50 mt-1">
+              Name shown in inventory (falls back to template name)
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-bold uppercase text-coliseum-sand/70 mb-2">
+                Icon Source *
+              </label>
+              <select
+                value={(formData.ui as any)?.icon?.source || 'LOCAL_PUBLIC'}
+                onChange={(e) => setFormData({
+                  ...formData,
+                  ui: {
+                    ...(formData.ui as any),
+                    icon: { ...(formData.ui as any)?.icon, source: e.target.value }
+                  }
+                })}
+                className="input"
+              >
+                <option value="LOCAL_PUBLIC">Local Public Assets</option>
+                <option value="SUPABASE_STORAGE">Supabase Storage</option>
+              </select>
+              <p className="text-xs text-coliseum-sand/50 mt-1">Where icon is stored</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold uppercase text-coliseum-sand/70 mb-2">
+                Icon Path *
+              </label>
+              <input
+                type="text"
+                value={(formData.ui as any)?.icon?.path || ''}
+                onChange={(e) => setFormData({
+                  ...formData,
+                  ui: {
+                    ...(formData.ui as any),
+                    icon: { ...(formData.ui as any)?.icon, path: e.target.value }
+                  }
+                })}
+                placeholder={`/assets/items/${formData.rarity?.toLowerCase() || 'commons'}/${formData.key}/icon.png`}
+                className="input font-mono text-sm"
+              />
+              <p className="text-xs text-coliseum-sand/50 mt-1">
+                {(formData.ui as any)?.icon?.source === 'LOCAL_PUBLIC'
+                  ? 'Must start with /assets/'
+                  : 'Storage key (e.g. items/commons/sword/icon.png)'}
+              </p>
+            </div>
+          </div>
+
+          {/* Health warning */}
+          {(!(formData.ui as any)?.displayName || !(formData.ui as any)?.icon?.path) && (
+            <div className="p-3 bg-yellow-900/20 border border-yellow-600/40 text-yellow-200 text-sm">
+              <strong>⚠ Incomplete UI metadata:</strong>
+              {!(formData.ui as any)?.displayName && ' Missing display name.'}
+              {!(formData.ui as any)?.icon?.path && ' Missing icon path.'}
+            </div>
+          )}
+        </div>
+
         {/* JSON Configs */}
         <div className="panel p-6 space-y-4 inner-shadow">
           <h2 className="font-display text-2xl uppercase tracking-wide text-coliseum-sand">Stats & Modifiers (JSON)</h2>
@@ -250,17 +354,6 @@ export default function NewEquipmentTemplatePage() {
               allowedRarities: ['COMMON', 'RARE'],
             })}
             helperText="(Optional) Loot/crafting rarity config"
-          />
-
-          <JsonEditor
-            label="UI Metadata"
-            value={formData.ui}
-            onChange={(val) => setFormData({ ...formData, ui: val })}
-            insertSkeleton={() => ({
-              iconKey: 'sword_iron',
-              spriteKey: 'itm_sword_iron',
-            })}
-            helperText="Icon keys, sprite paths, etc."
           />
         </div>
 

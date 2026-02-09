@@ -1,0 +1,24 @@
+{
+  "equipmentKey": "balanced-armor",
+  "equipmentType": "WEAPON",
+  "slot": "MAIN_HAND",
+  "displayName": "Balanced Armor",
+  "description": "",
+  "rarity": "COMMON",
+  "basePath": "/assets/items/commons/balanced-armor",
+  "icons": {
+    "original": "icon.png",
+    "large": "icon.png",
+    "medium": "icon.png",
+    "small": "icon.png"
+  },
+  "metadata": {
+    "subtype": "",
+    "generatedBy": "seed-item-manifests"
+  },
+  "gameData": {
+    "templateKey": "balanced-armor",
+    "baseStatMods": {},
+    "grantedActions": []
+  }
+}

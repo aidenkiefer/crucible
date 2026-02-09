@@ -8,6 +8,8 @@ interface Equipment {
   type: string
   rarity: string
   rolledMods: any
+  displayName?: string
+  iconUrl?: string
   equippedBy?: Array<{
     id: string
     slot: string
@@ -159,15 +161,34 @@ export function EquipmentInventory({ gladiatorId }: Props) {
               isEquipped ? 'border-green-500/80 bg-green-900/20' : ''
             } hover:border-coliseum-bronze/60 transition-colors cursor-pointer`}
           >
-            {/* Item Icon Placeholder */}
-            <div className="w-full aspect-square panel-inset flex items-center justify-center text-4xl mb-2">
-              {item.type === 'WEAPON' ? '⚔️' : '🛡️'}
+            {/* Item Icon or Emoji Fallback */}
+            <div className="w-full aspect-square panel-inset flex items-center justify-center mb-2 overflow-hidden">
+              {item.iconUrl ? (
+                <img
+                  src={item.iconUrl}
+                  alt={item.displayName || item.name}
+                  className="w-full h-full object-contain"
+                  onError={(e) => {
+                    // Fallback to emoji if image fails to load
+                    e.currentTarget.style.display = 'none'
+                    if (e.currentTarget.nextElementSibling) {
+                      (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'block'
+                    }
+                  }}
+                />
+              ) : null}
+              <div
+                className="text-4xl"
+                style={{ display: item.iconUrl ? 'none' : 'block' }}
+              >
+                {item.type === 'WEAPON' ? '⚔️' : '🛡️'}
+              </div>
             </div>
 
             {/* Item Name and Rarity */}
             <div className="text-center mb-2">
               <h3 className={`font-bold text-sm uppercase ${getRarityColor(item.rarity)}`}>
-                {item.name}
+                {item.displayName || item.name}
               </h3>
               <p className="text-[10px] text-coliseum-sand/60 uppercase tracking-wider">
                 {item.type}

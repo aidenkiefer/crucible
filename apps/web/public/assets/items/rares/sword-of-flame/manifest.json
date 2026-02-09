@@ -1,0 +1,24 @@
+{
+  "equipmentKey": "sword-of-flame",
+  "equipmentType": "WEAPON",
+  "slot": "MAIN_HAND",
+  "displayName": "Sword Of Flame",
+  "description": "",
+  "rarity": "RARE",
+  "basePath": "/assets/items/rares/sword-of-flame",
+  "icons": {
+    "original": "icon.png",
+    "large": "icon.png",
+    "medium": "icon.png",
+    "small": "icon.png"
+  },
+  "metadata": {
+    "subtype": "",
+    "generatedBy": "seed-item-manifests"
+  },
+  "gameData": {
+    "templateKey": "sword-of-flame",
+    "baseStatMods": {},
+    "grantedActions": []
+  }
+}

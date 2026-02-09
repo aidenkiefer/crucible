@@ -1,0 +1,24 @@
+{
+  "equipmentKey": "night-dagger",
+  "equipmentType": "WEAPON",
+  "slot": "MAIN_HAND",
+  "displayName": "Night Dagger",
+  "description": "",
+  "rarity": "RARE",
+  "basePath": "/assets/items/rares/night-dagger",
+  "icons": {
+    "original": "icon.png",
+    "large": "icon.png",
+    "medium": "icon.png",
+    "small": "icon.png"
+  },
+  "metadata": {
+    "subtype": "",
+    "generatedBy": "seed-item-manifests"
+  },
+  "gameData": {
+    "templateKey": "night-dagger",
+    "baseStatMods": {},
+    "grantedActions": []
+  }
+}

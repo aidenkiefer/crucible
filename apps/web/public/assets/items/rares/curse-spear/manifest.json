@@ -1,0 +1,24 @@
+{
+  "equipmentKey": "curse-spear",
+  "equipmentType": "WEAPON",
+  "slot": "MAIN_HAND",
+  "displayName": "Curse Spear",
+  "description": "",
+  "rarity": "RARE",
+  "basePath": "/assets/items/rares/curse-spear",
+  "icons": {
+    "original": "icon.png",
+    "large": "icon.png",
+    "medium": "icon.png",
+    "small": "icon.png"
+  },
+  "metadata": {
+    "subtype": "",
+    "generatedBy": "seed-item-manifests"
+  },
+  "gameData": {
+    "templateKey": "curse-spear",
+    "baseStatMods": {},
+    "grantedActions": []
+  }
+}

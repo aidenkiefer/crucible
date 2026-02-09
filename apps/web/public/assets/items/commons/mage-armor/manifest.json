@@ -1,0 +1,24 @@
+{
+  "equipmentKey": "mage-armor",
+  "equipmentType": "WEAPON",
+  "slot": "MAIN_HAND",
+  "displayName": "Mage Armor",
+  "description": "",
+  "rarity": "COMMON",
+  "basePath": "/assets/items/commons/mage-armor",
+  "icons": {
+    "original": "icon.png",
+    "large": "icon.png",
+    "medium": "icon.png",
+    "small": "icon.png"
+  },
+  "metadata": {
+    "subtype": "",
+    "generatedBy": "seed-item-manifests"
+  },
+  "gameData": {
+    "templateKey": "mage-armor",
+    "baseStatMods": {},
+    "grantedActions": []
+  }
+}

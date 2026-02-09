@@ -1,0 +1,24 @@
+{
+  "equipmentKey": "call-of-the-sea",
+  "equipmentType": "WEAPON",
+  "slot": "MAIN_HAND",
+  "displayName": "Call Of The Sea",
+  "description": "",
+  "rarity": "RARE",
+  "basePath": "/assets/items/rares/call-of-the-sea",
+  "icons": {
+    "original": "icon.png",
+    "large": "icon.png",
+    "medium": "icon.png",
+    "small": "icon.png"
+  },
+  "metadata": {
+    "subtype": "",
+    "generatedBy": "seed-item-manifests"
+  },
+  "gameData": {
+    "templateKey": "call-of-the-sea",
+    "baseStatMods": {},
+    "grantedActions": []
+  }
+}

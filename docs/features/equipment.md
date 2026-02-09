@@ -278,6 +278,8 @@ Runtime combat logic **does not query the database for templates**.
 
 The database is a **tooling layer**, not a runtime dependency.
 
+**Equipment UI metadata:** UI metadata (display name, icon path) lives in `EquipmentTemplate.ui` and is included in published bundles. The Admin UI does **not** create asset folders or manifest files; it only updates the DB. The web app serves equipment via GET `/api/equipment`, which enriches each item with `displayName` and `iconUrl` from the template’s `ui`; the inventory UI renders the icon or falls back to emoji. See [admin-ui.md](admin-ui.md) §2.3 and [data-glossary.md](../data-glossary.md) §4.5.
+
 ---
 
 ## 8. Demo Scope Summary

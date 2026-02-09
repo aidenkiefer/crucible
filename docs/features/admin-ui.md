@@ -69,7 +69,18 @@ Admin UI supports create/read/update/delete for:
 - ActionTemplate
 - (Optional next) SpellTemplate
 
-### 2.3 Validation
+### 2.3 Equipment UI metadata (DB/bundles as source of truth)
+
+Equipment template **UI metadata** (display name, icon path) is stored in the `EquipmentTemplate.ui` JSON column and is the **only** source of truth for inventory rendering. The Admin UI **does not** create asset folders or write `manifest.json` files.
+
+- **Create (POST) and Update (PUT):** Only the database is updated. The backend never writes to the repo filesystem. This allows the Admin UI to work reliably on **Vercel** (read-only filesystem).
+- **Structured form:** The equipment template editor provides dedicated fields for **Display Name**, **Icon Source** (LOCAL_PUBLIC | SUPABASE_STORAGE), and **Icon Path**, instead of a freeform JSON editor.
+- **Validation:** Record-level validation returns `uiWarnings` when UI metadata is incomplete (draft save allowed). Bundle-level validation **blocks publish** when required UI fields are missing for templates in the bundle. See [docs/data-glossary.md](../data-glossary.md) §4.5.
+- **Runtime:** Published bundles include `ui` for each equipment template. The web app serves equipment via GET `/api/equipment`, which enriches each item with `displayName` and `iconUrl` from the template’s `ui`; the inventory UI renders the icon or falls back to emoji.
+
+See also: [docs/plans/summaries/EQUIPMENT-UI-METADATA-IMPLEMENTATION.md](../plans/summaries/EQUIPMENT-UI-METADATA-IMPLEMENTATION.md), [docs/features/equipment.md](equipment.md) (template vs instance model), [docs/data-glossary.md](../data-glossary.md) §4.5.
+
+### 2.4 Validation
 Validation is required at two levels:
 - Record-level validation (on save)
 - Bundle-level validation (before publish)
@@ -82,7 +93,7 @@ Validation must catch:
 - duplicate keys
 - incompatible slot/type/subtype combinations (as rules emerge)
 
-### 2.4 Publishing + Export
+### 2.5 Publishing + Export
 On publish:
 1) Validate all relevant templates in bundle
 2) Freeze bundle version (immutable)

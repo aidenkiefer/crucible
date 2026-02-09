@@ -120,7 +120,7 @@ crucible/
 │           └── assets/
 │               ├── backgrounds/   # Menu, camp, arena (main-menu-background.png, camp-background.png, campfire.gif)
 │               ├── chests/        # Shop chest images (wooden, bronze, stone, platinum)
-│               ├── items/         # Item icons for inventory UI (EquipmentInventory; template.ui.inventoryImage)
+│               ├── items/         # Item icons for inventory UI (EquipmentInventory uses iconUrl from /api/equipment, resolved from template.ui)
 │               │   ├── commons/     # Common-tier (balanced-armor, iron-sword, spear, steel-dagger, etc.)
 │               │   ├── uncommons/   # Uncommon-tier
 │               │   ├── rares/      # Rare-tier
@@ -141,11 +141,16 @@ crucible/
 │
 └── packages/
     ├── database/
-    │   ├── package.json        # Prisma client, build = prisma generate
+    │   ├── package.json        # Prisma client, build = prisma generate; backfill-ui script for equipment UI metadata
     │   ├── prisma/
     │   │   ├── schema.prisma   # User, Gladiator, Equipment, Match (persistence, rewards), LootBox, UserGold (Sprint 5), GameDataBundle, etc.
     │   │   └── migrations/    # add_8_stats_to_gladiator; Sprint 5: Match/LootBox/UserGold as needed
-    │   └── src/client.ts       # Prisma client singleton
+    │   ├── scripts/
+    │   │   └── backfill-equipment-ui.ts  # One-off: populate EquipmentTemplate.ui (displayName, icon) for existing templates
+    │   └── src/
+    │       ├── client.ts       # Prisma client singleton
+    │       ├── index.ts        # Re-exports client, equipment-ui-types
+    │       └── equipment-ui-types.ts  # EquipmentUIMetadata type, validateEquipmentUIMetadata(); used by Admin UI and API
     │
     └── shared/
         ├── package.json
@@ -194,7 +199,7 @@ crucible/
 | **Shared physics (client prediction)** | packages/shared/src/physics/* |
 | **Shared combat (weapons, damage, projectiles)** | packages/shared/src/combat/* |
 | **Progression & loot (Sprint 5)** | apps/game-server/src/services/progression.ts, apps/web/app/api/matches/history, api/loot-boxes, api/gladiators/[id]/progression|skills|equip|stats, api/equipment, api/gold/balance, components/loot, gladiators, equipment, skills; packages/shared/src/loot, skills, crafting |
-| **Inventory item icons** | [apps/web/public/assets/items/](apps/web/public/assets/items/) (commons/, uncommons/, rares/, epics/, legendaries/); EquipmentInventory uses template.ui.inventoryImage |
+| **Inventory item icons** | [apps/web/public/assets/items/](apps/web/public/assets/items/) (commons/, uncommons/, rares/, epics/, legendaries/); [apps/web/app/api/equipment/route.ts](apps/web/app/api/equipment/route.ts) enriches response with displayName, iconUrl from template.ui; EquipmentInventory renders icon or emoji fallback |
 | **Multiplayer (Sprint 6)** | apps/game-server/src/services/matchmaking-service.ts, input-validator.ts, rate-limiter.ts, disconnect-handler.ts; sockets/matchmaking-handlers.ts, match-handlers.ts; apps/web/app/quick-match/page.tsx, app/friends/page.tsx, app/api/friends/add|accept, app/api/challenges/create|accept |
 | **Runtime game data (bundle loader)** | apps/game-server/src/services/bundle-loader.ts |
 | **Database schema** | [packages/database/prisma/schema.prisma](packages/database/prisma/schema.prisma) |
@@ -294,6 +299,9 @@ crucible/
 - **prisma/schema.prisma** — User, Gladiator (8 stats, level, xp, skillPointsAvailable, unlockedSkills), Equipment, Match (matchType, matchStats, rewardType, lootBoxTier, completedAt — Sprint 5), LootBox, UserGold (Sprint 5), GameDataBundle, EquipmentTemplate, ActionTemplate, etc.; migrations.
 - **prisma/migrations/** — add_8_stats_to_gladiator; Sprint 5 migrations as applied.
 - **src/client.ts** — Singleton Prisma client export.
+- **src/equipment-ui-types.ts** — EquipmentUIMetadata type, validateEquipmentUIMetadata(); used by Admin UI and API for template UI metadata.
+- **src/index.ts** — Re-exports client and equipment-ui-types.
+- **scripts/backfill-equipment-ui.ts** — One-off script to populate EquipmentTemplate.ui (displayName, icon) for existing templates; run via `pnpm --filter @gladiator/database backfill-ui`.
 
 ### packages/shared
 
@@ -368,7 +376,22 @@ crucible/
     └── plans/
         ├── implementation/      # Date-stamped implementation plans
         │   ├── 2026-02-04-sprint-3-implementation.md  # Sprint 3 implementation details
-        │   └── 2026-02-05-rpg-ui-implementation-plan.md # RPG UI implementation plan
+        │   ├── 2026-02-05-rpg-ui-implementation-plan.md # RPG UI implementation plan
+        │   └── 2026-02-09-template.md  # Option 1: DB/bundles as source of truth for equipment UI metadata (see specs + tickets)
+        │
+        ├── specs/               # Read-only context for implementation (rules, constraints)
+        │   └── equipment-ui-metadata-db-bundles-spec.md  # Equipment UI metadata: DB + bundle as source of truth, no repo writes
+        │
+        ├── tickets/             # Bounded implementation tasks (one ticket at a time per claude-workflow-opt.md)
+        │   ├── 01-equipment-ui-review-plan-vs-codebase.md   # Review Option 1 plan against codebase (no code changes)
+        │   ├── 02-equipment-ui-remove-manifest-writes.md    # Remove filesystem side-effects from equipment template create
+        │   ├── 03-equipment-ui-formalize-ui-metadata-schema.md
+        │   ├── 04-equipment-ui-admin-ui-metadata-editor.md
+        │   ├── 05-equipment-ui-backfill-ui-metadata.md
+        │   ├── 06-equipment-ui-bundle-export-include-ui.md
+        │   ├── 07-equipment-ui-api-enrich-equipment-response.md
+        │   ├── 08-equipment-ui-inventory-render-icons.md
+        │   └── 09-equipment-ui-validation-ui-metadata.md
         │
         ├── sprints/             # Sprint plan docs (what to build)
         │   ├── 00-MASTER-PLAN.md    # Master plan: goal, success criteria, tech stack, sprints, design decisions, data model, risks
@@ -384,7 +407,8 @@ crucible/
         │   ├── 10-sprint-8-post-demo.md           # Sprint 8: post-demo roadmap
         │   └── sprint-3.5.md                      # Sprint 3.5: client prediction, mouse attacks, match creation, verification
         │
-        └── summaries/           # What was built (sprint completion summaries)
+        └── summaries/           # What was built (sprint completion summaries + feature implementations)
+            ├── EQUIPMENT-UI-METADATA-IMPLEMENTATION.md  # Equipment UI metadata: DB/bundles source of truth, Admin UI structured form, /api/equipment enrichment, inventory icons
             ├── SPRINT-1-SUMMARY.md    # Sprint 1 complete: auth, wallet, mint, event listener, admin
             ├── SPRINT-2-SUMMARY.md    # Sprint 2 complete: 20Hz combat, WASD, sword, dodge, CPU AI, WebSocket
             ├── SPRINT-2.5-SUMMARY.md  # Sprint 2.5 complete: Admin UI — bundles, templates, validate/publish/export, bundle loader
@@ -408,6 +432,7 @@ crucible/
 | **Admin UI (game data authoring, publish/export)** | [docs/features/admin-ui.md](docs/features/admin-ui.md) |
 | **Combat design** | [docs/features/combat.md](docs/features/combat.md), [docs/plans/summaries/SPRINT-2-SUMMARY.md](docs/plans/summaries/SPRINT-2-SUMMARY.md) |
 | **Equipment & loot design** | [docs/features/equipment.md](docs/features/equipment.md), [docs/data-glossary.md](docs/data-glossary.md) §5–8 |
+| **Equipment UI metadata (inventory icons, Admin UI)** | [docs/plans/summaries/EQUIPMENT-UI-METADATA-IMPLEMENTATION.md](docs/plans/summaries/EQUIPMENT-UI-METADATA-IMPLEMENTATION.md), [docs/plans/specs/equipment-ui-metadata-db-bundles-spec.md](docs/plans/specs/equipment-ui-metadata-db-bundles-spec.md), [docs/data-glossary.md](docs/data-glossary.md) §4.5 |
 | **Sprint plans (what to build)** | [docs/plans/sprints/00-MASTER-PLAN.md](docs/plans/sprints/00-MASTER-PLAN.md) … [docs/plans/sprints/10-sprint-8-post-demo.md](docs/plans/sprints/10-sprint-8-post-demo.md) |
 | **What’s been built (Sprints 1–6)** | [docs/plans/summaries/SPRINT-1-SUMMARY.md](docs/plans/summaries/SPRINT-1-SUMMARY.md) … [docs/plans/summaries/SPRINT-6-SUMMARY.md](docs/plans/summaries/SPRINT-6-SUMMARY.md) |
 | **Getting started (dev env)** | [docs/guides/development-setup.md](docs/guides/development-setup.md), [README.md](README.md) § Development |
@@ -417,6 +442,7 @@ crucible/
 | **Future ideas & backlog** | [docs/features/planned-features.md](docs/features/planned-features.md) |
 | **Design (UI, visuals, tone)** | [docs/design/design-guidelines.md](docs/design/design-guidelines.md), [docs/design/ui-rpg-design.md](docs/design/ui-rpg-design.md) |
 | **Agent / Claude instructions** | [CLAUDE.md](CLAUDE.md), [SKILLS_GUIDE.md](SKILLS_GUIDE.md) |
+| **Specs & tickets (implementation workflow)** | [docs/plans/specs/](docs/plans/specs/) (rules/constraints), [docs/plans/tickets/](docs/plans/tickets/) (bounded tasks); [claude-workflow-opt.md](claude-workflow-opt.md) |
 
 ---
 
@@ -437,4 +463,5 @@ crucible/
 ### docs/ (root)
 
 - **architecture.md** — Three-tier architecture (frontend, backend, blockchain); component breakdown (frontend, game server with MatchManager, MatchInstance, CombatEngine, CpuAI, etc., database with schema overview and key models including GameDataBundle, EquipmentTemplate, ActionTemplate, derived combat stats), blockchain layer, data flow (minting, combat CPU, PvP), security, performance, scalability, deployment, technology rationale, future enhancements.
-- **data-glossary.md** — Canonical reference for schema and game data: enums (GameDataStatus, EquipmentType, EquipmentSlot, ActionCategory), User/Friend, Gladiator/GladiatorLoadout, Equipment/GladiatorEquippedItem, Match/Challenge, GameDataBundle, EquipmentTemplate, ActionTemplate, EquipmentTemplateAction; action & attack vocabulary; suggested JSON shapes (§8); derived combat stats (§9); demo scope note (§10); guiding principles (§11).
+- **data-glossary.md** — Canonical reference for schema and game data: enums (GameDataStatus, EquipmentType, EquipmentSlot, ActionCategory), User/Friend, Gladiator/GladiatorLoadout, Equipment/GladiatorEquippedItem, Match/Challenge, GameDataBundle, EquipmentTemplate (§4.5 Equipment UI Metadata), ActionTemplate, EquipmentTemplateAction; action & attack vocabulary; suggested JSON shapes (§8); derived combat stats (§9); demo scope note (§10); guiding principles (§11).
+- **plans/summaries/EQUIPMENT-UI-METADATA-IMPLEMENTATION.md** — Equipment UI metadata implementation: DB/bundles as source of truth, Admin UI structured form (no filesystem writes), /api/equipment enrichment (displayName, iconUrl), inventory icon rendering, validation (warn on save, block publish), backfill script.

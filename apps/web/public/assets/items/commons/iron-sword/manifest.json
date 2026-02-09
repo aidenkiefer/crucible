@@ -1,0 +1,24 @@
+{
+  "equipmentKey": "iron-sword",
+  "equipmentType": "WEAPON",
+  "slot": "MAIN_HAND",
+  "displayName": "Iron Sword",
+  "description": "",
+  "rarity": "COMMON",
+  "basePath": "/assets/items/commons/iron-sword",
+  "icons": {
+    "original": "icon.png",
+    "large": "icon.png",
+    "medium": "icon.png",
+    "small": "icon.png"
+  },
+  "metadata": {
+    "subtype": "",
+    "generatedBy": "seed-item-manifests"
+  },
+  "gameData": {
+    "templateKey": "iron-sword",
+    "baseStatMods": {},
+    "grantedActions": []
+  }
+}

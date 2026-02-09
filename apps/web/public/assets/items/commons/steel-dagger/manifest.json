@@ -1,0 +1,24 @@
+{
+  "equipmentKey": "steel-dagger",
+  "equipmentType": "WEAPON",
+  "slot": "MAIN_HAND",
+  "displayName": "Steel Dagger",
+  "description": "",
+  "rarity": "COMMON",
+  "basePath": "/assets/items/commons/steel-dagger",
+  "icons": {
+    "original": "icon.png",
+    "large": "icon.png",
+    "medium": "icon.png",
+    "small": "icon.png"
+  },
+  "metadata": {
+    "subtype": "",
+    "generatedBy": "seed-item-manifests"
+  },
+  "gameData": {
+    "templateKey": "steel-dagger",
+    "baseStatMods": {},
+    "grantedActions": []
+  }
+}

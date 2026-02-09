@@ -39,3 +39,7 @@ pnpm-debug.log*
 
 agents
 agents/*
+
+CLAUDE.md
+claude-workflow-opt.md
+docs-audit.md

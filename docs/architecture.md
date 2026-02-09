@@ -82,7 +82,7 @@ Gladiator Coliseum is built as a **three-tier architecture** with clear separati
 - `/match/[matchId]` - Real-time combat (Canvas, sprites, WASD + mouse, client prediction, 4 weapons, projectiles, WeaponSelector, MatchHUD; **Sprints 3–4**)
 - `/admin` - Admin dashboard (game data authoring; **Sprint 2.5**)
   - `/admin/bundles` - List/create bundles, validate, publish, activate
-  - `/admin/equipment-templates` - CRUD equipment templates
+  - `/admin/equipment-templates` - CRUD equipment templates (structured UI metadata form; no filesystem writes)
   - `/admin/action-templates` - CRUD action templates
   - Admin routes are protected by middleware; only users with `isAdmin` can access.
 
@@ -213,6 +213,8 @@ Gladiator Coliseum is built as a **three-tier architecture** with clear separati
 
 **Design rule:** Templates (equipment, actions) are authored in the DB and **published to JSON/TS**. Runtime combat logic reads **published static data**, not the database. The DB is an authoring and collaboration layer; instances (player-owned items, equipped gear, gladiators) live in the DB.
 
+**Equipment inventory (web):** GET `/api/equipment` joins each Equipment instance to its EquipmentTemplate and enriches the response with `displayName` and `iconUrl` from `template.ui`. The frontend (`EquipmentInventory`) renders the icon when present and falls back to emoji otherwise; no per-item manifest fetches.
+
 **Schema Overview:**
 
 ```
@@ -270,7 +272,7 @@ Game data (authoring / publishing)
 
 **EquipmentTemplate**
 - key (canonical ID for JSON/TS), name, description, type (WEAPON, ARMOR, CATALYST, TRINKET, AUGMENT), slot (EquipmentSlot), subtype, tags
-- baseStatMods, scaling, rarityRules, ui (JSON)
+- baseStatMods, scaling, rarityRules, **ui (JSON)** — UI metadata (displayName, icon source/path) for inventory and tooltips; included in published bundle; validated on save (warnings) and publish (block if incomplete). Admin UI edits via structured form; no filesystem manifest creation.
 - status, version; bundleId (optional)
 - actions: EquipmentTemplateAction → ActionTemplate (actions granted by this item)
 

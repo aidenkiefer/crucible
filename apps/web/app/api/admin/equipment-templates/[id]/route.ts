@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@gladiator/database/src/client'
+import { validateEquipmentUIMetadata } from '@/lib/admin/validator'
 
 export async function GET(
   req: Request,
@@ -58,6 +59,7 @@ export async function PUT(
       type: data.type,
       slot: data.slot,
       subtype: data.subtype,
+      rarity: data.rarity ?? undefined,
       tags: data.tags,
       baseStatMods: data.baseStatMods,
       scaling: data.scaling,
@@ -79,7 +81,13 @@ export async function PUT(
     },
   })
 
-  return NextResponse.json({ template })
+  // Validate UI metadata and return warnings (allow save for drafts)
+  const uiWarnings = validateEquipmentUIMetadata(template.ui)
+
+  return NextResponse.json({
+    template,
+    ...(uiWarnings.length > 0 && { uiWarnings }),
+  })
 }
 
 export async function DELETE(

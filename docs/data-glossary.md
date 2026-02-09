@@ -341,6 +341,58 @@ Key fields:
 - `actions`: join rows linking template → action definitions
 - `instances`: reverse link to owned `Equipment` rows
 
+#### 4.5 Equipment UI Metadata
+
+The `EquipmentTemplate.ui` JSON field stores UI metadata for rendering equipment in inventory, tooltips, and other game UIs. This metadata is included in published bundles and used by the frontend at runtime.
+
+**TypeScript Type:** `EquipmentUIMetadata` (exported from `@gladiator/database`)
+
+**Schema:**
+
+```typescript
+{
+  // Required fields
+  displayName: string        // Display name for inventory (falls back to template.name)
+  icon: {
+    source: 'LOCAL_PUBLIC' | 'SUPABASE_STORAGE'  // Where icon is stored
+    path: string            // Path or storage key to icon
+    variant?: string        // Optional variant (e.g. "small", "large")
+  }
+
+  // Optional fields
+  shortName?: string         // Short name for compact UI
+  description?: string       // Flavor text
+  rarityFrameKey?: string    // Rarity frame visual key (future)
+  sortOrder?: number         // Sort hint for inventory
+  tags?: string[]            // UI-specific tags (e.g. ["starter", "hidden"])
+}
+```
+
+**Icon Resolution:**
+
+- **LOCAL_PUBLIC:** Icon path must start with `/assets/`. Server returns path as-is for `iconUrl`.
+  - Example: `{ source: "LOCAL_PUBLIC", path: "/assets/items/commons/iron-sword/icon.png" }`
+- **SUPABASE_STORAGE:** Path is a storage key. Server resolves to public or signed URL.
+  - Example: `{ source: "SUPABASE_STORAGE", path: "items/commons/iron-sword/icon.png" }`
+
+**Runtime Consumption:**
+
+Equipment instances are enriched at the API layer (`/api/equipment`) with:
+- `displayName`: from `template.ui.displayName || template.name || equipment.name`
+- `iconUrl`: resolved from `template.ui.icon.source` + `template.ui.icon.path`
+
+Frontend renders `iconUrl` when present; falls back to emoji when missing.
+
+**Validation:**
+
+Required for publish:
+- `ui.displayName` must be a non-empty string
+- `ui.icon.source` must be `"LOCAL_PUBLIC"` or `"SUPABASE_STORAGE"`
+- `ui.icon.path` must be a non-empty string
+- If `source` is `LOCAL_PUBLIC`, `path` must start with `/assets/`
+
+See `validateEquipmentUIMetadata()` helper in `@gladiator/database` for validation logic.
+
 ---
 
 ### `ActionTemplate`

@@ -52,6 +52,7 @@ export async function exportBundleToStorage(
   const basePath = `bundles/${bundle.label}`
 
   // Transform equipment templates for export
+  // IMPORTANT: ui field is REQUIRED for inventory rendering (displayName, iconUrl resolution)
   const equipmentData = bundle.equipmentTemplates.map((et: any) => ({
     key: et.key,
     name: et.name,
@@ -59,11 +60,12 @@ export async function exportBundleToStorage(
     type: et.type,
     slot: et.slot,
     subtype: et.subtype,
+    rarity: et.rarity, // Include rarity for icon path resolution
     tags: et.tags,
     baseStatMods: et.baseStatMods,
     scaling: et.scaling,
     rarityRules: et.rarityRules,
-    ui: et.ui,
+    ui: et.ui, // REQUIRED: UI metadata for inventory (displayName, icon.source, icon.path)
     grantedActions: et.actions.map((a: any) => a.actionTemplate.key),
   }))
 

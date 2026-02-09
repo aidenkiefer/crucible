@@ -305,6 +305,8 @@ After generation, create manifest for each equipment piece:
 
 ## Integration with Equipment System
 
+**Admin UI and asset folders:** When you create an equipment template via the Admin UI, the backend creates the DB row and (when running locally) a folder under `public/assets/items/{raritySlug}/{key}/` with a `manifest.json`. On Vercel, only the DB is updated; folders/manifests must exist in the repo (e.g. pre-seeded). Updating a template in the Admin UI does **not** update the manifest file. See [docs/features/admin-ui.md](../features/admin-ui.md) §2.3 for the full strategy (local vs Vercel, create vs update).
+
 ### Database Template Mapping
 Each generated equipment asset should map to an `EquipmentTemplate` in the database:
 
