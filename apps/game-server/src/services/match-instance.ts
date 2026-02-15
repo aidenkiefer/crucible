@@ -17,6 +17,7 @@ import {
 } from '../combat/types'
 import { calculateDerivedStats } from '../combat/damage-calculator'
 import { buildEffectiveStats, getWeaponCoeff } from './stat-builder'
+import { calculateSkillStatBonuses, TriggeredSkillTracker, checkTriggeredSkills } from './skill-effects'
 import { prisma } from '@gladiator/database/src/client'
 import { awardMatchXP } from './progression'
 
@@ -86,6 +87,9 @@ export class MatchInstance {
     dodgesUsed: { player1: 0, player2: 0 },
     attacksLanded: { player1: 0, player2: 0 },
   }
+
+  // Skill effects tracker (once-per-match triggered skills)
+  private skillTracker: TriggeredSkillTracker = new TriggeredSkillTracker()
 
   constructor(config: MatchConfig) {
     this.config = config
@@ -297,10 +301,14 @@ export class MatchInstance {
   private createCombatant(player: PlayerConfig): Combatant {
     // TODO: Load equipment and unlocked skills from DB
     // const equipment = await loadGladiatorEquipment(player.gladiatorId)
-    // const skills = await loadGladiatorSkills(player.gladiatorId)
+    // const unlockedSkills = await loadGladiatorSkills(player.gladiatorId)
+    const unlockedSkills: string[] = [] // Empty for now
+
+    // Calculate passive stat bonuses from unlocked skills
+    const skillBonuses = calculateSkillStatBonuses(unlockedSkills)
 
     // Build effective stats using wiki formulas (base + equipment + skills)
-    const derivedStats = buildEffectiveStats(player.stats)
+    const derivedStats = buildEffectiveStats(player.stats, undefined, skillBonuses)
 
     // Get weapon coefficient from main-hand weapon template
     const weaponCoeff = getWeaponCoeff() // TODO: Pass actual equipment template key
