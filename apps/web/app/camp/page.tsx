@@ -7,6 +7,7 @@ import { EquipmentInventory } from '@/components/equipment/EquipmentInventory'
 import { LootBoxInventory } from '@/components/loot/LootBoxInventory'
 import { CraftingWorkshop } from '@/components/equipment/CraftingWorkshop'
 import { CharacterSheet } from '@/components/rpg-ui/CharacterSheet'
+import { SkillTree } from '@/components/skills/SkillTree'
 import { useActiveGladiator } from '@/contexts/ActiveGladiatorContext'
 
 interface Gladiator {
@@ -14,7 +15,7 @@ interface Gladiator {
   tokenId: number
   class: string
   level: number
-  experience: number
+  experience?: number
   constitution: number
   strength: number
   dexterity: number
@@ -26,9 +27,10 @@ interface Gladiator {
   xp?: number
   skillPointsAvailable?: number
   statPointsAvailable?: number
+  unlockedSkills?: string[]
 }
 
-type Tab = 'inventory' | 'crafting'
+type Tab = 'inventory' | 'crafting' | 'skills'
 
 export default function CampPage() {
   const { data: session, status } = useSession()
@@ -229,7 +231,7 @@ export default function CampPage() {
           {/* Right: Tabbed Content */}
           <div className="space-y-6">
             {/* Tabs */}
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={() => setTab('inventory')}
@@ -240,6 +242,17 @@ export default function CampPage() {
                 }
               >
                 📦 Inventory
+              </button>
+              <button
+                type="button"
+                onClick={() => setTab('skills')}
+                className={
+                  tab === 'skills'
+                    ? 'btn-pressed px-6 py-3 bg-coliseum-black/60 text-coliseum-bronze border-2 border-coliseum-bronze/50 uppercase tracking-wider font-bold text-sm'
+                    : 'btn-raised uppercase tracking-wider font-bold text-sm'
+                }
+              >
+                🌳 Skills
               </button>
               <button
                 type="button"
@@ -269,6 +282,26 @@ export default function CampPage() {
                   </h2>
                   <EquipmentInventory />
                 </div>
+              </div>
+            )}
+
+            {tab === 'skills' && activeGladiator && (
+              <div className="panel-embossed p-6">
+                <SkillTree
+                  gladiatorId={activeGladiator.id}
+                  gladiatorClass={activeGladiator.class}
+                  unlockedSkills={activeGladiator.unlockedSkills ?? []}
+                  skillPointsAvailable={activeGladiator.skillPointsAvailable ?? 0}
+                  onSkillUnlocked={() => {
+                    fetch('/api/gladiators')
+                      .then((res) => res.json())
+                      .then((data) => {
+                        const list = data.gladiators ?? []
+                        const updated = list.find((g: Gladiator) => g.id === activeGladiator.id)
+                        if (updated) setActiveGladiator(updated)
+                      })
+                  }}
+                />
               </div>
             )}
 
