@@ -1,0 +1,19 @@
+﻿Name,Skill Tree,Min Stats,Max Stats,Notes
+Immutable Core,Valor,"CON 16, DEF 12","CON 30, DEF 22","lets Duelists/Legionnaires dabble (mid CON), but true tanks get peak value"
+Last Bastion,Valor,"CON 16, STR 12","CON 28, STR 24",this makes “bruiser tanks” real; discourages pure DEF-stacking from also being best damage
+Zone of Denial,Valor,"CON 12, DEF 16","CON 20, DEF 30","ensures the control tank must actually be DEF-forward, not just HP sponge"
+Perfect Flow,Instinct,"DEX 16, SPD 14","DEX 30, SPD 24",high ceiling for Duelists; speedcasters can hit it if they invest
+Phase Reposition,Instinct,"DEX 12, SPD 18","DEX 20, SPD 32",primary SPD prevents “DEX-only crit builds” from also being best gap-closers
+Hyper Awareness,Instinct,"CON 12, DEX 16","CON 22, DEX 28","gives glass builds survival options, but requires real durability investment to become oppressive"
+Master Scaling,Discipline,"DEX 16, STR 16","DEX 28, STR 28",this is your “true weapon master” capstone — should demand commitment
+Endless Chain,Discipline,"CON 14, DEX 14","CON 24, DEX 26",this avoids “only offense stats” and forces endurance to sustain the loop
+Disarm Technique,Discipline,"DEF 12, DEX 16","DEF 22, DEX 28",makes disruption builds viable for Legionnaire/Tank hybrids without making Duelist default best disarmer
+Arcane Overload,Intellect,"ARC 16, MR 14","ARC 30, MR 22",forces casters to invest in survivability/anti-magic to reach peak output
+Spell Weaving,Intellect,"ARC 16, STR 12","ARC 28, STR 22",explicitly supports battlemage + spellblade without making pure Mage always best
+Reality Distortion,Intellect,"ARC 12, MR 16","ARC 20, MR 30",makes anti-resource control belong to defensive casters / monks more than glass cannons
+Divine Overflow,Zeal,"CON 14, FTH 16","CON 22, FTH 30",prevents pure heal-bot from also being best DPS unless they invest
+Radiant Conversion,Zeal,"FTH 16, STR 12","FTH 28, STR 22",supports paladin/war-priest/duelist sustain variants cleanly
+Purity Field,Zeal,"CON 16, FTH 12","CON 28, FTH 22","makes “purifier” a durable archetype, not a fragile dispel spammer"
+Predator Momentum,Ferocity,"SPD 12, STR 18","SPD 20, STR 32",keeps execute identity STR-forward; SPD is still relevant but not mandatory-max
+Blood Surge,Ferocity,"SPD 16, STR 14","SPD 28, STR 24",snowball requires tempo and damage; avoids “fast but weak resets forever”
+Frenzy Pressure,Ferocity,"DEF 12, STR 16","DEF 22, STR 28","if you want anti-tank, it should come from bruisers who can stay in range, not pure assassins"

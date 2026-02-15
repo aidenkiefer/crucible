@@ -41,9 +41,12 @@ export async function POST(
       return NextResponse.json({ error: 'Gladiator not found' }, { status: 404 })
     }
 
-    // Verify equipment ownership
+    // Verify equipment ownership and get template
     const equipment = await prisma.equipment.findUnique({
       where: { id: equipmentId },
+      include: {
+        template: true,
+      },
     })
 
     if (!equipment || equipment.ownerId !== session.user.id) {
@@ -62,6 +65,24 @@ export async function POST(
         { error: 'Can only equip armor in CHEST slot' },
         { status: 400 }
       )
+    }
+
+    // Validate class restriction (if template has allowedClass set)
+    if (equipment.template?.allowedClass) {
+      const allowedClass = equipment.template.allowedClass
+
+      // Skip validation for universal items
+      if (allowedClass !== 'universal') {
+        // Check if gladiator's class matches
+        if (allowedClass !== gladiator.class) {
+          return NextResponse.json(
+            {
+              error: `This ${equipment.type.toLowerCase()} is for ${allowedClass} only. Your gladiator is a ${gladiator.class}.`
+            },
+            { status: 400 }
+          )
+        }
+      }
     }
 
     // Unequip existing item in that slot (if any)

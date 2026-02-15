@@ -2,7 +2,11 @@ import { prisma } from '@gladiator/database/src/client'
 import { getServerSession } from 'next-auth'
 import { NextResponse } from 'next/server'
 import { authOptions } from '@/lib/auth'
-import { getSkill, canUnlockSkill } from '@gladiator/shared/src/skills/skill-trees'
+import {
+  getSkill,
+  canUnlockSkill,
+  calculateSkillPointsSpent,
+} from '@gladiator/shared/src/skills/skill-trees'
 
 /**
  * POST /api/gladiators/[gladiatorId]/skills/unlock
@@ -44,8 +48,8 @@ export async function POST(
       return NextResponse.json({ error: 'Skill not found' }, { status: 404 })
     }
 
-    // Check if can unlock
-    const unlockedSkills = gladiator.unlockedSkills as string[]
+    // Check if can unlock (prerequisite and not already unlocked)
+    const unlockedSkills = (gladiator.unlockedSkills as string[]) || []
     if (!canUnlockSkill(skillId, unlockedSkills)) {
       return NextResponse.json(
         { error: 'Cannot unlock skill: prerequisite not met or already unlocked' },
@@ -53,8 +57,11 @@ export async function POST(
       )
     }
 
-    // Check skill points
-    if (gladiator.skillPointsAvailable < skill.cost) {
+    // Validate available points
+    const currentPointsSpent = calculateSkillPointsSpent(unlockedSkills)
+    const pointsAvailable = gladiator.skillPointsAvailable
+
+    if (pointsAvailable < skill.cost) {
       return NextResponse.json(
         { error: 'Not enough skill points' },
         { status: 400 }
@@ -83,10 +90,13 @@ export async function POST(
       `✨ Gladiator ${params.gladiatorId} unlocked skill: ${skill.name} (${skillId})`
     )
 
+    const pointsRemaining = updated.skillPointsAvailable - calculateSkillPointsSpent(updated.unlockedSkills as string[])
+
     return NextResponse.json({
       success: true,
       gladiator: updated,
       unlockedSkill: skill,
+      pointsRemaining,
     })
   } catch (error) {
     console.error('Error unlocking skill:', error)

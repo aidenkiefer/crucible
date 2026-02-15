@@ -32,6 +32,8 @@ export const ACTION_CONFIG = {
 export const XP_PER_WIN = 100
 export const XP_PER_LOSS = 25
 export const XP_TO_LEVEL = (level: number) => level * 100
+export const SKILL_POINTS_PER_LEVEL = 1
+export const MAX_SKILL_POINTS = 20 // Level 1-20 = 19 level-ups = 19 points + 1 starting = 20
 
 // Loot Drop Rates
 export const LOOT_DROP_RATES = {

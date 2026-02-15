@@ -1,6 +1,13 @@
 // Gladiator Types
+// Updated to 5 classes per Notion Systems Wiki
+// Legacy classes (Brute → Tank, Assassin → Legionnaire for migration)
 export enum GladiatorClass {
+  Tank = 'Tank',
+  Legionnaire = 'Legionnaire',
   Duelist = 'Duelist',
+  Mage = 'Mage',
+  Monk = 'Monk',
+  // Legacy values for backward compatibility (deprecated)
   Brute = 'Brute',
   Assassin = 'Assassin',
 }

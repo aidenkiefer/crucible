@@ -45,6 +45,14 @@ export async function PUT(
 
   const data = await req.json()
 
+  // Validate weaponCoeff is only set for WEAPON type
+  if (data.weaponCoeff !== undefined && data.type !== 'WEAPON') {
+    return NextResponse.json(
+      { error: 'weaponCoeff is only valid for WEAPON type' },
+      { status: 400 }
+    )
+  }
+
   // Delete existing action connections
   await prisma.equipmentTemplateAction.deleteMany({
     where: { equipmentTemplateId: params.id },
@@ -60,6 +68,8 @@ export async function PUT(
       slot: data.slot,
       subtype: data.subtype,
       rarity: data.rarity ?? undefined,
+      ...(data.allowedClass !== undefined && { allowedClass: data.allowedClass }),
+      ...(data.weaponCoeff !== undefined && { weaponCoeff: data.weaponCoeff }),
       tags: data.tags,
       baseStatMods: data.baseStatMods,
       scaling: data.scaling,

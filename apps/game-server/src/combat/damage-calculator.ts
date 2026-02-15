@@ -24,11 +24,13 @@ export function calculateDerivedStats(base: BaseAttributes): DerivedStats {
  * Apply damage to target combatant
  * Returns actual damage dealt (after defense)
  * Mutates target HP and alive state
+ * @param weaponCoeff - Optional weapon coefficient (1.0 for class weapon, 0.8 for universal)
  */
 export function applyDamage(
   attacker: Combatant,
   target: Combatant,
-  weapon: WeaponConfig | WeaponDefinition
+  weapon: WeaponConfig | WeaponDefinition,
+  weaponCoeff?: number
 ): number {
   // Check if target is invulnerable (dodge i-frames)
   if (target.isInvulnerable) {
@@ -45,7 +47,8 @@ export function applyDamage(
     weaponDef,
     attacker.baseAttributes,
     target.derivedStats,
-    target.isInvulnerable
+    target.isInvulnerable,
+    weaponCoeff ?? 1.0 // Default to 1.0 if not provided
   )
 
   // Apply damage to HP (mutate)

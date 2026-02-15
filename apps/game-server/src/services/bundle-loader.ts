@@ -19,6 +19,7 @@ interface EquipmentTemplate {
   rarityRules: Record<string, any>
   ui: Record<string, any>
   grantedActions: string[]
+  weaponCoeff?: number // 1.0 for class weapon, 0.8 for universal
 }
 
 interface ActionTemplate {

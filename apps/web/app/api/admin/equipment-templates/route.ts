@@ -60,6 +60,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Key already exists' }, { status: 400 })
   }
 
+  // Validate weaponCoeff is only set for WEAPON type
+  if (data.weaponCoeff != null && data.type !== 'WEAPON') {
+    return NextResponse.json(
+      { error: 'weaponCoeff is only valid for WEAPON type' },
+      { status: 400 }
+    )
+  }
+
   const template = await prisma.equipmentTemplate.create({
     data: {
       key: data.key,
@@ -71,6 +79,8 @@ export async function POST(req: Request) {
       slot: data.slot,
       subtype: data.subtype,
       ...(data.rarity != null && { rarity: data.rarity }),
+      ...(data.allowedClass != null && { allowedClass: data.allowedClass }),
+      ...(data.weaponCoeff != null && { weaponCoeff: data.weaponCoeff }),
       tags: data.tags || [],
       baseStatMods: data.baseStatMods || {},
       scaling: data.scaling || {},

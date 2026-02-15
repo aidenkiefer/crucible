@@ -309,6 +309,7 @@ export class MatchInstance {
       invulnerabilityEndTime: 0,
       equippedWeapon: WeaponType.Sword,
       weapon: WeaponType.Sword,
+      weaponCoeff: 1.0, // Default to 1.0 (TODO: load from equipped weapon template)
       currentAction: null,
     }
   }
@@ -344,6 +345,7 @@ export class MatchInstance {
       invulnerabilityEndTime: 0,
       equippedWeapon: WeaponType.Sword,
       weapon: WeaponType.Sword,
+      weaponCoeff: 1.0, // Default to 1.0
       currentAction: null,
     }
   }

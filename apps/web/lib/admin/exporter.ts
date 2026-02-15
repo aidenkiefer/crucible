@@ -62,6 +62,8 @@ export async function exportBundleToStorage(
     subtype: et.subtype,
     rarity: et.rarity, // Include rarity for icon path resolution
     tags: et.tags,
+    allowedClass: et.allowedClass, // Class restriction (Tank, Legionnaire, Duelist, Mage, Monk, universal, or null)
+    weaponCoeff: et.weaponCoeff, // Weapon coefficient (1.0 for class weapon, 0.8 for universal)
     baseStatMods: et.baseStatMods,
     scaling: et.scaling,
     rarityRules: et.rarityRules,

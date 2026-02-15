@@ -33,6 +33,8 @@ export default function EditEquipmentTemplatePage() {
     subtype: string
     rarity: string
     tags: string[]
+    allowedClass: string | null
+    weaponCoeff: number
     baseStatMods: Record<string, unknown>
     scaling: Record<string, unknown>
     rarityRules: Record<string, unknown>
@@ -48,6 +50,8 @@ export default function EditEquipmentTemplatePage() {
     subtype: '',
     rarity: 'COMMON',
     tags: [],
+    allowedClass: null,
+    weaponCoeff: 1.0,
     baseStatMods: {},
     scaling: {},
     rarityRules: {},
@@ -77,6 +81,8 @@ export default function EditEquipmentTemplatePage() {
       setFormData({
         ...template,
         rarity: template.rarity || 'COMMON',
+        allowedClass: template.allowedClass || null,
+        weaponCoeff: template.weaponCoeff ?? 1.0,
         actionTemplateIds: template.actions?.map((a: any) => a.actionTemplateId) || [],
       })
     }
@@ -242,6 +248,85 @@ export default function EditEquipmentTemplatePage() {
                 ))}
               </select>
             </div>
+          </div>
+
+          {/* Class Restriction */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-bold uppercase text-coliseum-sand/70 mb-2">
+                Allowed Class
+              </label>
+              <select
+                value={formData.allowedClass || ''}
+                onChange={(e) => {
+                  const newClass = e.target.value || null
+                  const updates: any = { allowedClass: newClass }
+
+                  // Auto-adjust weaponCoeff based on class selection (for WEAPON type only)
+                  if (formData.type === 'WEAPON') {
+                    if (newClass === 'universal') {
+                      updates.weaponCoeff = 0.8
+                    } else if (newClass !== null && newClass !== 'universal') {
+                      // Only set to 1.0 for class-specific weapons
+                      updates.weaponCoeff = 1.0
+                    }
+                    // If newClass is null (backward compat), weaponCoeff remains unchanged
+                  }
+
+                  setFormData({ ...formData, ...updates })
+                }}
+                className="input"
+              >
+                {(formData.type === 'ARMOR'
+                  ? [
+                      { value: '', label: '(None - Backward Compat)' },
+                      { value: 'Tank', label: 'Tank' },
+                      { value: 'Legionnaire', label: 'Legionnaire' },
+                      { value: 'Duelist', label: 'Duelist' },
+                      { value: 'Mage', label: 'Mage' },
+                      { value: 'Monk', label: 'Monk' },
+                    ]
+                  : [
+                      { value: '', label: '(None - Backward Compat)' },
+                      { value: 'universal', label: 'Universal' },
+                      { value: 'Tank', label: 'Tank' },
+                      { value: 'Legionnaire', label: 'Legionnaire' },
+                      { value: 'Duelist', label: 'Duelist' },
+                      { value: 'Mage', label: 'Mage' },
+                      { value: 'Monk', label: 'Monk' },
+                    ]
+                ).map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+              <p className="text-xs text-coliseum-sand/50 mt-1">
+                {formData.type === 'ARMOR'
+                  ? 'ARMOR should be class-specific'
+                  : formData.type === 'WEAPON'
+                  ? 'WEAPON can be class-specific (1.0 coeff) or universal (0.8 coeff)'
+                  : 'Class restriction (optional)'}
+              </p>
+            </div>
+
+            {formData.type === 'WEAPON' && (
+              <div>
+                <label className="block text-sm font-bold uppercase text-coliseum-sand/70 mb-2">
+                  Weapon Coefficient
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0.5"
+                  max="1.5"
+                  value={formData.weaponCoeff}
+                  onChange={(e) => setFormData({ ...formData, weaponCoeff: parseFloat(e.target.value) || 1.0 })}
+                  className="input"
+                />
+                <p className="text-xs text-coliseum-sand/50 mt-1">
+                  1.0 for class weapon, 0.8 for universal (auto-set by class selection)
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">

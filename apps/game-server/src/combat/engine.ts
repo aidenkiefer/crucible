@@ -268,7 +268,8 @@ export class CombatEngine {
     )
 
     if (hit) {
-      const damage = applyDamage(attacker, target, weapon)
+      // Apply damage with weapon coefficient from equipped weapon
+      const damage = applyDamage(attacker, target, weapon, attacker.weaponCoeff)
 
       if (damage > 0) {
         this.addEvent({
@@ -306,8 +307,12 @@ export class CombatEngine {
     weapon: WeaponDefinition,
     currentTime: number
   ): void {
-    // Calculate damage for projectile
-    const damage = Damage.calculateRawDamage(weapon, attacker.baseAttributes)
+    // Calculate damage for projectile with weapon coefficient
+    const damage = Damage.calculateRawDamage(
+      weapon,
+      attacker.baseAttributes,
+      attacker.weaponCoeff ?? 1.0
+    )
 
     // Spawn projectile
     const projectile = Projectiles.createProjectile(

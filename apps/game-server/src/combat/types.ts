@@ -71,6 +71,9 @@ export interface Combatant {
   equippedWeapon: WeaponType
   weapon: WeaponType // Alias for currently equipped weapon
 
+  // Equipment (for accessing weaponCoeff)
+  weaponCoeff?: number // Weapon coefficient from equipped template (1.0 for class, 0.8 for universal)
+
   // Action state
   currentAction: ActionState | null
 }

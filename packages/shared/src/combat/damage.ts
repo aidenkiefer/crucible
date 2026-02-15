@@ -8,10 +8,12 @@ import type { BaseAttributes, DerivedStats, WeaponDefinition, WeaponType } from 
 /**
  * Calculate raw damage from a weapon attack before defense mitigation
  * Melee weapons scale with STR, ranged weapons scale with DEX
+ * @param weaponCoeff - Weapon coefficient (1.0 for class weapon, 0.8 for universal, default 1.0)
  */
 export function calculateRawDamage(
   weapon: WeaponDefinition,
-  attackerAttributes: BaseAttributes
+  attackerAttributes: BaseAttributes,
+  weaponCoeff: number = 1.0
 ): number {
   const baseDamage = weapon.baseDamage
 
@@ -20,7 +22,10 @@ export function calculateRawDamage(
   const dexDamage = attackerAttributes.dexterity * weapon.scaling.dexterity
   const scaledDamage = baseDamage + strDamage + dexDamage
 
-  return Math.floor(scaledDamage)
+  // Apply weapon coefficient (class vs universal weapon)
+  const finalDamage = scaledDamage * weaponCoeff
+
+  return Math.floor(finalDamage)
 }
 
 /**
@@ -40,19 +45,21 @@ export function calculateFinalDamage(
 /**
  * Calculate complete damage from attacker to defender
  * Combines raw damage calculation and defense mitigation
+ * @param weaponCoeff - Weapon coefficient (1.0 for class weapon, 0.8 for universal, default 1.0)
  */
 export function calculateDamage(
   weapon: WeaponDefinition,
   attackerAttributes: BaseAttributes,
   defenderStats: DerivedStats,
-  isInvulnerable: boolean = false
+  isInvulnerable: boolean = false,
+  weaponCoeff: number = 1.0
 ): number {
   // No damage if invulnerable (dodge i-frames)
   if (isInvulnerable) {
     return 0
   }
 
-  const rawDamage = calculateRawDamage(weapon, attackerAttributes)
+  const rawDamage = calculateRawDamage(weapon, attackerAttributes, weaponCoeff)
   return calculateFinalDamage(rawDamage, defenderStats)
 }
 

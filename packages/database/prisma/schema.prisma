@@ -46,7 +46,7 @@ model Gladiator {
   ownerId String
   owner   User   @relation(fields: [ownerId], references: [id])
 
-  class String // Duelist, Brute, Assassin, Mage
+  class String // Tank, Legionnaire, Duelist, Mage, Monk (legacy: Brute, Assassin)
   level Int    @default(1)
   xp    Int    @default(0)
 
@@ -342,6 +342,15 @@ model EquipmentTemplate {
 
   // Display rarity for asset folder placement (COMMON, UNCOMMON, RARE, EPIC, LEGENDARY)
   rarity String?
+
+  // Class restriction (armor: one class; weapon: one class or "universal")
+  // Tank, Legionnaire, Duelist, Mage, Monk, or "universal"
+  // null = backward compatibility, equippable by all classes
+  allowedClass String?
+
+  // Weapon coefficient (1.0 for class weapon, 0.8 for universal)
+  // Only applicable for WEAPON type
+  weaponCoeff Float? @default(1.0)
 
   // Flexible stat modifiers (template baseline)
   // Example: { "def": 3, "speed": -1, "staminaRegenPct": -5 }
