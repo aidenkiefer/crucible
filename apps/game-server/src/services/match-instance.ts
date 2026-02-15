@@ -16,6 +16,7 @@ import {
   CombatEventType,
 } from '../combat/types'
 import { calculateDerivedStats } from '../combat/damage-calculator'
+import { buildEffectiveStats, getWeaponCoeff } from './stat-builder'
 import { prisma } from '@gladiator/database/src/client'
 import { awardMatchXP } from './progression'
 
@@ -291,9 +292,18 @@ export class MatchInstance {
 
   /**
    * Create a combatant from player config
+   * Uses wiki-based effective stats with soft caps
    */
   private createCombatant(player: PlayerConfig): Combatant {
-    const derivedStats = calculateDerivedStats(player.stats)
+    // TODO: Load equipment and unlocked skills from DB
+    // const equipment = await loadGladiatorEquipment(player.gladiatorId)
+    // const skills = await loadGladiatorSkills(player.gladiatorId)
+
+    // Build effective stats using wiki formulas (base + equipment + skills)
+    const derivedStats = buildEffectiveStats(player.stats)
+
+    // Get weapon coefficient from main-hand weapon template
+    const weaponCoeff = getWeaponCoeff() // TODO: Pass actual equipment template key
 
     return {
       id: player.gladiatorId,
@@ -309,13 +319,14 @@ export class MatchInstance {
       invulnerabilityEndTime: 0,
       equippedWeapon: WeaponType.Sword,
       weapon: WeaponType.Sword,
-      weaponCoeff: 1.0, // Default to 1.0 (TODO: load from equipped weapon template)
+      weaponCoeff, // Now loaded via stat-builder (defaults to 1.0 for now)
       currentAction: null,
     }
   }
 
   /**
    * Create a CPU combatant with balanced stats
+   * Uses wiki-based effective stats with soft caps
    */
   private createCpuCombatant(): Combatant {
     const baseAttributes = {
@@ -329,7 +340,9 @@ export class MatchInstance {
       faith: 50,
     }
 
-    const derivedStats = calculateDerivedStats(baseAttributes)
+    // Build effective stats using wiki formulas
+    const derivedStats = buildEffectiveStats(baseAttributes)
+    const weaponCoeff = getWeaponCoeff() // Default to 1.0
 
     return {
       id: 'cpu',
@@ -345,7 +358,7 @@ export class MatchInstance {
       invulnerabilityEndTime: 0,
       equippedWeapon: WeaponType.Sword,
       weapon: WeaponType.Sword,
-      weaponCoeff: 1.0, // Default to 1.0
+      weaponCoeff,
       currentAction: null,
     }
   }
