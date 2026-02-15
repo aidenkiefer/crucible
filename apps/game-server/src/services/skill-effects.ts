@@ -9,7 +9,18 @@
  */
 
 import type { BaseStats } from '@gladiator/shared/src/stats'
-import { SKILL_TREES, type SkillNode } from '@gladiator/shared/src/skills/skill-trees'
+import { getSkill } from '@gladiator/shared/src/skills/skill-trees'
+
+const STAT_KEY_TO_BASE: Record<string, keyof BaseStats> = {
+  constitution: 'CON',
+  strength: 'STR',
+  dexterity: 'DEX',
+  speed: 'SPD',
+  defense: 'DEF',
+  magicResist: 'MR',
+  arcana: 'ARC',
+  faith: 'FTH',
+}
 
 /**
  * Calculate total passive stat bonuses from unlocked skills
@@ -30,28 +41,18 @@ export function calculateSkillStatBonuses(unlockedSkills: string[]): Partial<Bas
   }
 
   for (const skillId of unlockedSkills) {
-    const skill = findSkillById(skillId)
-    if (!skill || !skill.flatStatBonus) continue
+    const skill = getSkill(skillId)
+    if (!skill || !skill.statBoosts) continue
 
-    // Sum flat stat bonuses
-    for (const [stat, value] of Object.entries(skill.flatStatBonus)) {
-      const statKey = stat as keyof BaseStats
-      bonuses[statKey] = (bonuses[statKey] ?? 0) + value
+    for (const [stat, value] of Object.entries(skill.statBoosts)) {
+      const statKey = STAT_KEY_TO_BASE[stat]
+      if (statKey != null && typeof value === 'number') {
+        bonuses[statKey] = (bonuses[statKey] ?? 0) + value
+      }
     }
   }
 
   return bonuses
-}
-
-/**
- * Find a skill by ID across all trees
- */
-function findSkillById(skillId: string): SkillNode | null {
-  for (const tree of SKILL_TREES) {
-    const skill = tree.skills.find(s => s.id === skillId)
-    if (skill) return skill
-  }
-  return null
 }
 
 /**

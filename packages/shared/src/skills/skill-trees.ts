@@ -979,7 +979,7 @@ export const INTELLECT_SKILLS: SkillNode[] = [
     prerequisiteTier: 1,
     statBoosts: { arcana: 1, dexterity: 1, magicResist: 1 },
     cost: 1,
-    effectType: ['Passive Modifier', 'Tempo Control'],
+    effectType: ['Passive Modifier'],
     combatBehavior: 'Passive: +1 ARC +1 DEX +1 MR, Cast speed +5%',
     buildRole: ['Burst Damage', 'Tempo Control'],
   },
@@ -1054,7 +1054,7 @@ export const INTELLECT_SKILLS: SkillNode[] = [
     prerequisiteTier: 3,
     statBoosts: { arcana: 4, speed: 3 },
     cost: 1,
-    effectType: ['Passive Modifier', 'Tempo Control'],
+    effectType: ['Passive Modifier'],
     combatBehavior:
       'Passive: +4 ARC +3 SPD, Cast speed +12%, spell recovery -10%',
     buildRole: ['Burst Damage', 'Tempo Control'],
@@ -1114,7 +1114,7 @@ export const INTELLECT_SKILLS: SkillNode[] = [
     prerequisiteTier: 4,
     statBoosts: { arcana: 5, dexterity: 4 },
     cost: 1,
-    effectType: ['Activated Ability', 'Damage Amplifier', 'Hybrid Support'],
+    effectType: ['Activated Ability', 'Damage Amplifier', 'Utility'],
     combatBehavior:
       'Active: +5 ARC +4 DEX, Weapon hit after spell empowers next spell by 20%, spell after weapon empowers next weapon by 20%',
     buildRole: ['Burst Damage', 'Hybrid Support'],

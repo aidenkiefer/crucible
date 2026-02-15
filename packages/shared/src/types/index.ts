@@ -12,7 +12,8 @@ export enum GladiatorClass {
   Assassin = 'Assassin',
 }
 
-export interface BaseStats {
+/** Legacy gladiator base stats shape (strength/agility/endurance/technique). Combat uses stats.BaseStats (STR, CON, etc.). */
+export interface LegacyBaseStats {
   strength: number
   agility: number
   endurance: number
@@ -26,7 +27,7 @@ export interface Gladiator {
   class: GladiatorClass
   level: number
   xp: number
-  baseStats: BaseStats
+  baseStats: LegacyBaseStats
   equippedWeaponId?: string
   equippedArmorId?: string
   skillPointsAvailable: number
