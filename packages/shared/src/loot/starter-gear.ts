@@ -229,15 +229,40 @@ export const LOOT_BOX_CONFIGS: Record<string, LootBoxConfig> = {
 }
 
 /**
- * Roll a random item from loot box
+ * Roll a random item from loot box using wiki loot distribution
+ *
+ * Distribution (Wiki - Classes & Equipment Identity):
+ * - 50% armor (class-specific when templates support it)
+ * - 50% weapon:
+ *   - 50% class weapon (when templates support it)
+ *   - 50% universal weapon (when templates support it)
+ *
+ * @param tier - Loot box tier (e.g., 'wooden')
+ * @param gladiatorClass - Gladiator class for filtering (optional, for future template integration)
+ * @returns Random starter gear item
  */
-export function rollLootBoxItem(tier: string): StarterGearItem {
+export function rollLootBoxItem(tier: string, gladiatorClass?: string): StarterGearItem {
   const config = LOOT_BOX_CONFIGS[tier]
   if (!config) {
     throw new Error(`Unknown loot box tier: ${tier}`)
   }
 
-  const pool = config.itemPool
-  const randomIndex = Math.floor(Math.random() * pool.length)
-  return pool[randomIndex]
+  // Step 1: Roll 50/50 for armor vs weapon
+  const isArmor = Math.random() < 0.5
+
+  if (isArmor) {
+    // Roll armor (TODO: filter by gladiator class when templates support allowedClass)
+    const armorPool = config.itemPool.filter(item => item.type === 'ARMOR')
+    const randomIndex = Math.floor(Math.random() * armorPool.length)
+    return armorPool[randomIndex]
+  } else {
+    // Roll weapon
+    // TODO: When templates support class/universal tags:
+    // - 50% class weapon (filter by gladiatorClass + allowedClass match)
+    // - 50% universal weapon (filter by allowedClass === 'universal')
+    // For now, roll from all weapons (starter gear is implicitly universal)
+    const weaponPool = config.itemPool.filter(item => item.type === 'WEAPON')
+    const randomIndex = Math.floor(Math.random() * weaponPool.length)
+    return weaponPool[randomIndex]
+  }
 }
