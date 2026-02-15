@@ -84,6 +84,19 @@ Implement only in directories and files that exist; do not assume other top-leve
 
 ---
 
+## Systems Design (Notion Wiki Alignment)
+
+**Design intent for stats, classes, equipment, and skills is documented in docs/notion/ (CRUCIBLE — SYSTEMS WIKI).** Implementation should align with these specifications.
+
+**Key systems:**
+- **Stats & Scaling:** 8 stats (STR, DEX, DEF, CON, SPD, MR, ARC, FTH) with **effective stat soft caps** (0-10: 100%, 11-20: 70%, 21-30: 40%, 31+: 20%). Derived stats (HP, stamina, mana, movement, dodge, recovery) use bounded curves. Damage scaling: `DMG_MULT = 1 + CAP * (eff(MAIN) / (eff(MAIN) + HALF))`. Mitigation: `MIT = CAP * (eff(DEF|MR) / (eff(DEF|MR) + HALF))`. See **docs/notion/Stats & Scaling System**.
+- **Classes & Equipment:** 5 classes (Tank, Legionnaire, Duelist, Mage, Monk) with weighted base stat generation. Armor is **class-locked**; weapons are **class or universal** (weaponCoeff: 1.0 for class, 0.8 for universal). Loot distribution: 50% armor (class-specific) / 50% weapon (25% class + 25% universal). See **docs/notion/Classes & Equipment Identity**.
+- **Skill Trees:** 6 cross-class trees (Valor, Instinct, Discipline, Intellect, Zeal, Ferocity) with major/minor/capstone structure. Capstones have min stat requirements. See **docs/notion/Skill Trees** and **docs/plans/summaries/NOTION-SYSTEMS-ALIGNMENT.md** for implementation status.
+
+**Implementation status:** See **docs/plans/summaries/NOTION-SYSTEMS-ALIGNMENT.md** for detailed alignment summary (effective stats, weapon coeff, skill trees, class system).
+
+---
+
 ## Out of Scope (Demo)
 
 Do not implement unless the task explicitly requests:
@@ -124,8 +137,9 @@ Focus on clean boundaries, simple flows, and replaceable components.
 | **docs/guides/development-setup.md** | Environment, dependencies, running the stack. |
 | **docs/guides/vercel-deployment.md** | Vercel deployment (root dir, env, checklist). |
 | **docs/features/equipment.md** | Equipment, loot, abilities — template/instance, slots, authoring, demo scope. |
-| **docs/features/admin-ui.md** | Admin UI — game data authoring, CRUD, validation, publish/export. |
-| **docs/data-glossary.md** | Database & game data glossary — schema, enums, templates, actions, JSON conventions (§8–11). |
+| **docs/features/admin-ui.md** | Admin UI — game data authoring, CRUD, validation, publish/export; equipment UI metadata (§2.3). |
+| **docs/data-glossary.md** | Database & game data glossary — schema, enums, templates, actions, JSON conventions (§8–11); equipment UI metadata (§4.5). |
+| **docs/plans/summaries/EQUIPMENT-UI-METADATA-IMPLEMENTATION.md** | Equipment UI metadata implementation: DB/bundles source of truth, /api/equipment enrichment, inventory icons, backfill script. |
 
 Prefer reading the specific files or docs relevant to the task rather than scanning the whole repo.
 
