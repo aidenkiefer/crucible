@@ -7,6 +7,7 @@ import { useAccount } from 'wagmi'
 import { useMintGladiator } from '@/hooks/useMintGladiator'
 import { GladiatorClass } from '@/lib/contracts'
 import { AnimatedTorch } from '@/components/ui/AnimatedTorch'
+import { ClassStatBars } from '@/lib/class-stat-display'
 
 const CLASS_ICONS: Record<GladiatorClass, string> = {
   [GladiatorClass.Tank]: '/assets/ui/icons/tank-icon-clean.png',
@@ -18,57 +19,33 @@ const CLASS_ICONS: Record<GladiatorClass, string> = {
 
 const CLASS_INFO: Record<
   GladiatorClass,
-  { name: string; description: string; strengths: string[]; statBias: { str: 'high' | 'med' | 'low'; dex: 'high' | 'med' | 'low'; spd: 'high' | 'med' | 'low' } }
+  { name: string; description: string; strengths: string[] }
 > = {
   [GladiatorClass.Tank]: {
     name: 'Tank',
     description: 'Defensive bulwark with high constitution and defense. They absorb what would shatter others and hold the line.',
     strengths: ['Constitution', 'Defense'],
-    statBias: { str: 'med', dex: 'low', spd: 'low' },
   },
   [GladiatorClass.Legionnaire]: {
     name: 'Legionnaire',
     description: 'Physical warrior with strong offense and defense. They deliver crushing blows and weather the same in return.',
     strengths: ['Strength', 'Defense'],
-    statBias: { str: 'high', dex: 'med', spd: 'low' },
   },
   [GladiatorClass.Duelist]: {
     name: 'Duelist',
     description: 'Fast, agile fighter with high technique. Masters of the blade who read their opponents like an open scroll.',
     strengths: ['Dexterity', 'Speed'],
-    statBias: { str: 'med', dex: 'high', spd: 'high' },
   },
   [GladiatorClass.Mage]: {
     name: 'Mage',
     description: 'Arcane caster who bends reality to their will. Magic rewrites the battlefield; they wield that power.',
     strengths: ['Arcana', 'Magic Resist'],
-    statBias: { str: 'low', dex: 'med', spd: 'med' },
   },
   [GladiatorClass.Monk]: {
     name: 'Monk',
     description: 'Faith-driven fighter with durability and inner focus. They channel conviction into resilience and controlled force.',
     strengths: ['Faith', 'Constitution'],
-    statBias: { str: 'low', dex: 'med', spd: 'med' },
   },
-}
-
-function StatBar({ label, level }: { label: string; level: 'high' | 'med' | 'low' }) {
-  const fills = { high: 3, med: 2, low: 1 }
-  const colors = { high: 'bg-coliseum-bronze', med: 'bg-coliseum-sand/70', low: 'bg-coliseum-sand/40' }
-
-  return (
-    <div className="flex items-center gap-2">
-      <span className="text-[10px] uppercase tracking-wider text-coliseum-sand/60 w-8">{label}</span>
-      <div className="flex gap-0.5">
-        {[1, 2, 3].map((i) => (
-          <div
-            key={i}
-            className={`w-3 h-1.5 ${i <= fills[level] ? colors[level] : 'bg-coliseum-stone'}`}
-          />
-        ))}
-      </div>
-    </div>
-  )
 }
 
 export function MintGladiator() {
@@ -147,7 +124,7 @@ export function MintGladiator() {
       {/* Decorative header bar */}
       <div className="h-1 bg-gradient-to-r from-transparent via-coliseum-bronze to-transparent" />
 
-      <div className="max-w-5xl mx-auto px-6 py-12">
+      <div className="max-w-7xl mx-auto px-6 py-12">
         {/* Header with torches */}
         <div className="flex items-center justify-center gap-6 mb-12">
           <AnimatedTorch size="sm" />
@@ -172,7 +149,7 @@ export function MintGladiator() {
             <div className="h-px flex-1 bg-coliseum-bronze/30" />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 min-[1600px]:grid-cols-5">
             {Object.entries(CLASS_INFO).map(([classId, info]) => {
               const isSelected = selectedClass === Number(classId)
               return (
@@ -180,7 +157,7 @@ export function MintGladiator() {
                   key={classId}
                   onClick={() => setSelectedClass(Number(classId))}
                   className={`
-                    group relative p-6 text-left transition-all duration-150
+                    group relative min-w-0 p-8 text-left transition-all duration-150
                     border-2 bg-coliseum-stone
                     ${isSelected
                       ? 'border-coliseum-bronze shadow-lg shadow-coliseum-bronze/20'
@@ -195,7 +172,7 @@ export function MintGladiator() {
 
                   {/* Class icon */}
                   <div className={`
-                    w-14 h-14 mb-4 border-2 flex items-center justify-center overflow-hidden
+                    mb-5 flex h-16 w-16 items-center justify-center overflow-hidden border-2
                     transition-colors duration-150
                     ${isSelected
                       ? 'border-coliseum-bronze bg-coliseum-black/50'
@@ -205,38 +182,36 @@ export function MintGladiator() {
                     <Image
                       src={CLASS_ICONS[Number(classId) as GladiatorClass]}
                       alt={info.name}
-                      width={56}
-                      height={56}
-                      className="w-full h-full object-contain"
+                      width={64}
+                      height={64}
+                      className="h-full w-full object-contain"
                     />
                   </div>
 
                   {/* Name */}
                   <h3 className={`
-                    font-display text-2xl uppercase tracking-wide mb-2
+                    font-display mb-2 text-2xl uppercase tracking-wide
                     ${isSelected ? 'text-coliseum-bronze' : 'text-coliseum-sand'}
                   `}>
                     {info.name}
                   </h3>
 
                   {/* Description */}
-                  <p className="text-coliseum-sand/70 text-sm leading-relaxed mb-4">
+                  <p className="mb-5 text-sm leading-relaxed text-coliseum-sand/70">
                     {info.description}
                   </p>
 
-                  {/* Stat bars */}
-                  <div className="space-y-1.5 pt-4 border-t border-coliseum-bronze/20">
-                    <StatBar label="STR" level={info.statBias.str as 'high' | 'med' | 'low'} />
-                    <StatBar label="DEX" level={info.statBias.dex as 'high' | 'med' | 'low'} />
-                    <StatBar label="SPD" level={(info.statBias.spd ?? 'med') as 'high' | 'med' | 'low'} />
+                  {/* All 8 stats in standard order */}
+                  <div className="border-t border-coliseum-bronze/20 pt-4">
+                    <ClassStatBars className={info.name} />
                   </div>
 
                   {/* Strengths tags */}
-                  <div className="flex flex-wrap gap-2 mt-4">
+                  <div className="mt-4 flex flex-wrap gap-2">
                     {info.strengths.map((s) => (
                       <span
                         key={s}
-                        className="px-2 py-0.5 text-[10px] uppercase tracking-wider bg-coliseum-black/50 text-coliseum-sand/80 border border-coliseum-bronze/20"
+                        className="border border-coliseum-bronze/20 bg-coliseum-black/50 px-2 py-0.5 text-[10px] uppercase tracking-wider text-coliseum-sand/80"
                       >
                         {s}
                       </span>
