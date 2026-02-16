@@ -6,6 +6,7 @@ import {
   getSkill,
   canUnlockSkill,
   calculateSkillPointsSpent,
+  findSkillById,
 } from '@gladiator/shared/src/skills/skill-trees'
 
 /**
@@ -43,35 +44,93 @@ export async function POST(
     }
 
     // Get skill definition
-    const skill = getSkill(skillId)
+    const skill = findSkillById(skillId)
     if (!skill) {
       return NextResponse.json({ error: 'Skill not found' }, { status: 404 })
     }
 
-    // Check if can unlock (prerequisite and not already unlocked)
     const unlockedSkills = (gladiator.unlockedSkills as string[]) || []
-    if (!canUnlockSkill(skillId, unlockedSkills)) {
+
+    // Check if already unlocked
+    if (unlockedSkills.includes(skillId)) {
       return NextResponse.json(
-        { error: 'Cannot unlock skill: prerequisite not met or already unlocked' },
+        { error: 'Skill already unlocked' },
         { status: 400 }
       )
     }
 
-    // Validate available points
-    const currentPointsSpent = calculateSkillPointsSpent(unlockedSkills)
-    const pointsAvailable = gladiator.skillPointsAvailable
-
-    if (pointsAvailable < skill.cost) {
+    // VALIDATION 1: Check sufficient points
+    const remaining = gladiator.skillPointsAvailable - gladiator.skillPointsSpent
+    if (remaining < skill.cost) {
       return NextResponse.json(
-        { error: 'Not enough skill points' },
+        {
+          error: 'Not enough skill points',
+          details: {
+            required: skill.cost,
+            available: remaining,
+            total: gladiator.skillPointsAvailable,
+            spent: gladiator.skillPointsSpent
+          }
+        },
+        { status: 400 }
+      )
+    }
+
+    // VALIDATION 2: Check prerequisite tier (must have any tier N-1 skill from same tree)
+    if (skill.tier > 1) {
+      const prerequisiteTier = skill.tier - 1
+      const hasPrerequisite = unlockedSkills.some((unlockedId) => {
+        const unlockedSkill = findSkillById(unlockedId)
+        return (
+          unlockedSkill &&
+          unlockedSkill.tree === skill.tree &&
+          unlockedSkill.tier === prerequisiteTier
+        )
+      })
+
+      if (!hasPrerequisite) {
+        return NextResponse.json(
+          {
+            error: `Must unlock a tier ${prerequisiteTier} skill from the ${skill.tree} tree first`,
+            details: {
+              requiredTier: prerequisiteTier,
+              tree: skill.tree
+            }
+          },
+          { status: 400 }
+        )
+      }
+    }
+
+    // VALIDATION 3: Check one-per-tier-per-tree rule
+    const hasSkillInSameTierAndTree = unlockedSkills.some((unlockedId) => {
+      const unlockedSkill = findSkillById(unlockedId)
+      return (
+        unlockedSkill &&
+        unlockedSkill.tree === skill.tree &&
+        unlockedSkill.tier === skill.tier
+      )
+    })
+
+    if (hasSkillInSameTierAndTree) {
+      return NextResponse.json(
+        {
+          error: `Already have a tier ${skill.tier} skill from the ${skill.tree} tree`,
+          details: {
+            tier: skill.tier,
+            tree: skill.tree
+          }
+        },
         { status: 400 }
       )
     }
 
     // Unlock skill and apply stat boosts
     const statUpdates: any = {
-      skillPointsAvailable: gladiator.skillPointsAvailable - skill.cost,
       unlockedSkills: [...unlockedSkills, skillId],
+      skillPointsSpent: {
+        increment: skill.cost
+      }
     }
 
     // Apply stat boosts
@@ -87,16 +146,18 @@ export async function POST(
     })
 
     console.log(
-      `✨ Gladiator ${params.gladiatorId} unlocked skill: ${skill.name} (${skillId})`
+      `✨ Gladiator ${params.gladiatorId} unlocked skill: ${skill.name} (${skillId}) for ${skill.cost} points`
     )
 
-    const pointsRemaining = updated.skillPointsAvailable - calculateSkillPointsSpent(updated.unlockedSkills as string[])
+    const pointsRemaining = updated.skillPointsAvailable - updated.skillPointsSpent
 
     return NextResponse.json({
       success: true,
       gladiator: updated,
       unlockedSkill: skill,
       pointsRemaining,
+      pointsSpent: updated.skillPointsSpent,
+      pointsAvailable: updated.skillPointsAvailable,
     })
   } catch (error) {
     console.error('Error unlocking skill:', error)
