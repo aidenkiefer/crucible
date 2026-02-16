@@ -71,6 +71,7 @@ model Gladiator {
 
   // Progression
   skillPointsAvailable  Int      @default(0)
+  skillPointsSpent      Int      @default(0) // Tracks total skill points spent
   statPointsAvailable   Int      @default(0) // Points to allocate to base stats on level up (3 per level)
   unlockedSkills        String[] // Array of skill IDs
 

@@ -1,6 +1,6 @@
 # Documentation Audit Instructions
 
-**Last audit ran:** 2026-02-06 15:00 *(Sprint 6 summary: docs/plans/summaries/SPRINT-6-SUMMARY.md)*
+**Last audit ran:** 2026-02-15 *(Equipment UI Metadata: docs/plans/summaries/EQUIPMENT-UI-METADATA-IMPLEMENTATION.md)*
 
 ---
 
