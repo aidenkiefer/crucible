@@ -16,6 +16,8 @@ interface Gladiator {
   magicResist: number
   arcana: number
   faith: number
+  skillPointsAvailable?: number
+  unlockedSkills?: string[]
 }
 
 interface ActiveGladiatorContextType {

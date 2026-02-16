@@ -49,7 +49,11 @@ export default function CampPage() {
 
           // Auto-select first gladiator if none active
           if (!activeGladiator && fetchedGladiators.length > 0) {
-            setActiveGladiator(fetchedGladiators[0])
+            const first = fetchedGladiators[0]
+            setActiveGladiator({
+              ...first,
+              experience: first.xp ?? first.experience ?? 0,
+            })
           }
         })
         .catch(console.error)
@@ -211,7 +215,12 @@ export default function CampPage() {
                   value={activeGladiator?.id || ''}
                   onChange={(e) => {
                     const selected = gladiators.find((g) => g.id === e.target.value)
-                    if (selected) setActiveGladiator(selected)
+                    if (selected) {
+                      setActiveGladiator({
+                        ...selected,
+                        experience: selected.xp ?? selected.experience ?? 0,
+                      })
+                    }
                   }}
                   className="w-full panel-inset px-3 py-2 text-coliseum-sand font-bold uppercase text-sm border-none"
                 >
@@ -298,7 +307,12 @@ export default function CampPage() {
                       .then((data) => {
                         const list = data.gladiators ?? []
                         const updated = list.find((g: Gladiator) => g.id === activeGladiator.id)
-                        if (updated) setActiveGladiator(updated)
+                        if (updated) {
+                          setActiveGladiator({
+                            ...updated,
+                            experience: updated.xp ?? updated.experience ?? 0,
+                          })
+                        }
                       })
                   }}
                 />
