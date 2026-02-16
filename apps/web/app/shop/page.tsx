@@ -85,19 +85,38 @@ export default function ShopPage() {
     setPurchasing(chest.id)
     setMessage(null)
 
+    // Optimistic UI: Immediately deduct gold for instant feedback
+    const previousBalance = goldBalance
+    setGoldBalance((prev) => prev - chest.price)
+
     try {
-      // TODO: Implement purchase API endpoint
-      // For now, simulate purchase
-      await new Promise((resolve) => setTimeout(resolve, 500))
+      const res = await fetch('/api/shop/purchase', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chestId: chest.id }),
+      })
+
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.error || 'Purchase failed')
+      }
+
+      const data = await res.json()
+
+      // Sync with server balance (should match optimistic update)
+      setGoldBalance(data.newBalance)
 
       setMessage({
         type: 'success',
         text: `Purchased ${chest.name}! Check your inventory.`,
       })
-      setGoldBalance((prev) => prev - chest.price)
       setTimeout(() => setMessage(null), 3000)
     } catch (error) {
-      setMessage({ type: 'error', text: 'Purchase failed. Try again.' })
+      // Rollback optimistic update on error
+      setGoldBalance(previousBalance)
+
+      const errorMessage = error instanceof Error ? error.message : 'Purchase failed. Try again.'
+      setMessage({ type: 'error', text: errorMessage })
       setTimeout(() => setMessage(null), 3000)
     } finally {
       setPurchasing(null)
