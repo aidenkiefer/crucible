@@ -4,3 +4,4 @@ export * from './constants'
 export * from './classes/class-stat-weights'
 // Types: re-export all; LegacyBaseStats from types does not conflict with BaseStats from stats
 export * from './types'
+export * from './skills/skill-trees'

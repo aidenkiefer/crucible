@@ -1857,3 +1857,12 @@ export function getSkillStatBonuses(
 
   return totals
 }
+
+/**
+ * Find a skill by ID across all skill trees
+ * Alias for getSkill() - Used for validation in skill unlock API
+ * @returns SkillNode if found, null otherwise
+ */
+export function findSkillById(skillId: string): SkillNode | null {
+  return getSkill(skillId) ?? null
+}
