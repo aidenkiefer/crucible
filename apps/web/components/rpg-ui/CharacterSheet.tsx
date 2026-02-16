@@ -214,7 +214,7 @@ export function CharacterSheet({ gladiator, onNameSet }: CharacterSheetProps) {
         open={statModalOpen}
         onClose={() => setStatModalOpen(false)}
         gladiator={gladiator}
-        onSuccess={onNameSet}
+        onSuccess={onNameSet ?? (() => {})}
       />
     </div>
   )
