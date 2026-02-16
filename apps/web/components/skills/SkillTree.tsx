@@ -70,6 +70,15 @@ const TREE_THEMES: Record<
   },
 }
 
+const TREE_DESCRIPTIONS: Record<SkillTreeName, string> = {
+  Valor: 'Combat prowess and resilience. Improves damage, survivability, and staying power in the arena. Ideal for Duelists and Brutes who trade blows head-on.',
+  Instinct: 'Reflexes and awareness. Enhances dodge, movement, and reaction speed. Suits Assassins and agile fighters who rely on positioning and evasion.',
+  Discipline: 'Control and consistency. Focuses on stamina, cooldowns, and reliable output. Best for methodical gladiators who manage resources carefully.',
+  Intellect: 'Tactical and magical edge. Unlocks utility, debuffs, and stat manipulation. Favored by strategic builds and those investing in Arcana.',
+  Zeal: 'Burst and commitment. High-risk, high-reward effects and execute-style power. For gladiators who commit to all-in moments.',
+  Ferocity: 'Aggression and pressure. Raw damage, lifesteal, and relentless offense. Fits Brutes and anyone who wants to dominate through force.',
+}
+
 function SkillTooltip({
   skill,
   isUnlocked,
@@ -120,7 +129,7 @@ function SkillTooltip({
   return (
     <div
       ref={tooltipRef}
-      className="fixed z-50 w-80 max-w-[calc(100vw-24px)] rounded-lg border-2 border-coliseum-sand/30 bg-coliseum-black/95 p-4 shadow-xl"
+      className="pointer-events-none fixed z-50 w-80 max-w-[calc(100vw-24px)] rounded-lg border-2 border-coliseum-sand/30 bg-coliseum-black/95 p-4 shadow-xl"
       style={{ top: pos.top, left: pos.left }}
     >
       <div className={`border-b border-coliseum-bronze/30 pb-2 ${treeTheme.accent}`}>
@@ -320,7 +329,31 @@ export function SkillTree({
 
       {/* Tier-based circular nodes */}
       {currentTree && (
-        <div className={`space-y-8 rounded-xl border p-6 bg-gradient-to-b ${treeTheme.bg} ${treeTheme.border}`}>
+        <div
+          className={`space-y-8 rounded-xl border p-6 bg-gradient-to-b ${treeTheme.bg} ${treeTheme.border}`}
+          onMouseLeave={() => setHoveredSkillId(null)}
+        >
+          {/* Tree title + icon + description (above Tier 1) */}
+          <div className="flex flex-col gap-2 pb-6 border-b border-coliseum-sand/20">
+            <div className="flex items-center gap-3">
+              <h3 className={`font-display text-xl uppercase ${treeTheme.accent}`}>
+                {selectedTree}
+              </h3>
+              <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full border-2 border-current opacity-90">
+                <Image
+                  src={treeTheme.icon}
+                  alt=""
+                  width={36}
+                  height={36}
+                  className="h-full w-full object-contain"
+                />
+              </span>
+            </div>
+            <p className="text-sm text-coliseum-sand/80 leading-snug max-w-2xl">
+              {TREE_DESCRIPTIONS[selectedTree]}
+            </p>
+          </div>
+
           {[1, 2, 3, 4, 5, 6].map((tier) => {
             const tierSkills = skillsByTier[tier] || []
             if (tierSkills.length === 0) return null
@@ -329,7 +362,7 @@ export function SkillTree({
                 <h3 className={`font-display text-lg uppercase mb-4 ${treeTheme.accent} border-b border-current/30 pb-2 w-fit`}>
                   Tier {tier} {tier === 6 && '— Capstones'}
                 </h3>
-                <div className="flex flex-wrap gap-6 justify-start">
+                <div className="flex flex-wrap gap-8 justify-center">
                   {tierSkills.map((skill) => {
                     const isUnlocked = unlockedSkills.includes(skill.id)
                     const canUnlock = canUnlockSkill(skill.id, unlockedSkills)
@@ -347,7 +380,7 @@ export function SkillTree({
                       <div
                         key={skill.id}
                         ref={isHovered ? hoveredWrapperRef : undefined}
-                        className="relative flex flex-col items-center gap-2"
+                        className="relative flex flex-col items-center gap-2 min-w-[7rem]"
                         onMouseEnter={() => setHoveredSkillId(skill.id)}
                         onMouseLeave={() => setHoveredSkillId(null)}
                       >
@@ -357,11 +390,11 @@ export function SkillTree({
                             if (isAvailable && !unlocking) unlockSkill(skill.id, skill.cost)
                           }}
                           disabled={!isAvailable || !!unlocking}
-                          className={`relative h-16 w-16 shrink-0 rounded-full border-2 transition-all duration-200 ${
+                          className={`relative h-16 w-16 shrink-0 rounded-full border-2 transition-[transform,box-shadow] duration-100 ease-out ${
                             isUnlocked
                               ? `${treeTheme.border} bg-gray-900/80 shadow-lg ring-2 ring-green-500/50`
                               : isAvailable
-                              ? `${treeTheme.border} bg-gray-900/80 hover:scale-110 hover:ring-2 hover:ring-coliseum-bronze/60 cursor-pointer`
+                              ? `${treeTheme.border} bg-gray-900/80 hover:scale-105 hover:ring-2 hover:ring-coliseum-bronze/60 cursor-pointer`
                               : 'border-gray-600 bg-gray-900/60 opacity-70 cursor-not-allowed'
                           }`}
                         >
@@ -389,7 +422,7 @@ export function SkillTree({
                             </span>
                           )}
                         </button>
-                        <span className="text-xs text-coliseum-sand/80 max-w-[4.5rem] truncate text-center">
+                        <span className="text-xs text-coliseum-sand/80 w-full text-center leading-tight px-0.5">
                           {skill.name}
                         </span>
                         {isHovered && (
