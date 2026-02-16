@@ -78,7 +78,7 @@ function SkillTooltip({
   canAfford,
   cost,
   treeTheme,
-  anchorRect,
+  anchorRef,
 }: {
   skill: SkillNode
   isUnlocked: boolean
@@ -87,13 +87,15 @@ function SkillTooltip({
   canAfford: boolean
   cost: number
   treeTheme: (typeof TREE_THEMES)[SkillTreeName]
-  anchorRect: { top: number; left: number; width: number; height: number } | null
+  anchorRef: React.RefObject<HTMLDivElement | null>
 }) {
-  const [pos, setPos] = useState({ top: 0, left: 0 })
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
   const tooltipRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (!anchorRect) return
+    const el = anchorRef.current
+    if (!el) return
+    const anchorRect = el.getBoundingClientRect()
     const padding = 8
     const centerX = anchorRect.left + anchorRect.width / 2
     const bottom = anchorRect.top + anchorRect.height
@@ -111,14 +113,14 @@ function SkillTooltip({
       left = Math.max(12, centerX - 160)
     }
     setPos({ top, left })
-  }, [anchorRect])
+  }, [anchorRef])
 
-  if (!anchorRect) return null
+  if (pos === null) return null
 
   return (
     <div
       ref={tooltipRef}
-      className="fixed z-50 w-80 max-w-[calc(100vw-24px)] rounded-lg border-2 border-coliseum-sand/30 bg-coliseum-black/95 p-4 shadow-xl backdrop-blur-sm"
+      className="fixed z-50 w-80 max-w-[calc(100vw-24px)] rounded-lg border-2 border-coliseum-sand/30 bg-coliseum-black/95 p-4 shadow-xl"
       style={{ top: pos.top, left: pos.left }}
     >
       <div className={`border-b border-coliseum-bronze/30 pb-2 ${treeTheme.accent}`}>
@@ -183,12 +185,7 @@ export function SkillTree({
   const [selectedTree, setSelectedTree] = useState<SkillTreeName>('Valor')
   const [loading, setLoading] = useState(true)
   const [hoveredSkillId, setHoveredSkillId] = useState<string | null>(null)
-  const [hoveredAnchorRect, setHoveredAnchorRect] = useState<{
-    top: number
-    left: number
-    width: number
-    height: number
-  } | null>(null)
+  const hoveredWrapperRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setUnlockedSkills(initialUnlockedSkills)
@@ -349,15 +346,10 @@ export function SkillTree({
                     return (
                       <div
                         key={skill.id}
+                        ref={isHovered ? hoveredWrapperRef : undefined}
                         className="relative flex flex-col items-center gap-2"
-                        onMouseEnter={(e) => {
-                          setHoveredSkillId(skill.id)
-                          setHoveredAnchorRect(e.currentTarget.getBoundingClientRect())
-                        }}
-                        onMouseLeave={() => {
-                          setHoveredSkillId(null)
-                          setHoveredAnchorRect(null)
-                        }}
+                        onMouseEnter={() => setHoveredSkillId(skill.id)}
+                        onMouseLeave={() => setHoveredSkillId(null)}
                       >
                         <button
                           type="button"
@@ -400,6 +392,18 @@ export function SkillTree({
                         <span className="text-xs text-coliseum-sand/80 max-w-[4.5rem] truncate text-center">
                           {skill.name}
                         </span>
+                        {isHovered && (
+                          <SkillTooltip
+                            skill={skill}
+                            isUnlocked={isUnlocked}
+                            isAvailable={isAvailable}
+                            needsPrereqTier={!!needsPrereqTier}
+                            canAfford={canAfford}
+                            cost={skill.cost}
+                            treeTheme={treeTheme}
+                            anchorRef={hoveredWrapperRef}
+                          />
+                        )}
                       </div>
                     )
                   })}
@@ -408,39 +412,6 @@ export function SkillTree({
             )
           })}
         </div>
-      )}
-
-      {/* Hover tooltip */}
-      {hoveredSkill && hoveredSkillId && (
-        <SkillTooltip
-          skill={hoveredSkill}
-          isUnlocked={unlockedSkills.includes(hoveredSkill.id)}
-          isAvailable={
-            canUnlockSkill(hoveredSkill.id, unlockedSkills) &&
-            pointsRemaining >= hoveredSkill.cost &&
-            !unlockedSkills.includes(hoveredSkill.id) &&
-            !(
-              hoveredSkill.prerequisiteTier &&
-              currentTree &&
-              !currentTree.skills
-                .filter((s) => s.tier === hoveredSkill.prerequisiteTier)
-                .some((s) => unlockedSkills.includes(s.id))
-            )
-          }
-          needsPrereqTier={
-            !!(
-              hoveredSkill.prerequisiteTier &&
-              currentTree &&
-              !currentTree.skills
-                .filter((s) => s.tier === hoveredSkill.prerequisiteTier)
-                .some((s) => unlockedSkills.includes(s.id))
-            )
-          }
-          canAfford={pointsRemaining >= hoveredSkill.cost}
-          cost={hoveredSkill.cost}
-          treeTheme={TREE_THEMES[selectedTree]}
-          anchorRect={hoveredAnchorRect}
-        />
       )}
     </div>
   )
