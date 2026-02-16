@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import Image from 'next/image'
 import type { SkillNode, SkillTreeName } from '@gladiator/shared/src/skills/skill-trees'
+import { useSkillTrees } from '@/contexts/SkillTreeContext'
 
 const TREE_THEMES: Record<
   SkillTreeName,
@@ -21,29 +22,21 @@ interface ActiveSkillsGridProps {
 }
 
 export function ActiveSkillsGrid({ unlockedSkills }: ActiveSkillsGridProps) {
-  const [skillsById, setSkillsById] = useState<Record<string, SkillNode>>({})
-  const [loading, setLoading] = useState(true)
+  const { trees, loading } = useSkillTrees()
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const hoveredRef = useRef<HTMLDivElement | null>(null)
 
-  useEffect(() => {
-    fetch('/api/skill-trees')
-      .then((res) => res.json())
-      .then((data) => {
-        const trees = data.trees as Record<string, SkillNode[]>
-        const map: Record<string, SkillNode> = {}
-        if (trees) {
-          for (const list of Object.values(trees)) {
-            for (const s of list) {
-              map[s.id] = s
-            }
-          }
+  const skillsById = useMemo(() => {
+    const map: Record<string, SkillNode> = {}
+    if (trees) {
+      for (const list of Object.values(trees)) {
+        for (const s of list) {
+          map[s.id] = s
         }
-        setSkillsById(map)
-      })
-      .catch(() => setSkillsById({}))
-      .finally(() => setLoading(false))
-  }, [])
+      }
+    }
+    return map
+  }, [trees])
 
   const resolved = unlockedSkills
     .map((id) => skillsById[id])

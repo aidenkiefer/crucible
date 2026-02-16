@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import Image from 'next/image'
 import {
   canUnlockSkill,
@@ -8,6 +8,7 @@ import {
   type SkillNode,
   type SkillTreeName,
 } from '@gladiator/shared/src/skills/skill-trees'
+import { useSkillTrees } from '@/contexts/SkillTreeContext'
 
 interface Props {
   gladiatorId: string
@@ -256,44 +257,29 @@ export function SkillTree({
   skillPointsAvailable: initialSkillPoints,
   onSkillUnlocked,
 }: Props) {
+  const { trees: treesMap, loading } = useSkillTrees()
   const [unlockedSkills, setUnlockedSkills] = useState(initialUnlockedSkills)
   const [skillPoints, setSkillPoints] = useState(initialSkillPoints)
   const [unlocking, setUnlocking] = useState<string | null>(null)
-  const [trees, setTrees] = useState<SkillTreeData[]>([])
   const [selectedTree, setSelectedTree] = useState<SkillTreeName>('Valor')
-  const [loading, setLoading] = useState(true)
   const [hoveredSkillId, setHoveredSkillId] = useState<string | null>(null)
   const hoveredWrapperRef = useRef<HTMLDivElement>(null)
+
+  const trees = useMemo(() => {
+    if (!treesMap) return []
+    return Object.entries(treesMap).map(([name, skills]) => ({
+      name: name as SkillTreeName,
+      skills: skills as SkillNode[],
+    }))
+  }, [treesMap])
 
   useEffect(() => {
     setUnlockedSkills(initialUnlockedSkills)
     setSkillPoints(initialSkillPoints)
   }, [initialUnlockedSkills, initialSkillPoints])
 
-  useEffect(() => {
-    async function fetchTrees() {
-      try {
-        const res = await fetch('/api/skill-trees')
-        const data = await res.json()
-        if (data.trees) {
-          const treeArray = Object.entries(data.trees).map(([name, skills]) => ({
-            name: name as SkillTreeName,
-            skills: skills as SkillNode[],
-          }))
-          setTrees(treeArray)
-        }
-      } catch (error) {
-        console.error('Failed to fetch skill trees:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchTrees()
-  }, [])
-
   const currentTree = trees.find((t) => t.name === selectedTree)
-  const pointsSpent = calculateSkillPointsSpent(unlockedSkills)
-  const pointsRemaining = skillPoints - pointsSpent
+  const pointsRemaining = skillPoints
   const treeTheme = currentTree ? TREE_THEMES[selectedTree] : TREE_THEMES.Valor
 
   const skillsByTier = currentTree?.skills.reduce(
@@ -321,7 +307,6 @@ export function SkillTree({
       const data = await res.json()
       if (data.success) {
         setUnlockedSkills([...unlockedSkills, skillId])
-        setSkillPoints((prev) => prev - cost)
         onSkillUnlocked?.()
       } else {
         console.error('Failed to unlock skill:', data.error || 'Unknown error')

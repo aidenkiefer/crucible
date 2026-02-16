@@ -81,11 +81,6 @@ export default function CampPage() {
     }
   }, [session?.user?.id])
 
-  // Refetch when switching to Skills tab so stats/XP/skill points stay current
-  useEffect(() => {
-    if (tab === 'skills' && session?.user?.id) refetchGladiators()
-  }, [tab])
-
   if (status === 'loading' || loading) {
     return (
       <main
