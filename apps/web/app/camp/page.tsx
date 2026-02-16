@@ -10,6 +10,7 @@ import { CharacterSheet } from '@/components/rpg-ui/CharacterSheet'
 import { SkillTree } from '@/components/skills/SkillTree'
 import { TestGladiatorSetup, isTestGladiator } from '@/components/camp/TestGladiatorSetup'
 import { CreateTestGladiatorModal } from '@/components/camp/CreateTestGladiatorModal'
+import { ActiveSkillsGrid } from '@/components/camp/ActiveSkillsGrid'
 import { useActiveGladiator } from '@/contexts/ActiveGladiatorContext'
 
 interface Gladiator {
@@ -347,6 +348,17 @@ export default function CampPage() {
                     Equipment
                   </h2>
                   <EquipmentInventory />
+                </div>
+                <div className="panel-embossed p-6">
+                  <h2 className="text-coliseum-bronze uppercase tracking-wider text-sm font-bold mb-4">
+                    Active Skills
+                  </h2>
+                  <p className="text-coliseum-sand/70 text-xs mb-3">
+                    Unlocked skills for your active gladiator. Hover for details.
+                  </p>
+                  <ActiveSkillsGrid
+                    unlockedSkills={activeGladiator?.unlockedSkills ?? []}
+                  />
                 </div>
               </div>
             )}

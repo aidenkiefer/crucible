@@ -1,19 +1,58 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { useActiveGladiator } from '@/contexts/ActiveGladiatorContext'
+import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
+interface GladiatorOption {
+  id: string
+  tokenId: number
+  name?: string | null
+  class: string
+  level: number
+  xp?: number
+  experience?: number
+  constitution: number
+  strength: number
+  dexterity: number
+  speed: number
+  defense: number
+  magicResist: number
+  arcana: number
+  faith: number
+  skillPointsAvailable?: number
+  unlockedSkills?: string[]
+}
+
+function displayName(g: GladiatorOption): string {
+  return g.name?.trim() || `Gladiator #${g.tokenId}`
+}
+
 export function PersistentHUD() {
-  const { activeGladiator } = useActiveGladiator()
+  const { data: session } = useSession()
+  const { activeGladiator, setActiveGladiator } = useActiveGladiator()
+  const [gladiators, setGladiators] = useState<GladiatorOption[]>([])
   const pathname = usePathname()
 
-  // Calculate XP percentage for progress bar
+  useEffect(() => {
+    if (session?.user?.id) {
+      fetch('/api/gladiators')
+        .then((res) => res.json())
+        .then((data) => setGladiators(data.gladiators ?? []))
+        .catch(() => setGladiators([]))
+    } else {
+      setGladiators([])
+    }
+  }, [session?.user?.id])
+
   const xpPercentage = activeGladiator
     ? Math.min(100, (activeGladiator.experience / getXpForNextLevel(activeGladiator.level)) * 100)
     : 0
 
-  // Navigation items
+  const hasMultiple = gladiators.length > 1
+
   const navItems = [
     { href: '/', label: 'Home', icon: '⚔️' },
     { href: '/camp', label: 'Camp', icon: '⛺' },
@@ -24,24 +63,45 @@ export function PersistentHUD() {
 
   return (
     <div className="fixed top-0 left-0 right-0 h-[90px] panel-embossed z-50 flex items-center px-3 sm:px-6 gap-2 sm:gap-6 border-b-4 border-coliseum-bronze/40">
-      {/* Left: Active Gladiator Info */}
+      {/* Left: Nickname + Legion dropdown (or single gladiator display) */}
       <div className="flex items-center gap-2 sm:gap-4 min-w-[200px] sm:min-w-[300px]">
         {activeGladiator ? (
           <>
-            {/* Gladiator Portrait Placeholder */}
-            <div className="w-12 h-12 sm:w-16 sm:h-16 panel-inset flex items-center justify-center text-2xl sm:text-3xl border-coliseum-bronze/50">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 panel-inset flex items-center justify-center text-2xl sm:text-3xl border-coliseum-bronze/50 shrink-0">
               🗿
             </div>
 
-            {/* Gladiator Stats */}
-            <div className="flex-1">
-              <div className="flex items-baseline gap-1 sm:gap-2 mb-1 flex-wrap">
-                <span className="text-coliseum-sand font-bold text-sm sm:text-lg">
-                  <span className="hidden sm:inline">Gladiator </span>#{activeGladiator.tokenId}
-                </span>
-                <span className="text-coliseum-bronze text-xs sm:text-sm">Lv. {activeGladiator.level}</span>
-                <span className="text-coliseum-sand/60 text-[10px] sm:text-xs uppercase hidden sm:inline">{activeGladiator.class}</span>
-              </div>
+            <div className="flex-1 min-w-0">
+              {hasMultiple ? (
+                <select
+                  value={activeGladiator.id}
+                  onChange={(e) => {
+                    const g = gladiators.find((x) => x.id === e.target.value)
+                    if (g) {
+                      setActiveGladiator({
+                        ...g,
+                        experience: g.xp ?? g.experience ?? 0,
+                      })
+                    }
+                  }}
+                  className="w-full panel-inset px-2 py-1 sm:px-3 sm:py-2 text-coliseum-sand font-bold text-sm sm:text-lg border border-coliseum-bronze/30 bg-coliseum-black/50 truncate"
+                  title="Your Legion"
+                >
+                  {gladiators.map((g) => (
+                    <option key={g.id} value={g.id}>
+                      {displayName(g)} (Lv.{g.level})
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div className="flex items-baseline gap-1 sm:gap-2 mb-1 flex-wrap">
+                  <span className="text-coliseum-sand font-bold text-sm sm:text-lg">
+                    {displayName(activeGladiator)}
+                  </span>
+                  <span className="text-coliseum-bronze text-xs sm:text-sm">Lv. {activeGladiator.level}</span>
+                  <span className="text-coliseum-sand/60 text-[10px] sm:text-xs uppercase hidden sm:inline">{activeGladiator.class}</span>
+                </div>
+              )}
 
               {/* XP Bar */}
               <div className="relative">
