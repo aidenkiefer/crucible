@@ -6,6 +6,7 @@ import { authOptions } from '@/lib/auth'
 import { SessionProvider } from '@/components/providers/SessionProvider'
 import { WagmiProvider } from '@/components/providers/WagmiProvider'
 import { ActiveGladiatorProvider } from '@/contexts/ActiveGladiatorContext'
+import { SkillTreeProvider } from '@/contexts/SkillTreeContext'
 import { PersistentHUD } from '@/components/rpg-ui/PersistentHUD'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -28,10 +29,12 @@ export default async function RootLayout({
       <body className={`${inter.className} ${vt323.variable}`}>
         <WagmiProvider>
           <SessionProvider session={session}>
-            <ActiveGladiatorProvider>
-              <PersistentHUD />
-              {children}
-            </ActiveGladiatorProvider>
+            <SkillTreeProvider>
+              <ActiveGladiatorProvider>
+                <PersistentHUD />
+                {children}
+              </ActiveGladiatorProvider>
+            </SkillTreeProvider>
           </SessionProvider>
         </WagmiProvider>
       </body>
