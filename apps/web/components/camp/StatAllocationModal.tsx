@@ -15,7 +15,7 @@ interface StatAllocationModalProps {
     magicResist: number
     arcana: number
     faith: number
-    statPointsAvailable: number
+    statPointsAvailable?: number
   }
   onSuccess: () => void
 }
@@ -84,7 +84,7 @@ export function StatAllocationModal({
 
   // Calculate total allocated and remaining points
   const totalAllocated = Object.values(pending).reduce((sum, val) => sum + val, 0)
-  const remainingPoints = gladiator.statPointsAvailable - totalAllocated
+  const remainingPoints = (gladiator.statPointsAvailable ?? 0) - totalAllocated
 
   const handleIncrement = (stat: StatKey) => {
     if (remainingPoints > 0) {
