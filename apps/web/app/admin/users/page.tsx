@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { AdminCreateTestGladiatorModal } from './components/AdminCreateTestGladiatorModal'
 
 interface GladiatorRow {
   id: string
@@ -29,6 +30,7 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState<string | null>(null)
   const [message, setMessage] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
+  const [createTestForUser, setCreateTestForUser] = useState<UserRow | null>(null)
 
   useEffect(() => {
     fetchUsers()
@@ -141,10 +143,23 @@ export default function AdminUsersPage() {
               user={user}
               onUpdateGladiator={updateGladiatorResources}
               onUpdateGold={updateUserGold}
+              onCreateTestGladiator={() => setCreateTestForUser(user)}
               saving={saving}
             />
           ))
         )}
+
+      {createTestForUser && (
+        <AdminCreateTestGladiatorModal
+          open={!!createTestForUser}
+          onClose={() => setCreateTestForUser(null)}
+          user={{ id: createTestForUser.id, email: createTestForUser.email }}
+          onCreated={() => {
+            setCreateTestForUser(null)
+            fetchUsers()
+          }}
+        />
+      )}
       </div>
     </div>
   )
@@ -154,6 +169,7 @@ function UserCard({
   user,
   onUpdateGladiator,
   onUpdateGold,
+  onCreateTestGladiator,
   saving,
 }: {
   user: UserRow
@@ -162,6 +178,7 @@ function UserCard({
     p: { level?: number; xp?: number; skillPointsAvailable?: number; statPointsAvailable?: number }
   ) => Promise<void>
   onUpdateGold: (userId: string, balance: number) => Promise<void>
+  onCreateTestGladiator: () => void
   saving: string | null
 }) {
   const [goldInput, setGoldInput] = useState<string>(String(user.goldBalance))
@@ -209,6 +226,13 @@ function UserCard({
               {saving === `gold-${user.id}` ? 'Saving…' : 'Set'}
             </button>
           </div>
+          <button
+            type="button"
+            onClick={onCreateTestGladiator}
+            className="px-3 py-1.5 text-xs uppercase border border-coliseum-bronze/50 bg-coliseum-bronze/20 text-coliseum-bronze hover:bg-coliseum-bronze/30"
+          >
+            + Test gladiator
+          </button>
           <button
             type="button"
             onClick={() => setExpanded(!expanded)}
