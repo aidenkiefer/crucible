@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { StatBar } from './StatBar'
 import { EquipmentSlot } from './EquipmentSlot'
+import { StatAllocationModal } from '../camp/StatAllocationModal'
 
 interface Gladiator {
   id: string
@@ -29,6 +30,8 @@ interface CharacterSheetProps {
 }
 
 export function CharacterSheet({ gladiator, onNameSet }: CharacterSheetProps) {
+  const [statModalOpen, setStatModalOpen] = useState(false)
+
   // Use base stats with fallbacks (e.g. from API or context)
   const con = gladiator.constitution ?? 0
   const xp = gladiator.experience ?? (gladiator as { xp?: number }).xp ?? 0
@@ -135,7 +138,18 @@ export function CharacterSheet({ gladiator, onNameSet }: CharacterSheetProps) {
         </div>
 
         {/* Stat Points */}
-        <div className="panel-inset p-3 flex items-center gap-2">
+        <div
+          className={`panel-inset p-3 flex items-center gap-2 ${
+            (gladiator.statPointsAvailable || 0) > 0
+              ? 'cursor-pointer hover:bg-coliseum-bronze/10 transition-colors'
+              : ''
+          }`}
+          onClick={() => {
+            if ((gladiator.statPointsAvailable || 0) > 0) {
+              setStatModalOpen(true)
+            }
+          }}
+        >
           <img
             src="/assets/ui/icons/bronze.png"
             alt="Stat Points"
@@ -194,6 +208,14 @@ export function CharacterSheet({ gladiator, onNameSet }: CharacterSheetProps) {
           </div>
         </div>
       </div>
+
+      {/* Stat Allocation Modal */}
+      <StatAllocationModal
+        open={statModalOpen}
+        onClose={() => setStatModalOpen(false)}
+        gladiator={gladiator}
+        onSuccess={onNameSet}
+      />
     </div>
   )
 }
