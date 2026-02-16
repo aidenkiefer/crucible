@@ -1,11 +1,13 @@
 'use client'
 
+import { useState } from 'react'
 import { StatBar } from './StatBar'
 import { EquipmentSlot } from './EquipmentSlot'
 
 interface Gladiator {
   id: string
   tokenId: number
+  name?: string | null
   class: string
   level: number
   experience: number
@@ -23,19 +25,27 @@ interface Gladiator {
 
 interface CharacterSheetProps {
   gladiator: Gladiator
+  onNameSet?: () => void
 }
 
-export function CharacterSheet({ gladiator }: CharacterSheetProps) {
-  // Derive max HP and stamina from stats (same formulas as combat engine)
-  const maxHp = 100 + gladiator.constitution * 10
-  const maxStamina = 100 + gladiator.constitution * 5
+export function CharacterSheet({ gladiator, onNameSet }: CharacterSheetProps) {
+  // Use base stats with fallbacks (e.g. from API or context)
+  const con = gladiator.constitution ?? 0
+  const xp = gladiator.experience ?? (gladiator as { xp?: number }).xp ?? 0
 
-  // Mock current values (in real implementation, fetch from active match or last known state)
+  // Derive max HP and stamina from stats (same formulas as combat engine)
+  const maxHp = 100 + con * 10
+  const maxStamina = 100 + con * 5
+
+  // In camp, show full bars (no active match); in-match would use current values
   const currentHp = maxHp
   const currentStamina = maxStamina
 
-  // Mock XP calculation
+  // XP to next level (same curve as progression)
   const xpForNextLevel = Math.floor(100 * Math.pow(gladiator.level, 1.5))
+
+  const displayName = gladiator.name?.trim() || null
+  const canName = !displayName
 
   return (
     <div className="panel-embossed p-6 space-y-6">
@@ -50,12 +60,18 @@ export function CharacterSheet({ gladiator }: CharacterSheetProps) {
           {/* Identity */}
           <div className="flex-1">
             <h2 className="text-2xl font-bold text-coliseum-sand">
-              Gladiator #{gladiator.tokenId}
+              {displayName ?? `Gladiator #${gladiator.tokenId}`}
             </h2>
             <div className="flex items-center gap-3 mt-1">
               <span className="text-coliseum-bronze font-bold">Level {gladiator.level}</span>
               <span className="text-coliseum-sand/60 uppercase text-sm">{gladiator.class}</span>
             </div>
+            {canName && (
+              <NameGladiatorForm
+                gladiatorId={gladiator.id}
+                onSuccess={onNameSet}
+              />
+            )}
           </div>
         </div>
       </div>
@@ -90,7 +106,7 @@ export function CharacterSheet({ gladiator }: CharacterSheetProps) {
           <div className="flex-1">
             <StatBar
               label="Experience"
-              value={gladiator.experience}
+              value={xp}
               maxValue={xpForNextLevel}
               type="xp"
               size="md"
@@ -142,14 +158,14 @@ export function CharacterSheet({ gladiator }: CharacterSheetProps) {
           Attributes
         </h3>
         <div className="grid grid-cols-2 gap-3 panel-inset p-4">
-          <AttributeStat label="Constitution" value={gladiator.constitution} />
-          <AttributeStat label="Strength" value={gladiator.strength} />
-          <AttributeStat label="Dexterity" value={gladiator.dexterity} />
-          <AttributeStat label="Speed" value={gladiator.speed} />
-          <AttributeStat label="Defense" value={gladiator.defense} />
-          <AttributeStat label="Magic Resist" value={gladiator.magicResist} />
-          <AttributeStat label="Arcana" value={gladiator.arcana} />
-          <AttributeStat label="Faith" value={gladiator.faith} />
+          <AttributeStat label="Constitution" value={gladiator.constitution ?? 0} />
+          <AttributeStat label="Strength" value={gladiator.strength ?? 0} />
+          <AttributeStat label="Dexterity" value={gladiator.dexterity ?? 0} />
+          <AttributeStat label="Speed" value={gladiator.speed ?? 0} />
+          <AttributeStat label="Defense" value={gladiator.defense ?? 0} />
+          <AttributeStat label="Magic Resist" value={gladiator.magicResist ?? 0} />
+          <AttributeStat label="Arcana" value={gladiator.arcana ?? 0} />
+          <AttributeStat label="Faith" value={gladiator.faith ?? 0} />
         </div>
       </div>
 
@@ -192,5 +208,135 @@ function AttributeStat({ label, value }: { label: string; value: number }) {
         {value}
       </span>
     </div>
+  )
+}
+
+const MAX_NAME_LENGTH = 32
+
+function NameGladiatorForm({
+  gladiatorId,
+  onSuccess,
+}: {
+  gladiatorId: string
+  onSuccess?: () => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [name, setName] = useState('')
+  const [understood, setUnderstood] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    const trimmed = name.trim()
+    if (!trimmed || !understood) return
+    if (trimmed.length > MAX_NAME_LENGTH) {
+      setError(`Name must be ${MAX_NAME_LENGTH} characters or fewer.`)
+      return
+    }
+    setSubmitting(true)
+    try {
+      const res = await fetch(`/api/gladiators/${gladiatorId}/name`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: trimmed }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error || 'Failed to set name')
+        return
+      }
+      setOpen(false)
+      setName('')
+      setUnderstood(false)
+      onSuccess?.()
+    } catch {
+      setError('Failed to set name')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="mt-2 text-sm text-coliseum-bronze hover:text-coliseum-bronze/80 underline uppercase tracking-wider"
+      >
+        Name your Gladiator
+      </button>
+
+      {open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70">
+          <div
+            className="panel-embossed p-6 max-w-md w-full space-y-4 border-2 border-coliseum-bronze/50"
+            role="dialog"
+            aria-labelledby="name-gladiator-title"
+          >
+            <h3 id="name-gladiator-title" className="text-lg font-bold text-coliseum-bronze uppercase">
+              Name your Gladiator
+            </h3>
+            <p className="text-sm text-amber-400/90 font-medium">
+              This name assignment cannot be undone or changed. Choose carefully.
+            </p>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="gladiator-name" className="block text-xs text-coliseum-sand/70 uppercase tracking-wider mb-1">
+                  Display name
+                </label>
+                <input
+                  id="gladiator-name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value.slice(0, MAX_NAME_LENGTH))}
+                  maxLength={MAX_NAME_LENGTH}
+                  placeholder="Enter name"
+                  className="w-full panel-inset px-3 py-2 text-coliseum-sand bg-coliseum-black/50 border border-coliseum-sand/20 rounded"
+                  disabled={submitting}
+                  autoFocus
+                />
+                <p className="mt-1 text-xs text-coliseum-sand/50">
+                  {name.length} / {MAX_NAME_LENGTH}
+                </p>
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={understood}
+                  onChange={(e) => setUnderstood(e.target.checked)}
+                  disabled={submitting}
+                  className="rounded border-coliseum-bronze/50"
+                />
+                <span className="text-sm text-coliseum-sand/90">
+                  I understand that this name cannot be changed later.
+                </span>
+              </label>
+              {error && (
+                <p className="text-sm text-red-400">{error}</p>
+              )}
+              <div className="flex gap-2 justify-end pt-2">
+                <button
+                  type="button"
+                  onClick={() => { setOpen(false); setError(null); setName(''); setUnderstood(false); }}
+                  className="btn-raised px-4 py-2 text-sm uppercase"
+                  disabled={submitting}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!name.trim() || !understood || submitting}
+                  className="px-4 py-2 text-sm uppercase bg-coliseum-bronze/20 text-coliseum-bronze border-2 border-coliseum-bronze/50 font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {submitting ? 'Saving…' : 'Confirm name'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
   )
 }

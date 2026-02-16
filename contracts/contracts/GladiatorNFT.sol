@@ -7,8 +7,13 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract GladiatorNFT is ERC721, Ownable {
     uint256 private _nextTokenId;
 
-    // Gladiator class types
-    enum GladiatorClass { Duelist, Brute, Assassin }
+    // 5-class system: Tank, Legionnaire, Duelist, Mage, Monk (uint8 0-4)
+    enum GladiatorClass { Tank, Legionnaire, Duelist, Mage, Monk }
+
+    // Stat order: 0=CON, 1=STR, 2=DEX, 3=SPD, 4=DEF, 5=MR, 6=ARC, 7=FTH
+    uint256 internal constant TOTAL_BASE_STATS = 50;
+    uint256 internal constant MIN_PER_STAT = 1;
+    uint256 internal constant RANGE = 10000;
 
     // Gladiator metadata
     struct Gladiator {
@@ -45,17 +50,24 @@ contract GladiatorNFT is ERC721, Ownable {
 
         _safeMint(msg.sender, tokenId);
 
-        // Generate random stats (pseudo-random for demo)
+        bytes32 baseRand = keccak256(abi.encodePacked(
+            block.timestamp,
+            block.prevrandao,
+            msg.sender,
+            tokenId
+        ));
+        uint8[8] memory rolled = _rollWeightedStats(gladiatorClass, baseRand);
+
         gladiators[tokenId] = Gladiator({
             class: gladiatorClass,
-            constitution: _randomStat(gladiatorClass, 0),
-            strength: _randomStat(gladiatorClass, 1),
-            dexterity: _randomStat(gladiatorClass, 2),
-            speed: _randomStat(gladiatorClass, 3),
-            defense: _randomStat(gladiatorClass, 4),
-            magicResist: _randomStat(gladiatorClass, 5),
-            arcana: _randomStat(gladiatorClass, 6),
-            faith: _randomStat(gladiatorClass, 7),
+            constitution: rolled[0],
+            strength: rolled[1],
+            dexterity: rolled[2],
+            speed: rolled[3],
+            defense: rolled[4],
+            magicResist: rolled[5],
+            arcana: rolled[6],
+            faith: rolled[7],
             mintedAt: block.timestamp
         });
 
@@ -64,32 +76,71 @@ contract GladiatorNFT is ERC721, Ownable {
         return tokenId;
     }
 
-    function _randomStat(GladiatorClass gladiatorClass, uint256 seed) private view returns (uint8) {
-        // Pseudo-random stat generation (NOT secure, demo only)
-        uint256 random = uint256(keccak256(abi.encodePacked(
-            block.timestamp,
-            block.prevrandao,
-            msg.sender,
-            seed,
-            _nextTokenId
-        ))) % 30;
-
-        uint8 baseMin = 50;
-        uint8 variance = uint8(random);
-
-        if (gladiatorClass == GladiatorClass.Duelist) {
-            // High dexterity, speed, defense
-            if (seed == 2 || seed == 3 || seed == 4) return baseMin + 20 + (variance % 10);
-            return baseMin + variance;
-        } else if (gladiatorClass == GladiatorClass.Brute) {
-            // High constitution, strength, defense
-            if (seed == 0 || seed == 1 || seed == 4) return baseMin + 20 + (variance % 10);
-            return baseMin + variance;
-        } else { // Assassin
-            // High dexterity, speed, arcana
-            if (seed == 2 || seed == 3 || seed == 6) return baseMin + 20 + (variance % 10);
-            return baseMin + variance;
+    /// @dev Returns weight for each stat (0=CON..7=FTH). Scaled: 1.4->140, 0.7->70.
+    function _getClassWeights(GladiatorClass c) internal pure returns (uint16[8] memory w) {
+        if (c == GladiatorClass.Tank) {
+            // CON140, DEF130, MR120, ARC110, STR100, FTH90, SPD80, DEX70
+            return [uint16(140), 100, 70, 80, 130, 120, 110, 90];
         }
+        if (c == GladiatorClass.Legionnaire) {
+            // STR140, DEF130, DEX120, CON110, SPD100, ARC90, FTH80, MR70
+            return [uint16(110), 140, 120, 100, 130, 70, 90, 80];
+        }
+        if (c == GladiatorClass.Duelist) {
+            // DEX140, SPD130, STR120, MR110, DEF100, FTH90, ARC80, CON70
+            return [uint16(70), 120, 140, 130, 100, 110, 80, 90];
+        }
+        if (c == GladiatorClass.Mage) {
+            // ARC140, MR130, SPD120, DEX110, FTH100, CON90, DEF80, STR70
+            return [uint16(90), 70, 110, 120, 80, 130, 140, 100];
+        }
+        // Monk: FTH140, CON130, SPD120, MR110, DEX100, DEF90, ARC80, STR70
+        return [uint16(130), 70, 100, 120, 90, 110, 80, 140];
+    }
+
+    /// @dev Allocates TOTAL_BASE_STATS across 8 stats using class weights and weighted random shares. Sum is exactly 50.
+    function _rollWeightedStats(GladiatorClass c, bytes32 baseRand) internal pure returns (uint8[8] memory out) {
+        uint16[8] memory w = _getClassWeights(c);
+        uint256 remaining = TOTAL_BASE_STATS - 8 * MIN_PER_STAT; // 42
+
+        uint256 sumS = 0;
+        uint256[8] memory s;
+        uint256[8] memory remainder;
+
+        for (uint256 i = 0; i < 8; i++) {
+            uint256 r = (uint256(keccak256(abi.encodePacked(baseRand, i))) % RANGE) + 1;
+            s[i] = r * uint256(w[i]);
+            sumS += s[i];
+        }
+
+        for (uint256 i = 0; i < 8; i++) {
+            uint256 raw = (remaining * s[i]) / sumS;
+            out[i] = uint8(MIN_PER_STAT + raw);
+            remainder[i] = (remaining * s[i]) % sumS;
+        }
+
+        uint256 sumAlloc = 0;
+        for (uint256 i = 0; i < 8; i++) {
+            sumAlloc += out[i];
+        }
+        uint256 leftover = TOTAL_BASE_STATS - sumAlloc;
+
+        while (leftover > 0) {
+            uint256 maxRem = 0;
+            uint256 maxIdx = 0;
+            for (uint256 i = 0; i < 8; i++) {
+                if (remainder[i] > maxRem) {
+                    maxRem = remainder[i];
+                    maxIdx = i;
+                }
+            }
+            out[maxIdx] += 1;
+            remainder[maxIdx] = 0;
+            sumAlloc += 1;
+            leftover--;
+        }
+
+        return out;
     }
 
     function setBaseURI(string memory baseURI) public onlyOwner {

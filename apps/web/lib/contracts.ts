@@ -9,8 +9,11 @@ export const GLADIATOR_NFT_ABI = parseAbi([
   'event GladiatorMinted(uint256 indexed tokenId, address indexed owner, uint8 class)',
 ])
 
+/** 5-class system: contract expects uint8 0–4 */
 export enum GladiatorClass {
-  Duelist = 0,
-  Brute = 1,
-  Assassin = 2,
+  Tank = 0,
+  Legionnaire = 1,
+  Duelist = 2,
+  Mage = 3,
+  Monk = 4,
 }

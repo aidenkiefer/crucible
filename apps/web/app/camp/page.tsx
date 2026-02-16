@@ -8,11 +8,14 @@ import { LootBoxInventory } from '@/components/loot/LootBoxInventory'
 import { CraftingWorkshop } from '@/components/equipment/CraftingWorkshop'
 import { CharacterSheet } from '@/components/rpg-ui/CharacterSheet'
 import { SkillTree } from '@/components/skills/SkillTree'
+import { TestGladiatorSetup, isTestGladiator } from '@/components/camp/TestGladiatorSetup'
+import { CreateTestGladiatorModal } from '@/components/camp/CreateTestGladiatorModal'
 import { useActiveGladiator } from '@/contexts/ActiveGladiatorContext'
 
 interface Gladiator {
   id: string
   tokenId: number
+  name?: string | null
   class: string
   level: number
   experience?: number
@@ -38,30 +41,49 @@ export default function CampPage() {
   const [gladiators, setGladiators] = useState<Gladiator[]>([])
   const [tab, setTab] = useState<Tab>('inventory')
   const [loading, setLoading] = useState(true)
+  const [createTestOpen, setCreateTestOpen] = useState(false)
+
+  const refetchGladiators = () => {
+    if (!session?.user?.id) return
+    return fetch('/api/gladiators')
+      .then((res) => res.json())
+      .then((data) => {
+        const fetchedGladiators = data.gladiators || []
+        setGladiators(fetchedGladiators)
+        // Keep active gladiator in sync with latest data (stats, XP, skill points, etc.)
+        if (activeGladiator && fetchedGladiators.length > 0) {
+          const updated = fetchedGladiators.find((g: Gladiator) => g.id === activeGladiator.id)
+          if (updated) {
+            setActiveGladiator({
+              ...updated,
+              experience: updated.xp ?? updated.experience ?? 0,
+            })
+          }
+        }
+        // Auto-select first gladiator if none active
+        if (!activeGladiator && fetchedGladiators.length > 0) {
+          const first = fetchedGladiators[0]
+          setActiveGladiator({
+            ...first,
+            experience: first.xp ?? first.experience ?? 0,
+          })
+        }
+      })
+      .catch(console.error)
+  }
 
   useEffect(() => {
     if (session?.user?.id) {
-      fetch('/api/gladiators')
-        .then((res) => res.json())
-        .then((data) => {
-          const fetchedGladiators = data.gladiators || []
-          setGladiators(fetchedGladiators)
-
-          // Auto-select first gladiator if none active
-          if (!activeGladiator && fetchedGladiators.length > 0) {
-            const first = fetchedGladiators[0]
-            setActiveGladiator({
-              ...first,
-              experience: first.xp ?? first.experience ?? 0,
-            })
-          }
-        })
-        .catch(console.error)
-        .finally(() => setLoading(false))
+      refetchGladiators()?.finally(() => setLoading(false))
     } else {
       setLoading(false)
     }
-  }, [session?.user?.id, activeGladiator, setActiveGladiator])
+  }, [session?.user?.id])
+
+  // Refetch when switching to Skills tab so stats/XP/skill points stay current
+  useEffect(() => {
+    if (tab === 'skills' && session?.user?.id) refetchGladiators()
+  }, [tab])
 
   if (status === 'loading' || loading) {
     return (
@@ -205,12 +227,21 @@ export default function CampPage() {
         <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-6">
           {/* Left: Character Sheet */}
           <div className="space-y-6">
-            {/* Gladiator Selector */}
-            {gladiators.length > 1 && (
-              <div className="panel-embossed p-4">
-                <label className="block text-coliseum-bronze uppercase text-xs tracking-wider font-bold mb-2">
+            {/* Gladiator Selector + Create test */}
+            <div className="panel-embossed p-4 space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <label className="block text-coliseum-bronze uppercase text-xs tracking-wider font-bold">
                   Select Gladiator
                 </label>
+                <button
+                  type="button"
+                  onClick={() => setCreateTestOpen(true)}
+                  className="text-xs uppercase tracking-wider text-coliseum-bronze/90 hover:text-coliseum-bronze border border-coliseum-bronze/40 px-2 py-1 rounded"
+                >
+                  + Test gladiator
+                </button>
+              </div>
+              {gladiators.length > 0 && (
                 <select
                   value={activeGladiator?.id || ''}
                   onChange={(e) => {
@@ -226,16 +257,42 @@ export default function CampPage() {
                 >
                   {gladiators.map((g) => (
                     <option key={g.id} value={g.id}>
-                      {g.class} #{g.tokenId} (Lv. {g.level})
+                      {g.name?.trim() || `${g.class} #${g.tokenId}`} (Lv. {g.level})
                     </option>
                   ))}
                 </select>
-              </div>
+              )}
+            </div>
+
+            {/* Test gladiator setup: class + generate stats (same as mint flow) */}
+            {activeGladiator && isTestGladiator(activeGladiator.tokenId) && (
+              <TestGladiatorSetup
+                gladiatorId={activeGladiator.id}
+                currentClass={activeGladiator.class}
+                onSuccess={refetchGladiators}
+              />
             )}
 
-            {/* Character Sheet */}
-            {activeGladiator && <CharacterSheet gladiator={activeGladiator} />}
+            {/* Character Sheet (stats, name, etc.) */}
+            {activeGladiator && (
+              <CharacterSheet
+                gladiator={activeGladiator}
+                onNameSet={refetchGladiators}
+              />
+            )}
           </div>
+
+          <CreateTestGladiatorModal
+            open={createTestOpen}
+            onClose={() => setCreateTestOpen(false)}
+            onCreated={(g) => {
+              setActiveGladiator({
+                ...g,
+                experience: g.xp ?? 0,
+              })
+              refetchGladiators()
+            }}
+          />
 
           {/* Right: Tabbed Content */}
           <div className="space-y-6">

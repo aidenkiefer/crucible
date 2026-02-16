@@ -256,3 +256,85 @@ export function dbStatsToWeights(dbStats: {
     FTH: dbStats.faith,
   }
 }
+
+const STAT_ORDER: StatKey[] = ['CON', 'STR', 'DEX', 'SPD', 'DEF', 'MR', 'ARC', 'FTH']
+const TOTAL_BASE_STATS = 50
+const MIN_PER_STAT = 1
+const RANGE = 10000
+
+/** Seeded PRNG (mulberry32) for reproducible rolls. Returns 0..1. */
+function seededRandom(seed: number): () => number {
+  return () => {
+    seed = (seed + 0x6d2b79f5) | 0
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+/**
+ * Roll base stats using the same weighted algorithm as the on-chain contract:
+ * 8 random values scaled by class weights, then allocate TOTAL_BASE_STATS (50)
+ * with MIN_PER_STAT (1) per stat. Sum of returned stats is exactly 50.
+ * Use for test gladiators and any off-chain mint flow.
+ *
+ * @param gladiatorClass - Tank, Legionnaire, Duelist, Mage, Monk (or legacy Brute/Assassin)
+ * @param seed - Optional seed for reproducibility. If omitted, uses Math.random().
+ */
+export function rollWeightedStatsContractStyle(
+  gladiatorClass: GladiatorClass,
+  seed?: number
+): { constitution: number; strength: number; dexterity: number; speed: number; defense: number; magicResist: number; arcana: number; faith: number } {
+  const weights = getBaseStatWeights(gladiatorClass)
+  const w = STAT_ORDER.map((k) => Math.round(weights[k] * 100))
+
+  const random = seed !== undefined ? seededRandom(seed) : () => Math.random()
+
+  const s: number[] = []
+  let sumS = 0
+  for (let i = 0; i < 8; i++) {
+    const r = Math.floor(random() * RANGE) + 1
+    const si = r * w[i]
+    s.push(si)
+    sumS += si
+  }
+
+  const remaining = TOTAL_BASE_STATS - 8 * MIN_PER_STAT
+  const out = [0, 0, 0, 0, 0, 0, 0, 0]
+  const remainder = [0, 0, 0, 0, 0, 0, 0, 0]
+
+  for (let i = 0; i < 8; i++) {
+    const raw = Math.floor((remaining * s[i]) / sumS)
+    out[i] = MIN_PER_STAT + raw
+    remainder[i] = (remaining * s[i]) % sumS
+  }
+
+  let sumAlloc = out.reduce((a, b) => a + b, 0)
+  let leftover = TOTAL_BASE_STATS - sumAlloc
+
+  while (leftover > 0) {
+    let maxRem = 0
+    let maxIdx = 0
+    for (let i = 0; i < 8; i++) {
+      if (remainder[i] > maxRem) {
+        maxRem = remainder[i]
+        maxIdx = i
+      }
+    }
+    out[maxIdx] += 1
+    remainder[maxIdx] = 0
+    sumAlloc += 1
+    leftover -= 1
+  }
+
+  return {
+    constitution: out[0],
+    strength: out[1],
+    dexterity: out[2],
+    speed: out[3],
+    defense: out[4],
+    magicResist: out[5],
+    arcana: out[6],
+    faith: out[7],
+  }
+}

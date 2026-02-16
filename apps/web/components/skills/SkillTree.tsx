@@ -71,12 +71,81 @@ const TREE_THEMES: Record<
 }
 
 const TREE_DESCRIPTIONS: Record<SkillTreeName, string> = {
-  Valor: 'Combat prowess and resilience. Improves damage, survivability, and staying power in the arena. Ideal for Duelists and Brutes who trade blows head-on.',
-  Instinct: 'Reflexes and awareness. Enhances dodge, movement, and reaction speed. Suits Assassins and agile fighters who rely on positioning and evasion.',
-  Discipline: 'Control and consistency. Focuses on stamina, cooldowns, and reliable output. Best for methodical gladiators who manage resources carefully.',
-  Intellect: 'Tactical and magical edge. Unlocks utility, debuffs, and stat manipulation. Favored by strategic builds and those investing in Arcana.',
-  Zeal: 'Burst and commitment. High-risk, high-reward effects and execute-style power. For gladiators who commit to all-in moments.',
-  Ferocity: 'Aggression and pressure. Raw damage, lifesteal, and relentless offense. Fits Brutes and anyone who wants to dominate through force.',
+  Valor: `Valor - The Unbroken Will
+
+Before blades were forged, before spells were whispered, there were those who simply refused to fall.
+
+Valor is not armor, nor shield, nor flesh - it is endurance made manifest. It is the discipline of standing when bone fractures, when breath burns, when the arena itself demands surrender. Those who walk the path of Valor do not outpace death - they outlast it.
+
+In the Crucible, victory does not always belong to the strongest or the fastest. Sometimes it belongs to the one who remains… when the dust settles and all others have fallen.
+
+Valor is the art of surviving what should have killed you.`,
+
+  Instinct: `Instinct - The Edge Between Heartbeats
+
+There is a moment - smaller than thought - where survival is decided.
+
+Instinct lives in that moment.
+
+It is the twitch before the strike lands, the shift of weight before steel cuts air, the awareness that moves the body before the mind understands danger. Those who master Instinct do not react - they exist ahead of reaction itself.
+
+In the arena, hesitation is death. Calculation is slow. Strategy is fragile.
+
+Instinct is certainty without thinking. Motion without doubt. Survival without mercy.
+
+To walk this path is to trust the body more than the world.`,
+
+  Discipline: `Discipline - The Perfected Strike
+
+Power is common. Control is rare.
+
+Discipline is the relentless pursuit of mastery - not strength, but precision. Not fury, but intention. Every movement honed, every strike measured, every breath serving purpose. Those who embrace Discipline do not fight wildly… they fight correctly.
+
+A single flawless strike ends what a thousand reckless blows cannot.
+
+In the Crucible, chaos consumes the untrained. Only those who refine themselves beyond instinct, beyond emotion, beyond hesitation… wield true dominance.
+
+Discipline is not learning to fight.
+
+It is learning to never fight imperfectly again.`,
+
+  Intellect: `Intellect - The Shaping of Reality
+
+Steel cuts flesh. Magic rewrites existence.
+
+Intellect is the understanding that the arena is not fixed - that force, energy, and will can be bent, redirected, consumed, and reshaped. Those who walk this path do not merely wield power… they comprehend it.
+
+Every motion carries cost. Every spell carries consequence. Every force obeys structure. Intellect is the mastery of those structures - the ability to make reality itself a weapon.
+
+In the Crucible, brute strength wins battles.
+
+Understanding wins inevitability.`,
+
+  Zeal: `Zeal - The Fire That Refuses Extinction
+
+Some wounds do not close. Some spirits do not break.
+
+Zeal is the defiance that burns after strength fades - the will to rise, again and again, long after the body demands stillness. It is faith without gods, conviction without proof, endurance born from something deeper than flesh.
+
+Those who embrace Zeal do not merely survive suffering… they transform it. Pain becomes fuel. Loss becomes resolve. Weakness becomes renewal.
+
+In the Crucible, many fight to win.
+
+The faithful fight because they cannot be extinguished.`,
+
+  Ferocity: `Ferocity - The Hunger of the Kill
+
+There is a moment when restraint dies - and something primal takes its place.
+
+Ferocity is the surge that overwhelms caution, the pressure that crushes hesitation, the instinct to pursue weakness until nothing remains. It is momentum without mercy. Aggression without pause. The certainty that the wounded must fall.
+
+Those who walk this path do not wait for victory - they force it into existence.
+
+In the Crucible, battles are not always decided by skill or endurance… but by who refuses to stop when the enemy begins to falter.
+
+Ferocity is not rage.
+
+It is inevitability sharpened into violence.`,
 }
 
 function SkillTooltip({
@@ -349,7 +418,7 @@ export function SkillTree({
                 />
               </span>
             </div>
-            <p className="text-sm text-coliseum-sand/80 leading-snug max-w-2xl">
+            <p className="text-sm text-coliseum-sand/80 leading-snug max-w-2xl whitespace-pre-line">
               {TREE_DESCRIPTIONS[selectedTree]}
             </p>
           </div>

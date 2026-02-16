@@ -5,6 +5,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 interface Gladiator {
   id: string
   tokenId: number
+  name?: string | null
   class: string
   level: number
   experience: number

@@ -2,33 +2,53 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useAccount } from 'wagmi'
 import { useMintGladiator } from '@/hooks/useMintGladiator'
 import { GladiatorClass } from '@/lib/contracts'
 import { AnimatedTorch } from '@/components/ui/AnimatedTorch'
 
-const CLASS_INFO = {
+const CLASS_ICONS: Record<GladiatorClass, string> = {
+  [GladiatorClass.Tank]: '/assets/ui/icons/tank-icon-clean.png',
+  [GladiatorClass.Legionnaire]: '/assets/ui/icons/legionnaire-icon-clean.png',
+  [GladiatorClass.Duelist]: '/assets/ui/icons/duelist-icon-clean.png',
+  [GladiatorClass.Mage]: '/assets/ui/icons/mage-icon-clean.png',
+  [GladiatorClass.Monk]: '/assets/ui/icons/monk-icon-clean.png',
+}
+
+const CLASS_INFO: Record<
+  GladiatorClass,
+  { name: string; description: string; strengths: string[]; statBias: { str: 'high' | 'med' | 'low'; dex: 'high' | 'med' | 'low'; spd: 'high' | 'med' | 'low' } }
+> = {
+  [GladiatorClass.Tank]: {
+    name: 'Tank',
+    description: 'Defensive bulwark with high constitution and defense. They absorb what would shatter others and hold the line.',
+    strengths: ['Constitution', 'Defense'],
+    statBias: { str: 'med', dex: 'low', spd: 'low' },
+  },
+  [GladiatorClass.Legionnaire]: {
+    name: 'Legionnaire',
+    description: 'Physical warrior with strong offense and defense. They deliver crushing blows and weather the same in return.',
+    strengths: ['Strength', 'Defense'],
+    statBias: { str: 'high', dex: 'med', spd: 'low' },
+  },
   [GladiatorClass.Duelist]: {
     name: 'Duelist',
-    description: 'Balanced fighter with high technique and agility. Masters of the blade who read their opponents like an open scroll.',
-    strengths: ['Technique', 'Agility'],
-    icon: '⚔️',
-    statBias: { dex: 'high', spd: 'high', str: 'med' },
+    description: 'Fast, agile fighter with high technique. Masters of the blade who read their opponents like an open scroll.',
+    strengths: ['Dexterity', 'Speed'],
+    statBias: { str: 'med', dex: 'high', spd: 'high' },
   },
-  [GladiatorClass.Brute]: {
-    name: 'Brute',
-    description: 'Raw power and unwavering endurance. They shatter shields and break bones with every swing.',
-    strengths: ['Strength', 'Endurance'],
-    icon: '🪓',
-    // Include DEX/SPD so the UI stat bars have stable keys across classes
-    statBias: { str: 'high', dex: 'low', spd: 'low', con: 'high', def: 'med' },
+  [GladiatorClass.Mage]: {
+    name: 'Mage',
+    description: 'Arcane caster who bends reality to their will. Magic rewrites the battlefield; they wield that power.',
+    strengths: ['Arcana', 'Magic Resist'],
+    statBias: { str: 'low', dex: 'med', spd: 'med' },
   },
-  [GladiatorClass.Assassin]: {
-    name: 'Assassin',
-    description: 'Swift and deadly. They strike from shadows and vanish before their prey hits the sand.',
-    strengths: ['Agility', 'Precision'],
-    icon: '🗡️',
-    statBias: { spd: 'high', dex: 'high', str: 'low' },
+  [GladiatorClass.Monk]: {
+    name: 'Monk',
+    description: 'Faith-driven fighter with durability and inner focus. They channel conviction into resilience and controlled force.',
+    strengths: ['Faith', 'Constitution'],
+    statBias: { str: 'low', dex: 'med', spd: 'med' },
   },
 }
 
@@ -54,7 +74,7 @@ function StatBar({ label, level }: { label: string; level: 'high' | 'med' | 'low
 export function MintGladiator() {
   const { isConnected } = useAccount()
   const { mint, isPending, isConfirming, isSuccess, hash } = useMintGladiator()
-  const [selectedClass, setSelectedClass] = useState<GladiatorClass>(GladiatorClass.Duelist)
+  const [selectedClass, setSelectedClass] = useState<GladiatorClass>(GladiatorClass.Tank)
 
   if (!isConnected) {
     return (
@@ -152,7 +172,7 @@ export function MintGladiator() {
             <div className="h-px flex-1 bg-coliseum-bronze/30" />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             {Object.entries(CLASS_INFO).map(([classId, info]) => {
               const isSelected = selectedClass === Number(classId)
               return (
@@ -173,16 +193,22 @@ export function MintGladiator() {
                     <div className="absolute top-0 left-0 right-0 h-1 bg-coliseum-bronze" />
                   )}
 
-                  {/* Icon */}
+                  {/* Class icon */}
                   <div className={`
-                    w-14 h-14 mb-4 border-2 flex items-center justify-center text-2xl
+                    w-14 h-14 mb-4 border-2 flex items-center justify-center overflow-hidden
                     transition-colors duration-150
                     ${isSelected
                       ? 'border-coliseum-bronze bg-coliseum-black/50'
                       : 'border-coliseum-bronze/30 bg-coliseum-black/30 group-hover:border-coliseum-bronze/50'
                     }
                   `}>
-                    {info.icon}
+                    <Image
+                      src={CLASS_ICONS[Number(classId) as GladiatorClass]}
+                      alt={info.name}
+                      width={56}
+                      height={56}
+                      className="w-full h-full object-contain"
+                    />
                   </div>
 
                   {/* Name */}

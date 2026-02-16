@@ -56,6 +56,6 @@ export async function startGladiatorSync() {
 }
 
 function getClassName(classId: number): string {
-  const classes = ['Duelist', 'Brute', 'Assassin']
-  return classes[classId] || 'Duelist'
+  const classes = ['Tank', 'Legionnaire', 'Duelist', 'Mage', 'Monk']
+  return classes[classId] ?? 'Duelist'
 }
