@@ -316,12 +316,6 @@ export function SkillTree({
     )
   }, [currentTree])
 
-  const hoveredSkill = useMemo(() => {
-    return hoveredSkillId && currentTree
-      ? currentTree.skills.find((s) => s.id === hoveredSkillId) ?? null
-      : null
-  }, [hoveredSkillId, currentTree])
-
   const unlockSkill = async (skillId: string, cost: number) => {
     try {
       setUnlocking(skillId)
