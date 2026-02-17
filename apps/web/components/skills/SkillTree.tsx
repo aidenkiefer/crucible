@@ -187,24 +187,33 @@ function SkillTooltip({
   useEffect(() => {
     const el = anchorRef.current
     if (!el) return
-    const anchorRect = el.getBoundingClientRect()
-    const padding = 8
-    const centerX = anchorRect.left + anchorRect.width / 2
-    const bottom = anchorRect.top + anchorRect.height
-    let top = bottom + padding
-    let left = centerX
-    const tooltip = tooltipRef.current
-    if (tooltip) {
-      const tw = tooltip.offsetWidth
-      const th = tooltip.offsetHeight
-      left = Math.max(12, Math.min(centerX - tw / 2, window.innerWidth - tw - 12))
-      if (bottom + th + padding > window.innerHeight - 12) {
-        top = anchorRect.top - th - padding
-      }
-    } else {
-      left = Math.max(12, centerX - 160)
-    }
-    setPos({ top, left })
+
+    const id = window.setTimeout(() => {
+      const anchorRect = el.getBoundingClientRect()
+      const padding = 8
+      const centerX = anchorRect.left + anchorRect.width / 2
+      const anchorBottom = anchorRect.top + anchorRect.height
+      const viewportBottom = window.innerHeight - 12
+      const tooltip = tooltipRef.current
+      const estimatedTooltipHeight = 220
+      const estimatedTooltipWidth = 320
+
+      let th = tooltip ? tooltip.offsetHeight : estimatedTooltipHeight
+      const tw = tooltip ? tooltip.offsetWidth : estimatedTooltipWidth
+
+      const wouldOverflowBelow = anchorBottom + th + padding > viewportBottom
+      const hasRoomAbove = anchorRect.top - th - padding >= 12
+      const placeAbove = wouldOverflowBelow && hasRoomAbove
+
+      const top = placeAbove
+        ? anchorRect.top - th - padding
+        : anchorBottom + padding
+      const left = Math.max(12, Math.min(centerX - tw / 2, window.innerWidth - tw - 12))
+
+      setPos({ top, left })
+    }, 100)
+
+    return () => clearTimeout(id)
   }, [anchorRef])
 
   if (pos === null) return null
@@ -399,7 +408,7 @@ export function SkillTree({
           {/* Tree title + description (left); icon + major/minor stats (right) */}
           <div className="flex flex-col gap-4 pb-6 border-b border-coliseum-sand/20 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0 flex-1">
-              <h3 className={`font-display text-xl uppercase ${treeTheme.accent}`}>
+              <h3 className={`font-display text-3xl uppercase ${treeTheme.accent}`}>
                 {selectedTree}
               </h3>
               <p className="mx-auto mt-6 max-w-2xl text-center text-sm italic leading-snug text-coliseum-sand/80 whitespace-pre-line">
@@ -407,12 +416,12 @@ export function SkillTree({
               </p>
             </div>
             <div className="flex shrink-0 flex-col items-end gap-2 text-right">
-              <div className="relative h-16 w-16 overflow-hidden">
+              <div className="relative h-32 w-32 overflow-hidden">
                 <Image
                   src={treeTheme.icon}
                   alt=""
-                  width={64}
-                  height={64}
+                  width={128}
+                  height={128}
                   className="h-full w-full object-contain"
                 />
               </div>
