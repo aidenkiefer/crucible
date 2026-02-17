@@ -86,10 +86,11 @@ export class Renderer {
     const barHeight = 4
     const barX = centerX - barWidth / 2
 
-    // For now, use hardcoded max values (will be improved in later tasks)
-    // TODO: Get actual max values from server
-    const hpMax = 100
-    const stamMax = 100
+    // Use derived stats if available, otherwise use defaults
+    // Note: Currently server doesn't send derived stats in combat state broadcast
+    // Default to common max values based on CON stat (100 HP, 100 Stamina)
+    const hpMax = (combatant as any).derived?.maxHp || 100
+    const stamMax = (combatant as any).derived?.maxStamina || 100
 
     // HP bar background
     this.ctx.fillStyle = '#222'

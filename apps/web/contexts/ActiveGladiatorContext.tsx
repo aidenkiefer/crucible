@@ -35,11 +35,31 @@ export function ActiveGladiatorProvider({ children }: { children: ReactNode }) {
 
   // Load active gladiator from localStorage on mount
   useEffect(() => {
+    const fetchGladiator = async (gladiatorId: string) => {
+      try {
+        const res = await fetch(`/api/gladiators`)
+        if (res.ok) {
+          const data = await res.json()
+          const gladiator = data.gladiators?.find((g: Gladiator) => g.id === gladiatorId)
+          if (gladiator) {
+            setActiveGladiatorState(gladiator)
+          } else {
+            // Gladiator not found, clear localStorage
+            localStorage.removeItem('activeGladiatorId')
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch active gladiator:', error)
+        // Clear invalid ID from localStorage
+        localStorage.removeItem('activeGladiatorId')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
     const stored = localStorage.getItem('activeGladiatorId')
     if (stored) {
-      // TODO: Fetch full gladiator data from API
-      // For now, just mark as not loading
-      setIsLoading(false)
+      fetchGladiator(stored)
     } else {
       setIsLoading(false)
     }

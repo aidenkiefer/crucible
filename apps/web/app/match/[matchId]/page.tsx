@@ -11,15 +11,17 @@ import { useGameInput } from '@/hooks/useGameInput'
 import { useClientPrediction } from '@/hooks/useClientPrediction'
 import { useCreateMatch } from '@/hooks/useCreateMatch'
 import { WeaponType, Weapons } from '@gladiator/shared/src/combat'
+import { useActiveGladiator } from '@/contexts/ActiveGladiatorContext'
 
 export default function MatchPage() {
   const params = useParams()
   const router = useRouter()
   const { data: session } = useSession()
+  const { activeGladiator } = useActiveGladiator()
   const matchId = params.matchId as string
 
-  // TODO: Load gladiator ID from match data or query param
-  const gladiatorId = 'player-gladiator-id'
+  // Use active gladiator ID if available, fallback to query param or placeholder
+  const gladiatorId = activeGladiator?.id || 'player-gladiator-id'
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const { combatState, isConnected, isComplete, submitInput } = useRealTimeMatch(matchId, gladiatorId)
@@ -53,7 +55,7 @@ export default function MatchPage() {
       ? {
           position: playerCombatantData.position,
           facing: playerCombatantData.facingAngle,
-          moveSpeed: 150, // TODO: Get from derived stats when available
+          moveSpeed: playerCombatantData.derived?.moveSpeed || 150, // Use derived stats if available
         }
       : null,
     input,
@@ -145,22 +147,27 @@ export default function MatchPage() {
                 onClick={async () => {
                   setFightAgainError(null)
 
-                  // Create new match with same stats
-                  const mockGladiatorStats = {
-                    constitution: 10,
-                    strength: 10,
-                    dexterity: 10,
-                    speed: 10,
-                    defense: 10,
-                    magicResist: 10,
-                    arcana: 10,
-                    faith: 10,
+                  if (!activeGladiator) {
+                    setFightAgainError('No active gladiator selected')
+                    return
+                  }
+
+                  // Create new match with active gladiator's stats
+                  const gladiatorStats = {
+                    constitution: activeGladiator.constitution,
+                    strength: activeGladiator.strength,
+                    dexterity: activeGladiator.dexterity,
+                    speed: activeGladiator.speed,
+                    defense: activeGladiator.defense,
+                    magicResist: activeGladiator.magicResist,
+                    arcana: activeGladiator.arcana,
+                    faith: activeGladiator.faith,
                   }
 
                   const newMatchId = await createMatch({
                     userId: session?.user?.id || session?.user?.email || 'unknown',
-                    gladiatorId,
-                    gladiatorStats: mockGladiatorStats,
+                    gladiatorId: activeGladiator.id,
+                    gladiatorStats,
                     isCpuMatch: true,
                   })
 
@@ -170,7 +177,7 @@ export default function MatchPage() {
                     setFightAgainError('Failed to create new match')
                   }
                 }}
-                disabled={isCreating}
+                disabled={isCreating || !activeGladiator}
                 className="btn-primary disabled:opacity-50"
               >
                 {isCreating ? 'Creating Match...' : 'Fight Again'}
