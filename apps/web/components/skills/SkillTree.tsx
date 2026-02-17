@@ -304,14 +304,23 @@ export function SkillTree({
   const pointsRemaining = skillPoints
   const treeTheme = currentTree ? TREE_THEMES[selectedTree] : TREE_THEMES.Valor
 
-  const skillsByTier = currentTree?.skills.reduce(
-    (acc, skill) => {
-      if (!acc[skill.tier]) acc[skill.tier] = []
-      acc[skill.tier].push(skill)
-      return acc
-    },
-    {} as Record<number, SkillNode[]>
-  ) ?? {}
+  const skillsByTier = useMemo(() => {
+    if (!currentTree) return {}
+    return currentTree.skills.reduce(
+      (acc, skill) => {
+        if (!acc[skill.tier]) acc[skill.tier] = []
+        acc[skill.tier].push(skill)
+        return acc
+      },
+      {} as Record<number, SkillNode[]>
+    )
+  }, [currentTree])
+
+  const hoveredSkill = useMemo(() => {
+    return hoveredSkillId && currentTree
+      ? currentTree.skills.find((s) => s.id === hoveredSkillId) ?? null
+      : null
+  }, [hoveredSkillId, currentTree])
 
   const unlockSkill = async (skillId: string, cost: number) => {
     try {
@@ -347,11 +356,6 @@ export function SkillTree({
       </div>
     )
   }
-
-  const hoveredSkill =
-    hoveredSkillId && currentTree
-      ? currentTree.skills.find((s) => s.id === hoveredSkillId)
-      : null
 
   return (
     <div className="space-y-6">
