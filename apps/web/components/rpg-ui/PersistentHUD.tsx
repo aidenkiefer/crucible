@@ -5,6 +5,7 @@ import { useActiveGladiator } from '@/contexts/ActiveGladiatorContext'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { formatGold } from '@/lib/utils/format'
 
 interface GladiatorOption {
   id: string
@@ -34,6 +35,8 @@ export function PersistentHUD() {
   const { data: session } = useSession()
   const { activeGladiator, setActiveGladiator } = useActiveGladiator()
   const [gladiators, setGladiators] = useState<GladiatorOption[]>([])
+  const [gold, setGold] = useState<number | null>(null)
+  const [unreadCount, setUnreadCount] = useState(0)
   const pathname = usePathname()
 
   useEffect(() => {
@@ -45,6 +48,38 @@ export function PersistentHUD() {
     } else {
       setGladiators([])
     }
+  }, [session?.user?.id])
+
+  // Fetch user gold
+  useEffect(() => {
+    if (session?.user?.id) {
+      fetch('/api/gold/balance')
+        .then((res) => res.json())
+        .then((data) => setGold(data.balance ?? 0))
+        .catch(() => setGold(0))
+    } else {
+      setGold(null)
+    }
+  }, [session?.user?.id])
+
+  // Poll unread count every 5 seconds
+  useEffect(() => {
+    const poll = async () => {
+      if (!session?.user?.id) return
+      try {
+        const res = await fetch('/api/notifications/unread-count')
+        if (res.ok) {
+          const data = await res.json()
+          setUnreadCount(data.count || 0)
+        }
+      } catch (error) {
+        console.error('Failed to fetch unread count:', error)
+      }
+    }
+
+    poll()
+    const interval = setInterval(poll, 5000)
+    return () => clearInterval(interval)
   }, [session?.user?.id])
 
   const xpPercentage = activeGladiator
@@ -183,19 +218,18 @@ export function PersistentHUD() {
         <div className="flex items-center gap-1 sm:gap-2 panel-inset px-2 sm:px-4 py-1 sm:py-2">
           <span className="text-lg sm:text-2xl">💰</span>
           <span className="text-coliseum-bronze font-bold text-sm sm:text-base">
-            {/* TODO: Fetch actual gold from user data */}
-            <span className="hidden sm:inline">1,250</span>
-            <span className="sm:hidden">1.2k</span>
+            {gold !== null ? formatGold(gold) : '---'}
           </span>
         </div>
 
         {/* Notifications Bell */}
         <button className="btn-raised w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-lg sm:text-xl relative">
           🔔
-          {/* Notification badge */}
-          <span className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-red-600 text-white text-[8px] sm:text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-coliseum-stone">
-            3
-          </span>
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-red-600 text-white text-[8px] sm:text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-coliseum-stone">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
+          )}
         </button>
       </div>
     </div>
