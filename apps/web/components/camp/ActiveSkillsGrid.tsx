@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import Image from 'next/image'
 import type { SkillNode, SkillTreeName } from '@gladiator/shared/src/skills/skill-trees'
 import { useSkillTrees } from '@/contexts/SkillTreeContext'
@@ -20,6 +20,58 @@ const TREE_THEMES: Record<
 interface ActiveSkillsGridProps {
   unlockedSkills: string[]
 }
+
+interface SkillSlotProps {
+  skill: SkillNode
+  isHovered: boolean
+  onMouseEnter: () => void
+  onMouseLeave: () => void
+  theme: (typeof TREE_THEMES)[SkillTreeName]
+  anchorRef: React.RefObject<HTMLDivElement | null>
+}
+
+const SkillSlot = React.memo(({
+  skill,
+  isHovered,
+  onMouseEnter,
+  onMouseLeave,
+  theme,
+  anchorRef,
+}: SkillSlotProps) => {
+  return (
+    <div
+      ref={isHovered ? anchorRef : undefined}
+      className="relative"
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
+      <div
+        className={`
+          w-12 h-12 sm:w-14 sm:h-14 shrink-0 rounded-lg border-2 flex items-center justify-center overflow-hidden
+          bg-coliseum-black/60 transition-colors duration-100
+          ${isHovered ? 'border-coliseum-bronze shadow-lg' : 'border-coliseum-sand/30'}
+        `}
+      >
+        <Image
+          src={theme.icon}
+          alt={skill.name}
+          width={56}
+          height={56}
+          className="w-full h-full object-contain"
+        />
+      </div>
+      {isHovered && (
+        <SkillSlotTooltip
+          skill={skill}
+          treeTheme={theme}
+          anchorRef={anchorRef}
+        />
+      )}
+    </div>
+  )
+})
+
+SkillSlot.displayName = 'SkillSlot'
 
 export function ActiveSkillsGrid({ unlockedSkills }: ActiveSkillsGridProps) {
   const { trees, loading } = useSkillTrees()
@@ -76,36 +128,15 @@ export function ActiveSkillsGrid({ unlockedSkills }: ActiveSkillsGridProps) {
         const theme = TREE_THEMES[skill.tree as SkillTreeName] ?? TREE_THEMES.Valor
         const isHovered = hoveredId === skill.id
         return (
-          <div
+          <SkillSlot
             key={skill.id}
-            ref={isHovered ? hoveredRef : undefined}
-            className="relative"
+            skill={skill}
+            isHovered={isHovered}
             onMouseEnter={() => setHoveredId(skill.id)}
             onMouseLeave={() => setHoveredId(null)}
-          >
-            <div
-              className={`
-                w-12 h-12 sm:w-14 sm:h-14 shrink-0 rounded-lg border-2 flex items-center justify-center overflow-hidden
-                bg-coliseum-black/60 transition-colors duration-100
-                ${isHovered ? 'border-coliseum-bronze shadow-lg' : 'border-coliseum-sand/30'}
-              `}
-            >
-              <Image
-                src={theme.icon}
-                alt={skill.name}
-                width={56}
-                height={56}
-                className="w-full h-full object-contain"
-              />
-            </div>
-            {isHovered && (
-              <SkillSlotTooltip
-                skill={skill}
-                treeTheme={theme}
-                anchorRef={hoveredRef}
-              />
-            )}
-          </div>
+            theme={theme}
+            anchorRef={hoveredRef}
+          />
         )
       })}
     </div>
