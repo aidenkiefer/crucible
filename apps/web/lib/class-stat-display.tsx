@@ -47,6 +47,13 @@ export function getClassStatBiasByName(className: string): Record<StatKey, StatB
   return STAT_ORDER.reduce((acc, k) => ({ ...acc, [k]: 'med' as StatBiasLevel }), {} as Record<StatKey, StatBiasLevel>)
 }
 
+const BAR_COLORS: Record<StatBiasLevel, string> = {
+  high: '#C18F59',   // coliseum-bronze
+  med: 'rgba(210, 180, 140, 0.7)',  // coliseum-sand/70
+  low: 'rgba(210, 180, 140, 0.4)',  // coliseum-sand/40
+}
+const BAR_EMPTY = '#1E1B18'  // coliseum-stone
+
 export function ClassStatBar({ label, level }: { label: string; level: StatBiasLevel }) {
   const fillCount = level === 'high' ? 3 : level === 'med' ? 2 : 1
   return (
@@ -57,18 +64,12 @@ export function ClassStatBar({ label, level }: { label: string; level: StatBiasL
       <div className="flex gap-0.5">
         {[1, 2, 3].map((i) => {
           const filled = i <= fillCount
+          const backgroundColor = filled ? BAR_COLORS[level] : BAR_EMPTY
           return (
             <div
               key={i}
-              className={
-                filled
-                  ? level === 'high'
-                    ? 'h-1.5 w-3 bg-coliseum-bronze'
-                    : level === 'med'
-                      ? 'h-1.5 w-3 bg-coliseum-sand/70'
-                      : 'h-1.5 w-3 bg-coliseum-sand/40'
-                  : 'h-1.5 w-3 bg-coliseum-stone'
-              }
+              className="h-1.5 w-3 shrink-0 rounded-sm"
+              style={{ backgroundColor }}
             />
           )
         })}

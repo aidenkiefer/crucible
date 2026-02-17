@@ -215,16 +215,6 @@ export function AdminCreateTestGladiatorModal({
                       <div className="border-t border-coliseum-bronze/20 pt-3">
                         <ClassStatBars className={classId} />
                       </div>
-                      <div className="mt-3 flex flex-wrap gap-1">
-                        {info.strengths.map((s) => (
-                          <span
-                            key={s}
-                            className="border border-coliseum-bronze/20 bg-coliseum-black/50 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-coliseum-sand/80"
-                          >
-                            {s}
-                          </span>
-                        ))}
-                      </div>
                     </button>
                   )
                 })}

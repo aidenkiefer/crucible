@@ -5,6 +5,7 @@ module.exports = {
   content: [
     path.join(__dirname, 'app/**/*.{js,ts,jsx,tsx,mdx}'),
     path.join(__dirname, 'components/**/*.{js,ts,jsx,tsx,mdx}'),
+    path.join(__dirname, 'lib/**/*.{js,ts,jsx,tsx}'),
     path.join(__dirname, 'pages/**/*.{js,ts,jsx,tsx,mdx}'),
   ],
   theme: {

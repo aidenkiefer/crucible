@@ -205,18 +205,6 @@ export function MintGladiator() {
                   <div className="border-t border-coliseum-bronze/20 pt-4">
                     <ClassStatBars className={info.name} />
                   </div>
-
-                  {/* Strengths tags */}
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {info.strengths.map((s) => (
-                      <span
-                        key={s}
-                        className="border border-coliseum-bronze/20 bg-coliseum-black/50 px-2 py-0.5 text-[10px] uppercase tracking-wider text-coliseum-sand/80"
-                      >
-                        {s}
-                      </span>
-                    ))}
-                  </div>
                 </button>
               )
             })}
