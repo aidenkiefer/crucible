@@ -59,7 +59,7 @@ export async function PUT(
   })
 
   // Log admin action (non-blocking)
-  logAdminAction(session.user.id, 'updated', 'ActionTemplate', {
+  logAdminAction(session.user.id, session.user.email || 'Unknown', 'updated', 'ActionTemplate', {
     key: template.key,
     name: template.name,
     category: template.category,
@@ -90,7 +90,7 @@ export async function DELETE(
 
   // Log admin action (non-blocking)
   if (template) {
-    logAdminAction(session.user.id, 'deleted', 'ActionTemplate', {
+    logAdminAction(session.user.id, session.user.email || 'Unknown', 'deleted', 'ActionTemplate', {
       key: template.key,
       name: template.name,
     }).catch(console.error)

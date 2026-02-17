@@ -96,7 +96,7 @@ export async function PUT(
   const uiWarnings = validateEquipmentUIMetadata(template.ui)
 
   // Log admin action (non-blocking)
-  logAdminAction(session.user.id, 'updated', 'EquipmentTemplate', {
+  logAdminAction(session.user.id, session.user.email || 'Unknown', 'updated', 'EquipmentTemplate', {
     key: template.key,
     name: template.name,
     type: template.type,
@@ -131,7 +131,7 @@ export async function DELETE(
 
   // Log admin action (non-blocking)
   if (template) {
-    logAdminAction(session.user.id, 'deleted', 'EquipmentTemplate', {
+    logAdminAction(session.user.id, session.user.email || 'Unknown', 'deleted', 'EquipmentTemplate', {
       key: template.key,
       name: template.name,
     }).catch(console.error)
