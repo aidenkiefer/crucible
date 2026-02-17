@@ -4,13 +4,53 @@ import { useState, useEffect } from 'react'
 import { useSocket } from '@/hooks/useSocket'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
+import { useActiveGladiator } from '@/contexts/ActiveGladiatorContext'
+
+interface Gladiator {
+  id: string
+  tokenId: number
+  name: string | null
+  class: string
+  level: number
+}
 
 export default function QuickMatchPage() {
   const [isSearching, setIsSearching] = useState(false)
-  const [selectedGladiator, setSelectedGladiator] = useState<string | null>(null)
+  const [selectedGladiator, setSelectedGladiator] = useState<string>('')
+  const [gladiators, setGladiators] = useState<Gladiator[]>([])
+  const [loading, setLoading] = useState(true)
   const socket = useSocket()
   const router = useRouter()
   const { data: session } = useSession()
+  const { activeGladiator } = useActiveGladiator()
+
+  useEffect(() => {
+    // Set activeGladiator as default selection if available
+    if (activeGladiator) {
+      setSelectedGladiator(activeGladiator.id)
+    }
+  }, [activeGladiator])
+
+  useEffect(() => {
+    // Fetch user's gladiators
+    const fetchGladiators = async () => {
+      if (!session?.user?.id) return
+
+      try {
+        const res = await fetch('/api/gladiators')
+        if (res.ok) {
+          const data = await res.json()
+          setGladiators(data.gladiators || [])
+        }
+      } catch (error) {
+        console.error('Failed to fetch gladiators:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchGladiators()
+  }, [session?.user?.id])
 
   useEffect(() => {
     if (!socket) return
@@ -52,6 +92,10 @@ export default function QuickMatchPage() {
     setIsSearching(false)
   }
 
+  const displayName = (gladiator: Gladiator) => {
+    return gladiator.name || `Gladiator #${gladiator.tokenId}`
+  }
+
   return (
     <main className="min-h-screen bg-coliseum-black pt-[90px]">
       <div className="max-w-2xl mx-auto px-6 py-16">
@@ -68,24 +112,43 @@ export default function QuickMatchPage() {
 
           {!isSearching ? (
             <>
-              {/* TODO: Replace with GladiatorSelector component */}
               <div className="panel-inset p-4">
                 <label className="block mb-2 text-coliseum-sand/80 uppercase text-xs tracking-wider font-bold">
                   Select Gladiator:
                 </label>
-                <select
-                  onChange={e => setSelectedGladiator(e.target.value)}
-                  className="w-full panel-inset px-3 py-2 text-coliseum-sand font-bold uppercase text-sm border-none bg-coliseum-black/50"
-                >
-                  <option value="">-- Select a gladiator --</option>
-                  {/* TODO: Fetch and display user's gladiators */}
-                  <option value="placeholder-gladiator-id">Placeholder Gladiator</option>
-                </select>
+                {loading ? (
+                  <div className="text-center py-4">
+                    <p className="text-coliseum-sand/60 text-sm">Loading gladiators...</p>
+                  </div>
+                ) : gladiators.length === 0 ? (
+                  <div className="text-center py-4">
+                    <p className="text-coliseum-sand/60 text-sm mb-2">No gladiators found</p>
+                    <button
+                      onClick={() => router.push('/mint')}
+                      className="btn-raised px-4 py-2 text-xs"
+                    >
+                      Mint a Gladiator
+                    </button>
+                  </div>
+                ) : (
+                  <select
+                    value={selectedGladiator}
+                    onChange={e => setSelectedGladiator(e.target.value)}
+                    className="w-full panel-inset px-3 py-2 text-coliseum-sand font-bold uppercase text-sm border-none bg-coliseum-black/50"
+                  >
+                    <option value="">-- Select a gladiator --</option>
+                    {gladiators.map(gladiator => (
+                      <option key={gladiator.id} value={gladiator.id}>
+                        {displayName(gladiator)} (Lv. {gladiator.level} {gladiator.class})
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
 
               <button
                 onClick={startSearch}
-                disabled={!selectedGladiator}
+                disabled={!selectedGladiator || loading}
                 className="btn-raised w-full py-4 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Find Match

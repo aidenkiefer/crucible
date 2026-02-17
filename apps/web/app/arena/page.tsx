@@ -5,11 +5,13 @@ import { useSession } from 'next-auth/react'
 import { useState } from 'react'
 import Link from 'next/link'
 import { useCreateMatch } from '@/hooks/useCreateMatch'
+import { useActiveGladiator } from '@/contexts/ActiveGladiatorContext'
 
 export default function ArenaPage() {
   const router = useRouter()
   const { data: session } = useSession()
   const { createMatch, isCreating, error } = useCreateMatch()
+  const { activeGladiator } = useActiveGladiator()
   const [createError, setCreateError] = useState<string | null>(null)
 
   const handleCreateCpuMatch = async () => {
@@ -18,31 +20,30 @@ export default function ArenaPage() {
       return
     }
 
-    setCreateError(null)
-
-    // TODO: Load gladiator from database
-    // For now, use mock data
-    const mockGladiatorId = 'player-gladiator-id'
-    const mockGladiatorStats = {
-      constitution: 10,
-      strength: 10,
-      dexterity: 10,
-      speed: 10,
-      defense: 10,
-      magicResist: 10,
-      arcana: 10,
-      faith: 10,
+    if (!activeGladiator) {
+      setCreateError('Please select an active gladiator from the HUD')
+      return
     }
+
+    setCreateError(null)
 
     const matchId = await createMatch({
       userId: session.user.id || session.user.email || 'unknown',
-      gladiatorId: mockGladiatorId,
-      gladiatorStats: mockGladiatorStats,
+      gladiatorId: activeGladiator.id,
+      gladiatorStats: {
+        constitution: activeGladiator.constitution,
+        strength: activeGladiator.strength,
+        dexterity: activeGladiator.dexterity,
+        speed: activeGladiator.speed,
+        defense: activeGladiator.defense,
+        magicResist: activeGladiator.magicResist,
+        arcana: activeGladiator.arcana,
+        faith: activeGladiator.faith,
+      },
       isCpuMatch: true,
     })
 
     if (matchId) {
-      // Navigate to match page
       router.push(`/match/${matchId}`)
     } else {
       setCreateError(error || 'Failed to create match')
@@ -71,6 +72,28 @@ export default function ArenaPage() {
             </div>
           )}
 
+          {session && !activeGladiator && (
+            <div className="panel-inset p-4 border-2 border-yellow-500/50">
+              <p className="text-yellow-400 text-sm uppercase tracking-wider">
+                Select an active gladiator from the HUD above
+              </p>
+            </div>
+          )}
+
+          {session && activeGladiator && (
+            <div className="panel-inset p-4">
+              <p className="text-coliseum-sand text-sm uppercase tracking-wider mb-2">
+                Fighting with:
+              </p>
+              <p className="text-coliseum-bronze font-bold text-lg">
+                {activeGladiator.name || `Gladiator #${activeGladiator.tokenId}`}
+              </p>
+              <p className="text-coliseum-sand/60 text-xs uppercase tracking-wider">
+                Lv. {activeGladiator.level} {activeGladiator.class}
+              </p>
+            </div>
+          )}
+
           {(createError || error) && (
             <div className="panel-inset p-4 border-2 border-red-500/50">
               <p className="text-red-400 text-sm">
@@ -82,7 +105,7 @@ export default function ArenaPage() {
           <div className="pt-4 flex flex-col gap-3">
             <button
               onClick={handleCreateCpuMatch}
-              disabled={isCreating || !session}
+              disabled={isCreating || !session || !activeGladiator}
               className="btn-raised disabled:opacity-50 disabled:cursor-not-allowed px-8 py-4 text-lg"
             >
               {isCreating ? (
