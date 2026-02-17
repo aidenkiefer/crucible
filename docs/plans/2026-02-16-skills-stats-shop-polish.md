@@ -18,6 +18,22 @@ Three polish features to improve Camp experience and complete the Armory shop:
 
 ## Feature 1: Skills System - Performance & Bug Fixes
 
+### Implementation Status (Skill Tree UI – responsive, speedy, smooth)
+
+| Step | Description | Status |
+|------|-------------|--------|
+| 1 | **SkillTreeContext** – fetch trees once on mount, `useSkillTrees()` hook | ✅ Done (`contexts/SkillTreeContext.tsx`, `layout.tsx` wraps with `SkillTreeProvider`) |
+| 2 | **SkillTree** use context instead of fetching | ✅ Done (`SkillTree.tsx` uses `useSkillTrees()`) |
+| 3 | **ActiveSkillsGrid** use context instead of fetching | ✅ Done (`ActiveSkillsGrid.tsx` uses `useSkillTrees()`) |
+| 4 | **Remove gladiator refetch on Skills tab switch** | ✅ Done (Camp does not refetch when switching to Skills tab) |
+| 5 | **Memoize skill tree rendering** | ✅ Done (`SkillTree.tsx` uses `useMemo` for `trees` from context) |
+| 6 | **skillPointsSpent** in DB + unlock API validation | ✅ Done (Prisma schema, unlock route uses it; validations 1–3: points, prereq tier, one-per-tier-per-tree) |
+| 7 | **Debounce tooltip position calculations (100ms)** | ✅ Done (`SkillTooltip` useEffect uses 100ms timeout + cleanup) |
+
+**Status:** All steps for the skill tree UI are complete. The only remaining item for the “responsive, speedy, smooth” skill tree work is to **debounce tooltip position calculations (100ms)** in `SkillTree.tsx` (the `SkillTooltip` component’s `useEffect` that sets `pos` from `anchorRef`). That will reduce layout thrash when hovering across nodes quickly.
+
+---
+
 ### Problems Identified
 
 1. **Performance Issues:**

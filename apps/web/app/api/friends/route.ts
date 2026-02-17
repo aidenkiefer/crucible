@@ -92,7 +92,7 @@ export async function GET() {
     const friendData = isSender ? friendship.friend : friendship.user
 
     return {
-      friendshipId: friendship.id,
+      friendshipId: `${friendship.userId}-${friendship.friendId}`,
       friend: friendData,
       since: friendship.createdAt,
     }
@@ -101,12 +101,12 @@ export async function GET() {
   return Response.json({
     friends: normalizedFriends,
     pendingRequests: pendingRequests.map((req) => ({
-      requestId: req.id,
+      requestId: `${req.userId}-${req.friendId}`,
       from: req.user,
       createdAt: req.createdAt,
     })),
     sentRequests: sentRequests.map((req) => ({
-      requestId: req.id,
+      requestId: `${req.userId}-${req.friendId}`,
       to: req.friend,
       createdAt: req.createdAt,
     })),

@@ -1,5 +1,7 @@
 # Cross-Class Skill Trees
 
+**Technical reference (how it works, storage, fetching, performance):** [skill-trees-system.md](skill-trees-system.md)
+
 ## Overview
 
 Crucible features **6 cross-class skill trees** that all Gladiators can invest in, regardless of class. Each tree offers unique build paths and playstyles, allowing you to customize your gladiator beyond their base class.

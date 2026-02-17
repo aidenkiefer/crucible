@@ -55,7 +55,7 @@ export default function MatchPage() {
       ? {
           position: playerCombatantData.position,
           facing: playerCombatantData.facingAngle,
-          moveSpeed: playerCombatantData.derived?.moveSpeed || 150, // Use derived stats if available
+          moveSpeed: (playerCombatantData as any).derived?.moveSpeed || 150, // Use derived stats if available (not yet in broadcast)
         }
       : null,
     input,

@@ -114,7 +114,10 @@ pnpm dev
 
 ## 7. Troubleshooting
 
-- **Redirect to /admin/unauthorized**  
+- **Redirect to /admin/unauthorized** or **Admin link missing on main menu**  
+  Admin comes from the **application** `User` table (Table Editor → **User**), not from Supabase Auth. Set `isAdmin = true` on your user row (by email), then **sign out and sign in again** so the session JWT is refreshed.
+
+- **Redirect to /admin/unauthorized** (after setting isAdmin)  
   Session has `isAdmin: false`. Set `isAdmin = true` in DB and sign out/sign in again (or wait for session refresh).
 
 - **Publish fails (Storage)**  

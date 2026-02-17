@@ -8,16 +8,11 @@ export async function GET() {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const now = new Date()
-
   // Fetch pending challenges (received by user)
   const receivedChallenges = await prisma.challenge.findMany({
     where: {
       opponentId: session.user.id,
       status: 'pending',
-      expiresAt: {
-        gt: now, // Only show non-expired challenges
-      },
     },
     include: {
       challenger: {
@@ -56,9 +51,6 @@ export async function GET() {
     where: {
       challengerId: session.user.id,
       status: 'pending',
-      expiresAt: {
-        gt: now,
-      },
     },
     include: {
       opponent: {

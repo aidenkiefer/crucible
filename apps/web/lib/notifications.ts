@@ -1,5 +1,6 @@
 import { prisma } from '@gladiator/database/src/client'
-import { NotificationType } from '@prisma/client'
+
+type NotificationType = 'FRIEND_REQUEST' | 'CHALLENGE' | 'ANNOUNCEMENT' | 'ADMIN_LOG'
 
 /**
  * Create a notification for a user

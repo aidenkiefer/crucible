@@ -2,7 +2,8 @@ import { prisma } from '@gladiator/database/src/client'
 import { getServerSession } from 'next-auth'
 import { NextResponse } from 'next/server'
 import { authOptions } from '@/lib/auth'
-import { NotificationType } from '@prisma/client'
+
+type NotificationType = 'FRIEND_REQUEST' | 'CHALLENGE' | 'ANNOUNCEMENT' | 'ADMIN_LOG'
 
 /**
  * GET /api/notifications
