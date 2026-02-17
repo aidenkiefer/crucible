@@ -1,6 +1,7 @@
 import { prisma } from '@gladiator/database/src/client'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { createNotification } from '@/lib/notifications'
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions)
@@ -32,6 +33,20 @@ export async function POST(req: Request) {
       gladiator2Id: opponentGladiatorId,
       status: 'pending',
     },
+  })
+
+  // Create notification for opponent (expires in 30 seconds)
+  const expiresAt = new Date(Date.now() + 30 * 1000)
+  await createNotification({
+    userId: opponentId,
+    type: 'CHALLENGE',
+    data: {
+      challengeId: challenge.id,
+      fromUserId: session.user.id,
+      fromUsername: session.user.name || session.user.email || 'Unknown',
+      gladiatorId: challenge.gladiator1Id,
+    },
+    expiresAt,
   })
 
   return Response.json({ success: true, challengeId: challenge.id })

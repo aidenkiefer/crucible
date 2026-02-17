@@ -1,6 +1,7 @@
 import { prisma } from '@gladiator/database/src/client'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { createNotification } from '@/lib/notifications'
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions)
@@ -37,11 +38,22 @@ export async function POST(req: Request) {
   }
 
   // Create friend request
-  await prisma.friend.create({
+  const friendRequest = await prisma.friend.create({
     data: {
       userId: session.user.id,
       friendId: friend.id,
       status: 'pending',
+    },
+  })
+
+  // Create notification for recipient
+  await createNotification({
+    userId: friend.id,
+    type: 'FRIEND_REQUEST',
+    data: {
+      friendRequestId: friendRequest.friendId,
+      fromUserId: session.user.id,
+      fromUsername: session.user.name || session.user.email || 'Unknown',
     },
   })
 
