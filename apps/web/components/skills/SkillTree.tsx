@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import Image from 'next/image'
 import {
   canUnlockSkill,
@@ -162,6 +162,22 @@ Ferocity is not rage.
 It is inevitability sharpened into violence.`,
 }
 
+interface SkillNodeButtonProps {
+  skill: SkillNode
+  isUnlocked: boolean
+  isAvailable: boolean
+  canAfford: boolean
+  needsPrereqTier: boolean
+  unlocking: string | null
+  pointsRemaining: number
+  treeTheme: (typeof TREE_THEMES)[SkillTreeName]
+  onMouseEnter: () => void
+  onMouseLeave: () => void
+  onClick: () => void
+  isHovered: boolean
+  anchorRef: React.RefObject<HTMLDivElement | null>
+}
+
 function SkillTooltip({
   skill,
   isUnlocked,
@@ -271,6 +287,88 @@ function SkillTooltip({
     </div>
   )
 }
+
+const SkillNodeButton = React.memo(({
+  skill,
+  isUnlocked,
+  isAvailable,
+  canAfford,
+  needsPrereqTier,
+  unlocking,
+  pointsRemaining,
+  treeTheme,
+  onMouseEnter,
+  onMouseLeave,
+  onClick,
+  isHovered,
+  anchorRef,
+}: SkillNodeButtonProps) => {
+  const cost = skill.cost
+
+  return (
+    <div
+      key={skill.id}
+      ref={isHovered ? anchorRef : undefined}
+      className="relative flex flex-col items-center gap-2 min-w-[7rem]"
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={!isAvailable || !!unlocking}
+        className={`relative h-16 w-16 shrink-0 rounded-full border-2 transition-[transform,box-shadow] duration-100 ease-out ${
+          isUnlocked
+            ? `${treeTheme.border} bg-gray-900/80 shadow-lg ring-2 ring-green-500/50`
+            : isAvailable
+            ? `${treeTheme.border} bg-gray-900/80 hover:scale-105 hover:ring-2 hover:ring-coliseum-bronze/60 cursor-pointer`
+            : 'border-gray-600 bg-gray-900/60 opacity-70 cursor-not-allowed'
+        }`}
+      >
+        <span
+          className={`absolute inset-1.5 rounded-full overflow-hidden bg-gray-900 ${
+            isUnlocked ? '' : 'grayscale'
+          }`}
+        >
+          <Image
+            src={treeTheme.icon}
+            alt={skill.name}
+            width={56}
+            height={56}
+            className="h-full w-full object-contain"
+          />
+        </span>
+        {isUnlocked && (
+          <span className="absolute -top-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-green-600 text-xs text-white">
+            ✓
+          </span>
+        )}
+        {unlocking === skill.id && (
+          <span className="absolute inset-0 flex items-center justify-center rounded-full bg-coliseum-black/70 text-coliseum-bronze text-xs">
+            ...
+          </span>
+        )}
+      </button>
+      <span className="text-xs text-coliseum-sand/80 w-full text-center leading-tight px-0.5">
+        {skill.name}
+      </span>
+      {isHovered && (
+        <SkillTooltip
+          skill={skill}
+          isUnlocked={isUnlocked}
+          isAvailable={isAvailable}
+          needsPrereqTier={needsPrereqTier}
+          canAfford={canAfford}
+          cost={cost}
+          treeTheme={treeTheme}
+          anchorRef={anchorRef}
+        />
+      )}
+    </div>
+  )
+})
+
+SkillNodeButton.displayName = 'SkillNodeButton'
 
 export function SkillTree({
   gladiatorId,
