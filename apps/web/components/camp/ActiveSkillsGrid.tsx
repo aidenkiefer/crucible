@@ -40,7 +40,7 @@ const SkillSlot = React.memo(({
 }: SkillSlotProps) => {
   return (
     <div
-      ref={isHovered ? anchorRef : undefined}
+      ref={isHovered ? (anchorRef as React.RefObject<HTMLDivElement>) : undefined}
       className="relative"
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
