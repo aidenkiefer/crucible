@@ -81,7 +81,9 @@ crucible/
 │       │   └── api/
 │       │       ├── auth/[...nextauth]/route.ts  # NextAuth API
 │       │       ├── user/link-wallet/route.ts    # Link wallet to user
-│       │       ├── admin/   # Admin API (Sprint 2.5): bundles, action-templates, equipment-templates
+│       │       ├── admin/   # Admin API (Sprint 2.5): bundles, action-templates, equipment-templates, users (Manage Users, test-gladiator)
+│       │       ├── skill-trees/route.ts         # GET all 6 skill trees (definitions from shared)
+│       │       ├── gladiators/test/route.ts     # POST create test gladiator for current user (Camp)
 │       │       ├── matches/history/route.ts     # Sprint 5: match history
 │       │       ├── loot-boxes/route.ts, open/route.ts  # Sprint 5: loot box inventory, open
 │       │       ├── gladiators/route.ts          # List current user's gladiators (Camp)
@@ -97,8 +99,9 @@ crucible/
 │       │   ├── gladiators/     # Sprint 5: GladiatorProgression.tsx
 │       │   ├── loot/           # Sprint 5: LootBoxInventory.tsx
 │       │   ├── mint/MintGladiator.tsx
+│       │   ├── camp/          # Camp: CreateTestGladiatorModal, ActiveSkillsGrid, TestGladiatorSetup
 │       │   ├── providers/SessionProvider.tsx, WagmiProvider.tsx
-│       │   ├── skills/         # Sprint 5: SkillTree.tsx
+│       │   ├── skills/         # Sprint 5: SkillTree.tsx (6 trees, tier prerequisites, tooltips)
 │       │   ├── ui/AnimatedTorch.tsx
 │       │   └── wallet/ConnectWallet.tsx
 │       ├── hooks/
@@ -108,9 +111,11 @@ crucible/
 │       │   ├── useGameInput.ts        # Sprint 3–3.5: WASD, mouse aim, Space/Shift, L/R click main/off-hand; 1–4 weapon (Sprint 4)
 │       │   ├── useClientPrediction.ts # Sprint 3.5: local player prediction, reconciliation
 │       │   └── useCreateMatch.ts      # Sprint 3.5: match:create, match:start, navigate to match
+│       ├── contexts/      # SkillTreeContext (single fetch /api/skill-trees on mount, useSkillTrees())
 │       ├── lib/
 │       │   ├── auth.ts         # NextAuth config, session
 │       │   ├── arena.ts        # Arena status (open/closed messages, NEXT_PUBLIC_ARENA_OPEN)
+│       │   ├── class-stat-display.tsx  # Shared 8-stat bars (CON..FTH) for class selection (mint, admin modal)
 │       │   ├── contracts.ts    # Contract addresses, ABIs
 │       │   ├── wagmi.ts        # Wagmi config, chains
 │       │   ├── sprites/        # Sprint 3: types.ts, SpriteLoader.ts, AnimationPlayer.ts
@@ -180,34 +185,6 @@ crucible/
 
 ---
 
-## Quick reference by purpose (non-docs)
-
-| Purpose | Primary file(s) |
-|--------|------------------|
-| **Root scripts & monorepo** | [package.json](package.json), [pnpm-workspace.yaml](pnpm-workspace.yaml), [turbo.json](turbo.json) |
-| **Game server entry** | [apps/game-server/src/index.ts](apps/game-server/src/index.ts), [server.ts](apps/game-server/src/server.ts) |
-| **Combat (20Hz engine)** | [apps/game-server/src/combat/engine.ts](apps/game-server/src/combat/engine.ts), [physics.ts](apps/game-server/src/combat/physics.ts), [damage-calculator.ts](apps/game-server/src/combat/damage-calculator.ts) |
-| **Match lifecycle** | [apps/game-server/src/services/match-manager.ts](apps/game-server/src/services/match-manager.ts), [match-instance.ts](apps/game-server/src/services/match-instance.ts) |
-| **WebSocket / inputs** | [apps/game-server/src/sockets/match-handlers.ts](apps/game-server/src/sockets/match-handlers.ts) |
-| **CPU AI** | [apps/game-server/src/ai/cpu-ai.ts](apps/game-server/src/ai/cpu-ai.ts) |
-| **Blockchain → DB** | [apps/game-server/src/services/blockchain-listener.ts](apps/game-server/src/services/blockchain-listener.ts), [gladiator-sync.ts](apps/game-server/src/services/gladiator-sync.ts) |
-| **Web app entry & layout** | [apps/web/app/layout.tsx](apps/web/app/layout.tsx), [page.tsx](apps/web/app/page.tsx) |
-| **Auth** | [apps/web/app/api/auth/[...nextauth]/route.ts](apps/web/app/api/auth/[...nextauth]/route.ts), [lib/auth.ts](apps/web/lib/auth.ts) |
-| **Wallet & mint** | [apps/web/lib/wagmi.ts](apps/web/lib/wagmi.ts), [lib/contracts.ts](apps/web/lib/contracts.ts), [hooks/useMintGladiator.ts](apps/web/hooks/useMintGladiator.ts) |
-| **Admin UI (bundles, templates, validate/publish/export)** | apps/web/app/admin/*, apps/web/app/api/admin/*, apps/web/lib/admin/validator.ts, apps/web/lib/admin/exporter.ts |
-| **Match UI (Sprints 3–4)** | apps/web/app/arena/page.tsx, app/match/[matchId]/page.tsx, components/arena/*, hooks/useSocket.ts, useRealTimeMatch.ts, useGameInput.ts, useClientPrediction.ts, useCreateMatch.ts, lib/sprites/* |
-| **Shared physics (client prediction)** | packages/shared/src/physics/* |
-| **Shared combat (weapons, damage, projectiles)** | packages/shared/src/combat/* |
-| **Progression & loot (Sprint 5)** | apps/game-server/src/services/progression.ts, apps/web/app/api/matches/history, api/loot-boxes, api/gladiators/[id]/progression|skills|equip|stats, api/equipment, api/gold/balance, components/loot, gladiators, equipment, skills; packages/shared/src/loot, skills, crafting |
-| **Inventory item icons** | [apps/web/public/assets/items/](apps/web/public/assets/items/) (commons/, uncommons/, rares/, epics/, legendaries/); [apps/web/app/api/equipment/route.ts](apps/web/app/api/equipment/route.ts) enriches response with displayName, iconUrl from template.ui; EquipmentInventory renders icon or emoji fallback |
-| **Multiplayer (Sprint 6)** | apps/game-server/src/services/matchmaking-service.ts, input-validator.ts, rate-limiter.ts, disconnect-handler.ts; sockets/matchmaking-handlers.ts, match-handlers.ts; apps/web/app/quick-match/page.tsx, app/friends/page.tsx, app/api/friends/add|accept, app/api/challenges/create|accept |
-| **Runtime game data (bundle loader)** | apps/game-server/src/services/bundle-loader.ts |
-| **Database schema** | [packages/database/prisma/schema.prisma](packages/database/prisma/schema.prisma) |
-| **Shared types & constants** | [packages/shared/src/types/index.ts](packages/shared/src/types/index.ts), [constants/index.ts](packages/shared/src/constants/index.ts) |
-| **Gladiator NFT contract** | [contracts/contracts/GladiatorNFT.sol](contracts/contracts/GladiatorNFT.sol), [scripts/deploy.ts](contracts/scripts/deploy.ts) |
-
----
-
 ## Non-documentation summaries
 
 ### Root
@@ -265,6 +242,8 @@ crucible/
 - **app/api/gold/balance/route.ts** — Sprint 5: gold balance.
 - **app/api/friends/add/route.ts**, **friends/accept/route.ts** — Sprint 6: add friend by username, accept friend request.
 - **app/api/challenges/create/route.ts**, **challenges/accept/route.ts** — Sprint 6: create challenge, accept challenge (creates PvP match).
+- **app/api/skill-trees/route.ts** — GET all 6 skill trees (from shared); consumed by SkillTreeContext.
+- **app/api/gladiators/test/route.ts** — POST create test gladiator for current user (Camp); **app/api/admin/users/[userId]/test-gladiator/route.ts** — POST create test gladiator for target user (admin only).
 - **lib/auth.ts** — NextAuth config (providers, callbacks, session).
 - **lib/wagmi.ts** — Wagmi config (chains, transports).
 - **lib/contracts.ts** — Contract addresses and ABIs for frontend.
@@ -309,7 +288,7 @@ crucible/
 - **src/constants/index.ts** — Combat (tick interval, health/stamina, ACTION_CONFIG), progression (XP_*), loot (LOOT_DROP_RATES).
 - **src/types/index.ts** — GladiatorClass, User, Gladiator, Equipment, Match, etc.
 - **src/loot/starter-gear.ts** — Sprint 5: starter gear definitions (4 armor sets, 7 weapons) for loot box pool.
-- **src/skills/skill-trees.ts** — Sprint 5: skill tree definitions (4 classes, branches, SkillNode, tier prerequisites).
+- **src/skills/skill-trees.ts** — Sprint 5: skill tree definitions (6 cross-class trees, 108 skills, SkillNode, tier prerequisites, getSkillTree, findSkillById, canUnlockSkill).
 - **src/crafting/crafting-system.ts** — Sprint 5: 3→1 crafting, determineCraftedRarity, rarity tiers.
 - **src/combat/** — Sprint 4: types (weapon, projectile, stats), stats.ts, damage.ts, weapons.ts (WEAPONS), projectiles.ts, index.
 - **src/physics/** — Sprint 3.5: types, constants, vector, movement, collision, index; used by server and client prediction.
@@ -361,9 +340,11 @@ crucible/
     │   └── ui-rpg-design.md     # RPG UI design notes
     │
     ├── features/                # Feature specs and plans
-    │   ├── admin-ui.md          # Admin UI plan: game data authoring, CRUD templates, validation, publish/export, immutable bundles
+    │   ├── admin-ui.md          # Admin UI plan: game data authoring, CRUD templates, validation, publish/export, Manage Users (create test Gladiator)
     │   ├── combat.md            # Combat feature spec: real-time model, actions, weapons, hitboxes, projectiles
     │   ├── equipment.md         # Equipment/loot/abilities design: template vs instance, slots, authoring, demo scope
+    │   ├── skill-trees-cross-class.md  # Cross-class skill trees: player-facing (6 trees, builds, prerequisites)
+    │   ├── skill-trees-system.md      # Skill tree system: how it works, storage, fetching, performance (technical)
     │   ├── mainnet-migration.md # Mainnet migration (post-demo)
     │   ├── perks-and-abilities.md # Perks and abilities design
     │   └── planned-features.md  # Backlog: immediate/critical, abstract systems, post-launch, brainstorming
@@ -421,31 +402,6 @@ crucible/
 
 ---
 
-## Quick reference by purpose
-
-| Purpose | Primary doc(s) |
-|--------|----------------|
-| **What is this project?** | [README.md](README.md), [concept.md](concept.md) |
-| **Current status & roadmap** | [README.md](README.md) § Status & Roadmap, [docs/plans/sprints/00-MASTER-PLAN.md](docs/plans/sprints/00-MASTER-PLAN.md) |
-| **System architecture** | [docs/architecture.md](docs/architecture.md), [docs/audits/architecture-audit.md](docs/audits/architecture-audit.md) |
-| **Database & game data (schema, templates, JSON)** | [docs/data-glossary.md](docs/data-glossary.md), [docs/features/equipment.md](docs/features/equipment.md) |
-| **Admin UI (game data authoring, publish/export)** | [docs/features/admin-ui.md](docs/features/admin-ui.md) |
-| **Combat design** | [docs/features/combat.md](docs/features/combat.md), [docs/plans/summaries/SPRINT-2-SUMMARY.md](docs/plans/summaries/SPRINT-2-SUMMARY.md) |
-| **Equipment & loot design** | [docs/features/equipment.md](docs/features/equipment.md), [docs/data-glossary.md](docs/data-glossary.md) §5–8 |
-| **Equipment UI metadata (inventory icons, Admin UI)** | [docs/plans/summaries/EQUIPMENT-UI-METADATA-IMPLEMENTATION.md](docs/plans/summaries/EQUIPMENT-UI-METADATA-IMPLEMENTATION.md), [docs/plans/specs/equipment-ui-metadata-db-bundles-spec.md](docs/plans/specs/equipment-ui-metadata-db-bundles-spec.md), [docs/data-glossary.md](docs/data-glossary.md) §4.5 |
-| **Sprint plans (what to build)** | [docs/plans/sprints/00-MASTER-PLAN.md](docs/plans/sprints/00-MASTER-PLAN.md) … [docs/plans/sprints/10-sprint-8-post-demo.md](docs/plans/sprints/10-sprint-8-post-demo.md) |
-| **What’s been built (Sprints 1–6)** | [docs/plans/summaries/SPRINT-1-SUMMARY.md](docs/plans/summaries/SPRINT-1-SUMMARY.md) … [docs/plans/summaries/SPRINT-6-SUMMARY.md](docs/plans/summaries/SPRINT-6-SUMMARY.md) |
-| **Getting started (dev env)** | [docs/guides/development-setup.md](docs/guides/development-setup.md), [README.md](README.md) § Development |
-| **Deploy web app (Vercel)** | [docs/guides/vercel-deployment.md](docs/guides/vercel-deployment.md) |
-| **Contract deployment** | [contracts/DEPLOYMENT.md](contracts/DEPLOYMENT.md) |
-| **Mainnet (post-demo)** | [docs/features/mainnet-migration.md](docs/features/mainnet-migration.md) |
-| **Future ideas & backlog** | [docs/features/planned-features.md](docs/features/planned-features.md) |
-| **Design (UI, visuals, tone)** | [docs/design/design-guidelines.md](docs/design/design-guidelines.md), [docs/design/ui-rpg-design.md](docs/design/ui-rpg-design.md) |
-| **Agent / Claude instructions** | [CLAUDE.md](CLAUDE.md), [SKILLS_GUIDE.md](SKILLS_GUIDE.md) |
-| **Specs & tickets (implementation workflow)** | [docs/plans/specs/](docs/plans/specs/) (rules/constraints), [docs/plans/tickets/](docs/plans/tickets/) (bounded tasks); [claude-workflow-opt.md](claude-workflow-opt.md) |
-
----
-
 ## Document summaries
 
 ### Root
@@ -465,3 +421,5 @@ crucible/
 - **architecture.md** — Three-tier architecture (frontend, backend, blockchain); component breakdown (frontend, game server with MatchManager, MatchInstance, CombatEngine, CpuAI, etc., database with schema overview and key models including GameDataBundle, EquipmentTemplate, ActionTemplate, derived combat stats), blockchain layer, data flow (minting, combat CPU, PvP), security, performance, scalability, deployment, technology rationale, future enhancements.
 - **data-glossary.md** — Canonical reference for schema and game data: enums (GameDataStatus, EquipmentType, EquipmentSlot, ActionCategory), User/Friend, Gladiator/GladiatorLoadout, Equipment/GladiatorEquippedItem, Match/Challenge, GameDataBundle, EquipmentTemplate (§4.5 Equipment UI Metadata), ActionTemplate, EquipmentTemplateAction; action & attack vocabulary; suggested JSON shapes (§8); derived combat stats (§9); demo scope note (§10); guiding principles (§11).
 - **plans/summaries/EQUIPMENT-UI-METADATA-IMPLEMENTATION.md** — Equipment UI metadata implementation: DB/bundles as source of truth, Admin UI structured form (no filesystem writes), /api/equipment enrichment (displayName, iconUrl), inventory icon rendering, validation (warn on save, block publish), backfill script.
+- **features/skill-trees-cross-class.md** — Player-facing overview: 6 cross-class trees (Valor, Instinct, Discipline, Intellect, Zeal, Ferocity), 20 skill points, flexible tier prerequisites, example builds, tips.
+- **features/skill-trees-system.md** — Technical reference: how skill trees work (rules, unlock flow), storage (definitions in shared, Gladiator.unlockedSkills/skillPointsSpent), fetching (GET /api/skill-trees, SkillTreeContext single fetch), performance (caching, memoization, debounced tooltips).

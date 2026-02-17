@@ -1,6 +1,6 @@
 # Documentation Audit Instructions
 
-**Last audit ran:** 2026-02-15 *(Equipment UI Metadata: docs/plans/summaries/EQUIPMENT-UI-METADATA-IMPLEMENTATION.md)*
+**Last audit ran:** 2026-02-16 *(Post–skills/admin polish: admin test Gladiator, skill tree system doc, class stat display, SkillTreeContext, INDEX/README/architecture/data-glossary/admin-ui/CLAUDE)*
 
 ---
 
@@ -125,3 +125,19 @@ Only touch these if the summary document clearly implies an update.
 | **docs/data-glossary.md** | Prisma schema or game data model changes; new/updated enums, models, fields, or conventions. |
 
 Use the **implementation/summary document** as the single source of truth; only change docs where the summary justifies it.
+
+---
+
+## Last audit report (2026-02-16)
+
+**Source:** Conversation summary (admin test Gladiator, skill tree system doc, class stat display, SkillTreeContext, skill tree UI polish).
+
+**Priority docs updated:**
+- **README.md** — "Currently built" now mentions admin/users create test Gladiator and 6 cross-class skill trees with SkillTreeContext; documentation table adds skill-trees-cross-class.md and skill-trees-system.md.
+- **INDEX.md** — Tree: admin API (users, test-gladiator), skill-trees/route, gladiators/test; contexts/, lib/class-stat-display; camp components; docs/features skill-trees entries. Summaries and quick-reference updated; shared skills line fixed to "6 cross-class trees".
+- **docs/architecture.md** — Key Pages: /admin/users and create test Gladiator; State Management: SkillTreeContext and GET /api/skill-trees; Database section: other key web APIs (skill-trees, skills/unlock, admin test-gladiator).
+- **docs/data-glossary.md** — Gladiator: added `skillPointsSpent` (server-tracked; remaining = skillPointsAvailable - skillPointsSpent).
+
+**Other docs updated:**
+- **docs/features/admin-ui.md** — New §2.2 Manage Users (create test Gladiator); CRUD/Validation/Publishing renumbered to 2.3–2.6.
+- **CLAUDE.md** — Key Documentation table: admin-ui description, skill-trees-system.md and skill-trees-cross-class.md rows.

@@ -84,10 +84,11 @@ Gladiator Coliseum is built as a **three-tier architecture** with clear separati
   - `/admin/bundles` - List/create bundles, validate, publish, activate
   - `/admin/equipment-templates` - CRUD equipment templates (structured UI metadata form; no filesystem writes)
   - `/admin/action-templates` - CRUD action templates
+  - `/admin/users` - Manage Users; list users and **create test Gladiator** per user (class selection, confirmation; admin-only POST)
   - Admin routes are protected by middleware; only users with `isAdmin` can access.
 
 **State Management:**
-- React Context for global state
+- React Context for global state (e.g. **SkillTreeContext**: single fetch of GET `/api/skill-trees` on mount, `useSkillTrees()`; SkillTree and ActiveSkillsGrid consume cached trees; no refetch on tab switch)
 - React Query for server state
 - Local state with `useState` for component state
 
@@ -214,6 +215,8 @@ Gladiator Coliseum is built as a **three-tier architecture** with clear separati
 **Design rule:** Templates (equipment, actions) are authored in the DB and **published to JSON/TS**. Runtime combat logic reads **published static data**, not the database. The DB is an authoring and collaboration layer; instances (player-owned items, equipped gear, gladiators) live in the DB.
 
 **Equipment inventory (web):** GET `/api/equipment` joins each Equipment instance to its EquipmentTemplate and enriches the response with `displayName` and `iconUrl` from `template.ui`. The frontend (`EquipmentInventory`) renders the icon when present and falls back to emoji otherwise; no per-item manifest fetches.
+
+**Other key web APIs:** GET `/api/skill-trees` returns all six skill tree definitions (from shared); used by SkillTreeContext for Camp skill UI. POST `/api/gladiators/[gladiatorId]/skills/unlock` spends skill points (updates `skillPointsSpent`, `unlockedSkills`). Admin: POST `/api/admin/users/[userId]/test-gladiator` creates a test Gladiator for a target user (admin-only; class selection server-side).
 
 **Schema Overview:**
 

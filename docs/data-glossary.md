@@ -98,6 +98,7 @@ A player-controlled unit with base stats, progression, and loadout state.
 - `level`: starts at 1
 - `xp`: experience points
 - `skillPointsAvailable`: points to spend on skill tree unlocks
+- `skillPointsSpent`: server-tracked total points already spent on unlocks (remaining = `skillPointsAvailable - skillPointsSpent`)
 - `statPointsAvailable`: points to spend on **base stats** (earned in chunks, e.g. 3 per level)
 - `unlockedSkills`: `String[]` of skill IDs (these IDs point to static definitions later)
 

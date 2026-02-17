@@ -43,3 +43,6 @@ agents/*
 CLAUDE.md
 claude-workflow-opt.md
 docs-audit.md
+
+.turbo/*
+.turbo/

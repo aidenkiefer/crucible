@@ -137,7 +137,9 @@ Focus on clean boundaries, simple flows, and replaceable components.
 | **docs/guides/development-setup.md** | Environment, dependencies, running the stack. |
 | **docs/guides/vercel-deployment.md** | Vercel deployment (root dir, env, checklist). |
 | **docs/features/equipment.md** | Equipment, loot, abilities — template/instance, slots, authoring, demo scope. |
-| **docs/features/admin-ui.md** | Admin UI — game data authoring, CRUD, validation, publish/export; equipment UI metadata (§2.3). |
+| **docs/features/admin-ui.md** | Admin UI — game data authoring, CRUD, validation, publish/export, Manage Users (create test Gladiator); equipment UI metadata (§2.4). |
+| **docs/features/skill-trees-system.md** | Skill tree system — how it works, storage, fetching, performance (technical reference). |
+| **docs/features/skill-trees-cross-class.md** | Cross-class skill trees — player-facing overview (6 trees, builds, prerequisites). |
 | **docs/data-glossary.md** | Database & game data glossary — schema, enums, templates, actions, JSON conventions (§8–11); equipment UI metadata (§4.5). |
 | **docs/plans/summaries/EQUIPMENT-UI-METADATA-IMPLEMENTATION.md** | Equipment UI metadata implementation: DB/bundles source of truth, /api/equipment enrichment, inventory icons, backfill script. |
 

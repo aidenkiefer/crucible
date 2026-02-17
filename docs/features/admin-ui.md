@@ -62,14 +62,17 @@ Recommended approach:
   - Next.js middleware for /admin routes
   - server-side handlers for publish/export operations
 
-### 2.2 CRUD for Templates
+### 2.2 Manage Users (create test Gladiator)
+Under **Manage Users** (`/admin/users`), admins can create a **test Gladiator** for any user: class selection UI (same 8-stat display as mint), then confirmation. Implementation: `POST /api/admin/users/[userId]/test-gladiator` (admin-only); modal `AdminCreateTestGladiatorModal` with class grid and post-create refresh.
+
+### 2.3 CRUD for Templates
 Admin UI supports create/read/update/delete for:
 - GameDataBundle
 - EquipmentTemplate
 - ActionTemplate
 - (Optional next) SpellTemplate
 
-### 2.3 Equipment UI metadata (DB/bundles as source of truth)
+### 2.4 Equipment UI metadata (DB/bundles as source of truth)
 
 Equipment template **UI metadata** (display name, icon path) is stored in the `EquipmentTemplate.ui` JSON column and is the **only** source of truth for inventory rendering. The Admin UI **does not** create asset folders or write `manifest.json` files.
 
@@ -80,7 +83,7 @@ Equipment template **UI metadata** (display name, icon path) is stored in the `E
 
 See also: [docs/plans/summaries/EQUIPMENT-UI-METADATA-IMPLEMENTATION.md](../plans/summaries/EQUIPMENT-UI-METADATA-IMPLEMENTATION.md), [docs/features/equipment.md](equipment.md) (template vs instance model), [docs/data-glossary.md](../data-glossary.md) §4.5.
 
-### 2.4 Validation
+### 2.5 Validation
 Validation is required at two levels:
 - Record-level validation (on save)
 - Bundle-level validation (before publish)
@@ -93,7 +96,7 @@ Validation must catch:
 - duplicate keys
 - incompatible slot/type/subtype combinations (as rules emerge)
 
-### 2.5 Publishing + Export
+### 2.6 Publishing + Export
 On publish:
 1) Validate all relevant templates in bundle
 2) Freeze bundle version (immutable)

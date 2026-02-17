@@ -175,7 +175,7 @@ interface SkillNodeButtonProps {
   onMouseLeave: () => void
   onClick: () => void
   isHovered: boolean
-  anchorRef: React.RefObject<HTMLDivElement | null>
+  anchorRef: React.RefObject<HTMLDivElement>
 }
 
 function SkillTooltip({
@@ -195,7 +195,7 @@ function SkillTooltip({
   canAfford: boolean
   cost: number
   treeTheme: (typeof TREE_THEMES)[SkillTreeName]
-  anchorRef: React.RefObject<HTMLDivElement | null>
+  anchorRef: React.RefObject<HTMLDivElement>
 }) {
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
   const tooltipRef = useRef<HTMLDivElement>(null)
