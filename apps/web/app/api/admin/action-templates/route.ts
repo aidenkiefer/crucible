@@ -68,7 +68,7 @@ export async function POST(req: Request) {
   })
 
   // Log admin action (non-blocking)
-  logAdminAction(session.user.id, 'created', 'ActionTemplate', {
+  logAdminAction(session.user.id, session.user.email || 'Unknown', 'created', 'ActionTemplate', {
     key: template.key,
     name: template.name,
     category: template.category,

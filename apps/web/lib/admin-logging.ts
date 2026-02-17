@@ -2,6 +2,7 @@ import { createNotification } from '@/lib/notifications'
 
 export async function logAdminAction(
   adminUserId: string,
+  adminEmail: string,
   action: string,
   entityType: string,
   entityData: Record<string, any>
@@ -18,7 +19,7 @@ export async function logAdminAction(
         userId: admin.id,
         type: 'ADMIN_LOG',
         data: {
-          performedBy: admin.email || 'Unknown',
+          performedBy: adminEmail || 'Unknown',
           action,
           entityType,
           details: entityData,

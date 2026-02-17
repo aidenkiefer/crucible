@@ -107,7 +107,7 @@ export async function POST(req: Request) {
   const uiWarnings = validateEquipmentUIMetadata(template.ui)
 
   // Log admin action (non-blocking)
-  logAdminAction(session.user.id, 'created', 'EquipmentTemplate', {
+  logAdminAction(session.user.id, session.user.email || 'Unknown', 'created', 'EquipmentTemplate', {
     key: template.key,
     name: template.name,
     type: template.type,
