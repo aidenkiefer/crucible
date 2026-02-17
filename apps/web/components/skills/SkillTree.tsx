@@ -25,7 +25,7 @@ interface SkillTreeData {
 
 const TREE_THEMES: Record<
   SkillTreeName,
-  { icon: string; accent: string; border: string; bg: string; tabBg: string }
+  { icon: string; accent: string; border: string; bg: string; tabBg: string; hoverGlow: string }
 > = {
   Valor: {
     icon: '/assets/ui/icons/valor_clean.png',
@@ -33,6 +33,7 @@ const TREE_THEMES: Record<
     border: 'border-amber-500/60',
     bg: 'from-amber-900/20 to-transparent',
     tabBg: 'bg-amber-950/40 border-amber-500/50',
+    hoverGlow: 'hover:ring-2 hover:ring-amber-500/50',
   },
   Instinct: {
     icon: '/assets/ui/icons/instinct_clean.png',
@@ -40,6 +41,7 @@ const TREE_THEMES: Record<
     border: 'border-emerald-400/60',
     bg: 'from-emerald-900/20 to-transparent',
     tabBg: 'bg-emerald-950/40 border-emerald-400/50',
+    hoverGlow: 'hover:ring-2 hover:ring-emerald-400/50',
   },
   Discipline: {
     icon: '/assets/ui/icons/discipline_clean.png',
@@ -47,6 +49,7 @@ const TREE_THEMES: Record<
     border: 'border-sky-400/60',
     bg: 'from-sky-900/20 to-transparent',
     tabBg: 'bg-sky-950/40 border-sky-400/50',
+    hoverGlow: 'hover:ring-2 hover:ring-sky-400/50',
   },
   Intellect: {
     icon: '/assets/ui/icons/intellect_clean.png',
@@ -54,6 +57,7 @@ const TREE_THEMES: Record<
     border: 'border-violet-400/60',
     bg: 'from-violet-900/20 to-transparent',
     tabBg: 'bg-violet-950/40 border-violet-400/50',
+    hoverGlow: 'hover:ring-2 hover:ring-violet-400/50',
   },
   Zeal: {
     icon: '/assets/ui/icons/zeal_clean.png',
@@ -61,6 +65,7 @@ const TREE_THEMES: Record<
     border: 'border-yellow-400/60',
     bg: 'from-yellow-900/20 to-transparent',
     tabBg: 'bg-yellow-950/40 border-yellow-400/50',
+    hoverGlow: 'hover:ring-2 hover:ring-yellow-400/50',
   },
   Ferocity: {
     icon: '/assets/ui/icons/ferocity_clean.png',
@@ -68,6 +73,7 @@ const TREE_THEMES: Record<
     border: 'border-red-400/60',
     bg: 'from-red-900/20 to-transparent',
     tabBg: 'bg-red-950/40 border-red-400/50',
+    hoverGlow: 'hover:ring-2 hover:ring-red-400/50',
   },
 }
 
@@ -317,11 +323,11 @@ const SkillNodeButton = React.memo(({
         type="button"
         onClick={onClick}
         disabled={!isAvailable || !!unlocking}
-        className={`relative h-16 w-16 shrink-0 rounded-full border-2 transition-[transform,box-shadow] duration-100 ease-out ${
+        className={`relative h-16 w-16 shrink-0 rounded-full border-2 ${
           isUnlocked
             ? `${treeTheme.border} bg-gray-900/80 shadow-lg ring-2 ring-green-500/50`
             : isAvailable
-            ? `${treeTheme.border} bg-gray-900/80 hover:scale-105 hover:ring-2 hover:ring-coliseum-bronze/60 cursor-pointer`
+            ? `${treeTheme.border} bg-gray-900/80 ${treeTheme.hoverGlow} cursor-pointer`
             : 'border-gray-600 bg-gray-900/60 opacity-70 cursor-not-allowed'
         }`}
       >
