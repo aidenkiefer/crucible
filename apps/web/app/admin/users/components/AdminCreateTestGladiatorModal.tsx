@@ -108,7 +108,7 @@ export function AdminCreateTestGladiatorModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70">
       <div
-        className="panel-embossed max-h-[90vh] w-full max-w-6xl overflow-y-auto border-2 border-coliseum-bronze/50 p-6"
+        className="panel-embossed max-h-[90vh] w-full max-w-[88rem] overflow-y-auto border-2 border-coliseum-bronze/50 p-6"
         role="dialog"
         aria-labelledby="admin-create-test-gladiator-title"
       >
@@ -163,7 +163,7 @@ export function AdminCreateTestGladiatorModal({
                 <div className="h-px flex-1 bg-coliseum-bronze/30" />
               </div>
 
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 min-[1600px]:grid-cols-5">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
                 {CLASS_NAMES.map((classId) => {
                   const info = CLASS_DISPLAY[classId]
                   const isSelected = selectedClass === classId
@@ -173,7 +173,7 @@ export function AdminCreateTestGladiatorModal({
                       type="button"
                       onClick={() => setSelectedClass(classId)}
                       className={`
-                        group relative min-w-0 text-left transition-all duration-150 border-2 bg-coliseum-stone p-8
+                        group relative min-w-0 text-left transition-all duration-150 border-2 bg-coliseum-stone p-5
                         ${isSelected
                           ? 'border-coliseum-bronze shadow-lg shadow-coliseum-bronze/20'
                           : 'border-coliseum-bronze/30 hover:border-coliseum-bronze/60'
@@ -185,7 +185,7 @@ export function AdminCreateTestGladiatorModal({
                       )}
                       <div
                         className={`
-                          mb-5 flex h-16 w-16 items-center justify-center overflow-hidden border-2
+                          mb-3 flex h-12 w-12 items-center justify-center overflow-hidden border-2
                           transition-colors duration-150
                           ${isSelected
                             ? 'border-coliseum-bronze bg-coliseum-black/50'
@@ -196,30 +196,30 @@ export function AdminCreateTestGladiatorModal({
                         <Image
                           src={CLASS_ICONS[classId]}
                           alt={info.name}
-                          width={64}
-                          height={64}
+                          width={48}
+                          height={48}
                           className="h-full w-full object-contain"
                         />
                       </div>
                       <h3
                         className={`
-                          font-display mb-2 text-2xl uppercase tracking-wide
+                          font-display mb-1.5 text-lg uppercase tracking-wide
                           ${isSelected ? 'text-coliseum-bronze' : 'text-coliseum-sand'}
                         `}
                       >
                         {info.name}
                       </h3>
-                      <p className="mb-5 text-sm leading-relaxed text-coliseum-sand/70">
+                      <p className="mb-3 text-xs leading-snug text-coliseum-sand/70">
                         {info.description}
                       </p>
-                      <div className="border-t border-coliseum-bronze/20 pt-4">
+                      <div className="border-t border-coliseum-bronze/20 pt-3">
                         <ClassStatBars className={classId} />
                       </div>
-                      <div className="mt-4 flex flex-wrap gap-2">
+                      <div className="mt-3 flex flex-wrap gap-1">
                         {info.strengths.map((s) => (
                           <span
                             key={s}
-                            className="border border-coliseum-bronze/20 bg-coliseum-black/50 px-2 py-0.5 text-[10px] uppercase tracking-wider text-coliseum-sand/80"
+                            className="border border-coliseum-bronze/20 bg-coliseum-black/50 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-coliseum-sand/80"
                           >
                             {s}
                           </span>

@@ -48,24 +48,30 @@ export function getClassStatBiasByName(className: string): Record<StatKey, StatB
 }
 
 export function ClassStatBar({ label, level }: { label: string; level: StatBiasLevel }) {
-  const fills = { high: 3, med: 2, low: 1 }
-  const colors = {
-    high: 'bg-coliseum-bronze',
-    med: 'bg-coliseum-sand/70',
-    low: 'bg-coliseum-sand/40',
-  }
+  const fillCount = level === 'high' ? 3 : level === 'med' ? 2 : 1
   return (
     <div className="flex items-center gap-2">
       <span className="w-8 text-[10px] uppercase tracking-wider text-coliseum-sand/60">
         {label}
       </span>
       <div className="flex gap-0.5">
-        {[1, 2, 3].map((i) => (
-          <div
-            key={i}
-            className={`h-1.5 w-3 ${i <= fills[level] ? colors[level] : 'bg-coliseum-stone'}`}
-          />
-        ))}
+        {[1, 2, 3].map((i) => {
+          const filled = i <= fillCount
+          return (
+            <div
+              key={i}
+              className={
+                filled
+                  ? level === 'high'
+                    ? 'h-1.5 w-3 bg-coliseum-bronze'
+                    : level === 'med'
+                      ? 'h-1.5 w-3 bg-coliseum-sand/70'
+                      : 'h-1.5 w-3 bg-coliseum-sand/40'
+                  : 'h-1.5 w-3 bg-coliseum-stone'
+              }
+            />
+          )
+        })}
       </div>
     </div>
   )
