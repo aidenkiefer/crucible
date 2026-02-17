@@ -6,6 +6,8 @@ import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { formatGold } from '@/lib/utils/format'
+import { NotificationDropdown } from '@/components/notifications/NotificationDropdown'
+import { NotificationModal } from '@/components/notifications/NotificationModal'
 
 interface GladiatorOption {
   id: string
@@ -37,6 +39,8 @@ export function PersistentHUD() {
   const [gladiators, setGladiators] = useState<GladiatorOption[]>([])
   const [gold, setGold] = useState<number | null>(null)
   const [unreadCount, setUnreadCount] = useState(0)
+  const [notificationDropdownOpen, setNotificationDropdownOpen] = useState(false)
+  const [selectedNotification, setSelectedNotification] = useState<any>(null)
   const pathname = usePathname()
 
   useEffect(() => {
@@ -212,6 +216,13 @@ export function PersistentHUD() {
         })}
       </nav>
 
+      {/* Notification Modal */}
+      <NotificationModal
+        notification={selectedNotification}
+        isOpen={!!selectedNotification}
+        onClose={() => setSelectedNotification(null)}
+      />
+
       {/* Right: Gold & Notifications */}
       <div className="flex items-center gap-2 sm:gap-4 min-w-[100px] sm:min-w-[200px] justify-end">
         {/* Gold Display */}
@@ -223,14 +234,29 @@ export function PersistentHUD() {
         </div>
 
         {/* Notifications Bell */}
-        <button className="btn-raised w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-lg sm:text-xl relative">
-          🔔
-          {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-red-600 text-white text-[8px] sm:text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-coliseum-stone">
-              {unreadCount > 9 ? '9+' : unreadCount}
-            </span>
-          )}
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => setNotificationDropdownOpen(!notificationDropdownOpen)}
+            className="btn-raised w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-lg sm:text-xl relative"
+          >
+            🔔
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-red-600 text-white text-[8px] sm:text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-coliseum-stone">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </button>
+
+          {/* Notification Dropdown */}
+          <NotificationDropdown
+            isOpen={notificationDropdownOpen}
+            onClose={() => setNotificationDropdownOpen(false)}
+            onNotificationClick={(notification) => {
+              setSelectedNotification(notification)
+              setNotificationDropdownOpen(false)
+            }}
+          />
+        </div>
       </div>
     </div>
   )
