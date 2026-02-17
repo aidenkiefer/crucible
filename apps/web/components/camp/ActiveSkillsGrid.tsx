@@ -38,11 +38,20 @@ export function ActiveSkillsGrid({ unlockedSkills }: ActiveSkillsGridProps) {
     return map
   }, [trees])
 
-  const resolved = unlockedSkills
-    .map((id) => skillsById[id])
-    .filter((s): s is SkillNode => s != null)
-  const sorted = [...resolved].sort(
-    (a, b) => (a.tree.localeCompare(b.tree) || a.tier - b.tier)
+  const resolved = useMemo(
+    () =>
+      unlockedSkills
+        .map((id) => skillsById[id])
+        .filter((s): s is SkillNode => s != null),
+    [unlockedSkills, skillsById]
+  )
+
+  const sorted = useMemo(
+    () =>
+      [...resolved].sort(
+        (a, b) => (a.tree.localeCompare(b.tree) || a.tier - b.tier)
+      ),
+    [resolved]
   )
 
   if (loading) {
