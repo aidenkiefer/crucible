@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useRef, useMemo } from 'react'
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import Image from 'next/image'
 import {
   canUnlockSkill,
@@ -414,32 +414,35 @@ export function SkillTree({
     )
   }, [currentTree])
 
-  const unlockSkill = async (skillId: string, cost: number) => {
-    try {
-      setUnlocking(skillId)
-      const res = await fetch(`/api/gladiators/${gladiatorId}/skills/unlock`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ skillId }),
-      })
-      if (!res.ok) {
-        const errorText = await res.text()
-        console.error('Failed to unlock skill:', errorText)
-        return
+  const unlockSkill = useCallback(
+    async (skillId: string, cost: number) => {
+      try {
+        setUnlocking(skillId)
+        const res = await fetch(`/api/gladiators/${gladiatorId}/skills/unlock`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ skillId }),
+        })
+        if (!res.ok) {
+          const errorText = await res.text()
+          console.error('Failed to unlock skill:', errorText)
+          return
+        }
+        const data = await res.json()
+        if (data.success) {
+          setUnlockedSkills([...unlockedSkills, skillId])
+          onSkillUnlocked?.()
+        } else {
+          console.error('Failed to unlock skill:', data.error || 'Unknown error')
+        }
+      } catch (error) {
+        console.error('Failed to unlock skill:', error)
+      } finally {
+        setUnlocking(null)
       }
-      const data = await res.json()
-      if (data.success) {
-        setUnlockedSkills([...unlockedSkills, skillId])
-        onSkillUnlocked?.()
-      } else {
-        console.error('Failed to unlock skill:', data.error || 'Unknown error')
-      }
-    } catch (error) {
-      console.error('Failed to unlock skill:', error)
-    } finally {
-      setUnlocking(null)
-    }
-  }
+    },
+    [gladiatorId, unlockedSkills, onSkillUnlocked]
+  )
 
   if (loading) {
     return (
