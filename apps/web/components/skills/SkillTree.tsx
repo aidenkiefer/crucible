@@ -71,6 +71,19 @@ const TREE_THEMES: Record<
   },
 }
 
+/** Major stats (primary focus) and minor stats (secondary) per tree — for UI display. */
+const TREE_MAJOR_MINOR_STATS: Record<
+  SkillTreeName,
+  { major: string[]; minor: string[] }
+> = {
+  Valor: { major: ['CON', 'DEF'], minor: ['STR', 'MR'] },
+  Instinct: { major: ['DEX', 'SPD'], minor: ['CON', 'STR'] },
+  Discipline: { major: ['DEX', 'DEF'], minor: ['STR', 'CON'] },
+  Intellect: { major: ['ARC', 'MR'], minor: ['DEX', 'FTH'] },
+  Zeal: { major: ['FTH', 'CON'], minor: ['STR', 'MR'] },
+  Ferocity: { major: ['STR', 'SPD'], minor: ['DEX', 'DEF'] },
+}
+
 const TREE_DESCRIPTIONS: Record<SkillTreeName, string> = {
   Valor: `Valor - The Unbroken Will
 
@@ -361,16 +374,12 @@ export function SkillTree({
                     : `bg-gray-800/80 border-gray-600 text-coliseum-sand hover:bg-gray-700 hover:border-gray-500`
                 }`}
               >
-                <span
-                  className={`relative h-7 w-7 shrink-0 overflow-hidden rounded-full border-2 ${
-                    isSelected ? 'border-current bg-black/30' : 'border-gray-600 bg-gray-900'
-                  }`}
-                >
+                <span className="relative h-8 w-8 shrink-0 overflow-hidden">
                   <Image
                     src={theme.icon}
                     alt=""
-                    width={28}
-                    height={28}
+                    width={32}
+                    height={32}
                     className="h-full w-full object-contain"
                   />
                 </span>
@@ -387,25 +396,42 @@ export function SkillTree({
           className={`space-y-8 rounded-xl border p-6 bg-gradient-to-b ${treeTheme.bg} ${treeTheme.border}`}
           onMouseLeave={() => setHoveredSkillId(null)}
         >
-          {/* Tree title + icon + description (above Tier 1) */}
-          <div className="flex flex-col gap-2 pb-6 border-b border-coliseum-sand/20">
-            <div className="flex items-center gap-3">
+          {/* Tree title + description (left); icon + major/minor stats (right) */}
+          <div className="flex flex-col gap-4 pb-6 border-b border-coliseum-sand/20 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0 flex-1">
               <h3 className={`font-display text-xl uppercase ${treeTheme.accent}`}>
                 {selectedTree}
               </h3>
-              <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full border-2 border-current opacity-90">
+              <p className="mx-auto mt-6 max-w-2xl text-center text-sm italic leading-snug text-coliseum-sand/80 whitespace-pre-line">
+                {TREE_DESCRIPTIONS[selectedTree]}
+              </p>
+            </div>
+            <div className="flex shrink-0 flex-col items-end gap-2 text-right">
+              <div className="relative h-16 w-16 overflow-hidden">
                 <Image
                   src={treeTheme.icon}
                   alt=""
-                  width={36}
-                  height={36}
+                  width={64}
+                  height={64}
                   className="h-full w-full object-contain"
                 />
-              </span>
+              </div>
+              {(() => {
+                const { major, minor } = TREE_MAJOR_MINOR_STATS[selectedTree]
+                return (
+                  <div className={`text-xs ${treeTheme.accent}`}>
+                    <div className="uppercase tracking-wider">
+                      <span className="text-coliseum-sand/60">Major: </span>
+                      {major.join(', ')}
+                    </div>
+                    <div className="mt-0.5 uppercase tracking-wider">
+                      <span className="text-coliseum-sand/60">Minor: </span>
+                      {minor.join(', ')}
+                    </div>
+                  </div>
+                )
+              })()}
             </div>
-            <p className="text-sm text-coliseum-sand/80 leading-snug max-w-2xl whitespace-pre-line">
-              {TREE_DESCRIPTIONS[selectedTree]}
-            </p>
           </div>
 
           {[1, 2, 3, 4, 5, 6].map((tier) => {
