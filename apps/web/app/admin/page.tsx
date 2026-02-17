@@ -80,6 +80,7 @@ export default async function AdminDashboardPage() {
           <nav className="py-4 space-y-1">
             <NavLink href="/admin" label="Dashboard" icon="📊" active />
             <NavLink href="/admin/users" label="Manage Users" icon="👤" />
+            <NavLink href="/admin/announcements" label="Announcements" icon="📢" />
             <NavLink href="/admin/bundles" label="Bundles" icon="📦" />
             <NavLink href="/admin/equipment-templates" label="Equipment" icon="⚔️" />
             <NavLink href="/admin/action-templates" label="Actions" icon="💥" />

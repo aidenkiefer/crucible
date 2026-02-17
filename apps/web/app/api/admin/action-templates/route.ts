@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@gladiator/database/src/client'
+import { logAdminAction } from '@/lib/admin-logging'
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions)
@@ -65,6 +66,13 @@ export async function POST(req: Request) {
       bundleId: data.bundleId || null,
     },
   })
+
+  // Log admin action (non-blocking)
+  logAdminAction(session.user.id, 'created', 'ActionTemplate', {
+    key: template.key,
+    name: template.name,
+    category: template.category,
+  }).catch(console.error)
 
   return NextResponse.json({ template })
 }

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@gladiator/database/src/client'
 import { validateEquipmentUIMetadata } from '@/lib/admin/validator'
+import { logAdminAction } from '@/lib/admin-logging'
 
 export async function GET(
   req: Request,
@@ -94,6 +95,14 @@ export async function PUT(
   // Validate UI metadata and return warnings (allow save for drafts)
   const uiWarnings = validateEquipmentUIMetadata(template.ui)
 
+  // Log admin action (non-blocking)
+  logAdminAction(session.user.id, 'updated', 'EquipmentTemplate', {
+    key: template.key,
+    name: template.name,
+    type: template.type,
+    slot: template.slot,
+  }).catch(console.error)
+
   return NextResponse.json({
     template,
     ...(uiWarnings.length > 0 && { uiWarnings }),
@@ -110,9 +119,23 @@ export async function DELETE(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
   }
 
+  // Fetch template before deletion for logging
+  const template = await prisma.equipmentTemplate.findUnique({
+    where: { id: params.id },
+    select: { key: true, name: true },
+  })
+
   await prisma.equipmentTemplate.delete({
     where: { id: params.id },
   })
+
+  // Log admin action (non-blocking)
+  if (template) {
+    logAdminAction(session.user.id, 'deleted', 'EquipmentTemplate', {
+      key: template.key,
+      name: template.name,
+    }).catch(console.error)
+  }
 
   return NextResponse.json({ success: true })
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useSocket } from '@/hooks/useSocket'
 
 interface Notification {
   id: string
@@ -15,6 +16,7 @@ export function useNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [loading, setLoading] = useState(true)
+  const socket = useSocket()
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -50,6 +52,22 @@ export function useNotifications() {
       console.error('Failed to mark as read:', error)
     }
   }, [fetchNotifications])
+
+  // Listen for real-time notifications via WebSocket
+  useEffect(() => {
+    if (!socket) return
+
+    socket.on('notification:created', (notification: Notification) => {
+      setNotifications((prev) => [notification, ...prev])
+      if (!notification.isRead) {
+        setUnreadCount((prev) => prev + 1)
+      }
+    })
+
+    return () => {
+      socket.off('notification:created')
+    }
+  }, [socket])
 
   useEffect(() => {
     fetchNotifications()

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@gladiator/database/src/client'
 import { validateEquipmentUIMetadata } from '@/lib/admin/validator'
+import { logAdminAction } from '@/lib/admin-logging'
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions)
@@ -104,6 +105,14 @@ export async function POST(req: Request) {
 
   // Validate UI metadata and return warnings (allow save for drafts)
   const uiWarnings = validateEquipmentUIMetadata(template.ui)
+
+  // Log admin action (non-blocking)
+  logAdminAction(session.user.id, 'created', 'EquipmentTemplate', {
+    key: template.key,
+    name: template.name,
+    type: template.type,
+    slot: template.slot,
+  }).catch(console.error)
 
   return NextResponse.json({
     template,

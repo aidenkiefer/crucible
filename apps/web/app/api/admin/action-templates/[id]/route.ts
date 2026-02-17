@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@gladiator/database/src/client'
+import { logAdminAction } from '@/lib/admin-logging'
 
 export async function GET(
   req: Request,
@@ -57,6 +58,13 @@ export async function PUT(
     },
   })
 
+  // Log admin action (non-blocking)
+  logAdminAction(session.user.id, 'updated', 'ActionTemplate', {
+    key: template.key,
+    name: template.name,
+    category: template.category,
+  }).catch(console.error)
+
   return NextResponse.json({ template })
 }
 
@@ -70,9 +78,23 @@ export async function DELETE(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
   }
 
+  // Fetch template before deletion for logging
+  const template = await prisma.actionTemplate.findUnique({
+    where: { id: params.id },
+    select: { key: true, name: true },
+  })
+
   await prisma.actionTemplate.delete({
     where: { id: params.id },
   })
+
+  // Log admin action (non-blocking)
+  if (template) {
+    logAdminAction(session.user.id, 'deleted', 'ActionTemplate', {
+      key: template.key,
+      name: template.name,
+    }).catch(console.error)
+  }
 
   return NextResponse.json({ success: true })
 }
