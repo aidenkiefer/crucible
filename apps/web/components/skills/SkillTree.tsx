@@ -583,9 +583,7 @@ export function SkillTree({
                         treeTheme={treeTheme}
                         onMouseEnter={() => setHoveredSkillId(skill.id)}
                         onMouseLeave={() => setHoveredSkillId(null)}
-                        onClick={() => {
-                          if (isAvailable && !unlocking) unlockSkill(skill.id, skill.cost)
-                        }}
+                        onClick={() => unlockSkill(skill.id, skill.cost)}
                         isHovered={isHovered}
                         anchorRef={hoveredWrapperRef}
                       />
