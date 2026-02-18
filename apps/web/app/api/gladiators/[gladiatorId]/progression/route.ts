@@ -26,6 +26,7 @@ export async function GET(
         level: true,
         xp: true,
         skillPointsAvailable: true,
+        skillPointsSpent: true,
         statPointsAvailable: true,
         unlockedSkills: true,
         constitution: true,
@@ -53,6 +54,7 @@ export async function GET(
     return NextResponse.json({
       gladiator: {
         ...gladiator,
+        skillPointsRemaining: gladiator.skillPointsAvailable - gladiator.skillPointsSpent,
         xpForNextLevel,
         isMaxLevel: gladiator.level >= MAX_LEVEL,
       },

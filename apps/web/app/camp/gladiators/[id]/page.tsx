@@ -34,7 +34,7 @@ export default function CampGladiatorPage() {
             id: data.gladiator.id,
             class: data.gladiator.class,
             unlockedSkills: data.gladiator.unlockedSkills || [],
-            skillPointsAvailable: data.gladiator.skillPointsAvailable ?? 0,
+            skillPointsAvailable: data.gladiator.skillPointsRemaining ?? 0,
           })
         }
       })
@@ -114,7 +114,7 @@ export default function CampGladiatorPage() {
                               ...prev,
                               unlockedSkills: data.gladiator.unlockedSkills || [],
                               skillPointsAvailable:
-                                data.gladiator.skillPointsAvailable ?? 0,
+                                data.gladiator.skillPointsRemaining ?? 0,
                             }
                           : null
                       )

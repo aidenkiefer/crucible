@@ -437,6 +437,7 @@ export function SkillTree({
         const data = await res.json()
         if (data.success) {
           setUnlockedSkills([...unlockedSkills, skillId])
+          setSkillPoints((prev) => prev - cost)
           onSkillUnlocked?.()
         } else {
           console.error('Failed to unlock skill:', data.error || 'Unknown error')
@@ -566,8 +567,11 @@ export function SkillTree({
                       !currentTree.skills
                         .filter((s) => s.tier === skill.prerequisiteTier)
                         .some((s) => unlockedSkills.includes(s.id))
+                    const alreadyHasSkillInTier = currentTree.skills
+                      .filter((s) => s.tier === skill.tier && s.id !== skill.id)
+                      .some((s) => unlockedSkills.includes(s.id))
                     const isAvailable =
-                      canUnlock && canAfford && !isUnlocked && !needsPrereqTier
+                      canUnlock && canAfford && !isUnlocked && !needsPrereqTier && !alreadyHasSkillInTier
                     const isHovered = hoveredSkillId === skill.id
 
                     return (
