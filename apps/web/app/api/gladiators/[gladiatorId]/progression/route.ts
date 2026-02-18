@@ -51,10 +51,13 @@ export async function GET(
         ? 0
         : gladiator.level * 100 + (gladiator.level - 1) * 50
 
+    const skillPointsRemaining = gladiator.skillPointsAvailable - gladiator.skillPointsSpent
+
     return NextResponse.json({
       gladiator: {
         ...gladiator,
-        skillPointsRemaining: gladiator.skillPointsAvailable - gladiator.skillPointsSpent,
+        skillPointsAvailable: skillPointsRemaining,
+        skillPointsRemaining,
         xpForNextLevel,
         isMaxLevel: gladiator.level >= MAX_LEVEL,
       },

@@ -33,12 +33,19 @@ export async function GET() {
         arcana: true,
         faith: true,
         skillPointsAvailable: true,
+        skillPointsSpent: true,
         statPointsAvailable: true,
         unlockedSkills: true,
       },
     })
 
-    return NextResponse.json({ gladiators })
+    // Return skillPointsAvailable as the actual remaining (earned minus spent)
+    const result = gladiators.map(({ skillPointsSpent, skillPointsAvailable, ...g }) => ({
+      ...g,
+      skillPointsAvailable: skillPointsAvailable - skillPointsSpent,
+    }))
+
+    return NextResponse.json({ gladiators: result })
   } catch (error) {
     console.error('Error fetching gladiators:', error)
     return NextResponse.json(
